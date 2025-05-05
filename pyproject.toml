@@ -1,0 +1,19 @@
+[project]
+name = "beryl3"
+version = "0.1.0"
+description = "Beryl, collection management system"
+authors = [
+    { name = "Mateusz Dubiel", email = "mdubiel@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "beryl3-webapp",
+]
+
+[tool.uv.workspace]
+members = [
+    "webapp",
+]
+
+[tool.uv.sources]
+beryl3-webapp = { workspace = true }
