@@ -1,0 +1,12 @@
+/* This file is used to import Tailwind CSS and DaisyUI styles.
+ * It also includes custom themes for DaisyUI.
+ * 
+ * @see https://tailwindcss.com/docs/installation
+ * @see https://daisyui.com/docs/install/
+ */
+
+/* Importing Tailwind CSS and DaisyUI */
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: nord --default, sunset --prefersdark;
+}

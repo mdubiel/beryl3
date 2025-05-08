@@ -1,6 +1,5 @@
-.venv/
-__pycache__/
+.venv
 *.pyc
-db.sqlite3
-.env
-.python-version
+__pycache__/
+webapp/node_modules/
+*.sqlite3
