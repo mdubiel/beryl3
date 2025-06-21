@@ -1,0 +1,15 @@
+{% extends "allauth/layouts/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Sign Up Closed" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    <div class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4 text-center">
+        <h2 class="fieldset-legend">{% trans "Sign Up Closed" %}</h2>
+        <div class="py-4">
+            <p>{% trans "We are sorry, but sign-ups are currently closed." %}</p>
+        </div>
+    </div>
+</div>
+{% endblock allauth_content %}

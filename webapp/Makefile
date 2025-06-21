@@ -6,8 +6,8 @@ TAILWIND_INPUT_CSS = src/input.css
 TAILWIND_OUTPUT_CSS = static/css/tailwind.css
 
 PYTHON = python
-MANAGE_PY = $(PYTHON) manage.py
-SERVER_ADDRESS = localhost:8763
+MANAGE_PY = uv run $(PYTHON) manage.py
+SERVER_ADDRESS = 0.0.0.0:8000
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
@@ -22,21 +22,23 @@ build-css:
 	@echo "Building Tailwind CSS: $(TAILWIND_INPUT_CSS) -> $(TAILWIND_OUTPUT_CSS)..."
 	$(TAILWIND_CLI) -i $(TAILWIND_INPUT_CSS) -o $(TAILWIND_OUTPUT_CSS)
 	@echo "Tailwind CSS build complete."
-
+build-css-watch:
+	@echo "Building Tailwind CSS: $(TAILWIND_INPUT_CSS) -> $(TAILWIND_OUTPUT_CSS)..."
+	$(TAILWIND_CLI) -i $(TAILWIND_INPUT_CSS) -o $(TAILWIND_OUTPUT_CSS) -w
+	@echo "Tailwind CSS build complete."
 # Target to run the Django development server
 run-dev-server:
 	@echo "Starting Django development server at http://$(SERVER_ADDRESS)/..."
-	$(MANAGE_PY) runserver $(SERVER_ADDRESS)
-
+	$(MANAGE_PY) runserver ${SERVER_ADDRESS}
 # Target to create Django database migrations
 makemigrations:
 	@echo "Creating Django database migrations..."
-	$(MANAGE_PY) makemigrations core
+	$(MANAGE_PY) makemigrations
 
 # Target to apply Django database migrations
 migrate:
 	@echo "Applying Django database migrations..."
-	$(MANAGE_PY) migrate core
+	$(MANAGE_PY) migrate
 
 # Target to clean generated files (e.g., the compiled CSS)
 clean:

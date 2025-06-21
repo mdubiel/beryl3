@@ -1,0 +1,31 @@
+{% extends "allauth/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Verify Your Email Address" %}{% endblock %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    
+    <div class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4 text-center">
+
+        <h2 class="fieldset-legend">{% trans "Verification Required" %}</h2>
+        
+        <div class="py-4">
+            <p class="text-sm">
+                {% blocktrans %}To continue, you must first verify your email address. We have already sent a verification email to you. Please click the link in that email.{% endblocktrans %}
+            </p>
+
+            <p class="text-xs text-base-content/70 mt-2">
+                {% blocktrans %}If you cannot find the email, you can request another one.{% endblocktrans %}
+            </p>
+        </div>
+
+        {# This form allows the user to request a new verification email #}
+        <form method="post" action="{% url 'account_email' %}">
+            {% csrf_token %}
+            <button class="btn btn-primary w-full" type="submit" name="action_send">{% trans 'Resend Verification Email' %}</button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

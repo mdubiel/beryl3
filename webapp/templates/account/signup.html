@@ -1,0 +1,53 @@
+{% extends "allauth/layouts/base.html" %}
+
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block head_title %}{% trans "Sign Up" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+        {% csrf_token %}
+
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <legend class="fieldset-legend">Register</legend>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error my-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>{{ form.non_field_errors.as_text }}</span>
+                </div>
+            {% endif %}
+
+            {# Email Field #}
+            <label class="label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {% render_field form.email type="email" class="input w-full" placeholder="Email Address" %}
+            {% if form.email.errors %}
+                <div class="text-error text-sm mt-1">{{ form.email.errors.as_text }}</div>
+            {% endif %}
+
+            {# Password Field - uses 'password1' #}
+            <label class="label mt-2" for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+            {% render_field form.password1 class="input w-full" placeholder="Password" %}
+            {% if form.password1.errors %}
+                <div class="text-error text-sm mt-1">{{ form.password1.errors.as_text }}</div>
+            {% endif %}
+
+            {# Password Confirmation Field - uses 'password2' #}
+            <label class="label mt-2" for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+            {% render_field form.password2 class="input w-full" placeholder="Confirm Password" %}
+            {% if form.password2.errors %}
+                <div class="text-error text-sm mt-1">{{ form.password2.errors.as_text }}</div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary mt-4 w-full">{% trans "Sign Up" %}</button>
+        </fieldset>
+    </form>
+</div>
+
+<p class="text-center mt-4 text-sm">
+    {% blocktrans %}Already have an account? Then please <a href="{{ login_url }}" class="link">sign in</a>.{% endblocktrans %}
+</p>
+
+{% endblock allauth_content %}

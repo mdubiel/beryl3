@@ -1,0 +1,53 @@
+{% extends "allauth/layouts/base.html" %}
+
+{% load i18n %}
+{% load widget_tweaks %} {# 1. Load widget_tweaks at the top #}
+
+{% block head_title %}{% trans "Sign In" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    <form method="POST" action="{% url 'account_login' %}">
+        {% csrf_token %}
+
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <legend class="fieldset-legend">Login</legend>
+
+            {# Display any non-field errors (e.g., "invalid credentials") #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-error my-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>{{ form.non_field_errors.as_text }}</span>
+                </div>
+            {% endif %}
+            
+            {# Email Field #}
+            <label class="label" for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
+            {% render_field form.login class="input w-full" placeholder="Email" %}
+            {% if form.login.errors %}
+                <div class="text-error text-sm mt-1">
+                    {{ form.login.errors.as_text }}
+                </div>
+            {% endif %}
+
+            {# Password Field #}
+            <label class="label mt-2" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+            {% render_field form.password class="input w-full" placeholder="Password" %}
+             {% if form.password.errors %}
+                <div class="text-error text-sm mt-1">
+                    {{ form.password.errors.as_text }}
+                </div>
+            {% endif %}
+
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+
+            <button type="submit" class="btn btn-neutral mt-4 w-full">Login</button>
+        </fieldset>
+    </form>
+</div>
+<div class="text-center mt-4">
+    <a class="link link-hover text-sm" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+</div>
+{% endblock allauth_content %}

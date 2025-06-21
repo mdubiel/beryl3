@@ -1,0 +1,21 @@
+{% extends "allauth/layouts/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Confirm Email Address" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    <div class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+        <h2 class="fieldset-legend">{% trans "Confirm Email Address" %}</h2>
+        {% if confirmation %}
+            <p>{% blocktrans with email=confirmation.email_address.email %}Please confirm that <a href="mailto:{{ email }}">{{ email }}</a> is an email address for user {{ user_display }}.{% endblocktrans %}</p>
+            <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                {% csrf_token %}
+                <button class="btn btn-primary w-full mt-4" type="submit">{% trans 'Confirm' %}</button>
+            </form>
+        {% else %}
+            <p>{% blocktrans %}Unable to confirm your email address. This link may be expired or invalid.{% endblocktrans %}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock allauth_content %}
