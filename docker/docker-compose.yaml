@@ -11,5 +11,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  inbucket:
+    image: inbucket/inbucket:latest
+    container_name: beryl3_inbucket
+    ports:
+      - "${INBUCKET_WEB_PORT}:9000"
+      - "${INBUCKET_SMTP_PORT}:2500"
+    restart: unless-stopped
+
 volumes:
   postgres_data:

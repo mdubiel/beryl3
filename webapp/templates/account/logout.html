@@ -1,0 +1,19 @@
+{% extends "allauth/layouts/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Sign Out" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    <form method="post" action="{% url 'account_logout' %}">
+        {% csrf_token %}
+        <div class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4 text-center">
+            <h2 class="fieldset-legend">{% trans "Sign Out" %}</h2>
+            <div class="py-4">
+                <p>{% trans 'Are you sure you want to sign out?' %}</p>
+            </div>
+            <button class="btn btn-primary w-full" type="submit">{% trans 'Sign Out' %}</button>
+        </div>
+    </form>
+</div>
+{% endblock allauth_content %}

@@ -1,0 +1,31 @@
+{% extends "allauth/layouts/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Verify Your Email Address" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+
+    <div class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4 text-center">
+        
+        <h2 class="fieldset-legend">{% trans "Verify Your Email Address" %}</h2>
+
+        <div class="py-4">
+            {# A mail icon is appropriate here #}
+            <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-12 w-12 stroke-current text-info" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+            </svg>
+
+            <p class="text-sm mt-4">
+                {% blocktrans %}We have sent an email to you for verification. Please follow the link provided in the email to finalize your registration process.{% endblocktrans %}
+            </p>
+            <p class="text-xs text-base-content/70 mt-2">
+                {% blocktrans %}If you do not see the email, please check your spam folder.{% endblocktrans %}
+            </p>
+        </div>
+
+        <a href="{% url 'account_login' %}" class="btn btn-secondary w-full">{% trans "Back to Login" %}</a>
+
+    </div>
+</div>
+{% endblock allauth_content %}

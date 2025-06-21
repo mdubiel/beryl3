@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{# This file acts as the new root for all allauth pages. #}
+{# It inherits from your project's base.html and provides #}
+{# the "content" block that allauth's own templates will fill. #}
+
+{% block content %}
+    {% block allauth_content %}
+    {% endblock allauth_content %}
+{% endblock content %}

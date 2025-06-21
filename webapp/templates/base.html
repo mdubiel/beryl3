@@ -1,0 +1,93 @@
+{% load static %}
+{% load lucide %}
+{% if debug %}
+  {% load django_browser_reload %}
+{% endif %}
+
+<!DOCTYPE html>
+<html lang="en" data-theme="emerald">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Your Product{% endblock %} | Beryl</title>
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    {# <script defer src="{% static 'js/htmx.min.js' %}"></script> #}
+</head>
+
+<body class="bg-base-100 text-base-content font-sans">
+    
+    {# Main content container #}
+    <div class="w-11/12 md:w-5/6 lg:w-4/5 mx-auto">
+    
+        {# Navbar #}
+        <header class="navbar mt-4">
+        
+            <div class="flex-1">
+                <a href="/" class="btn btn-ghost text-xl">Beryl</a>
+            </div>
+
+            <div class="flex-none">
+                {% if user.is_authenticated %}
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar shadow-lg">
+                        <div class="w-10 rounded-full">
+                            {# A placeholder for avatar #}
+                            <img alt="User Avatar" src="https://i.pravatar.cc/100?u={{ user.email }}" />
+                        </div>
+                    </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                        <li><a href="#">Dashboard</a></li>
+                        <li><a href="#">Your collections</a></li>
+                        <li></li> 
+                        <li><a href="{% url 'account_email' %}">Account settings</a></li>
+                        <li></li>
+                        <li><a href="{% url 'account_email' %}">Profile & Emails</a></li>
+                        <li><a href="{% url 'account_change_password' %}">Change Password</a></li>
+                        <li><a href="{% url 'account_logout' %}" class="text-error">Logout</a></li>
+                    </ul>                    
+                </div>
+                {% else %}
+                <div class="dropdown dropdown-end">
+                    <button tabindex="0" class="btn btn-ghost btn-circle avatar shadow-lg">
+                        {% lucide 'user-round' size='24' %}
+                    </button>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                        <li><a href="{% url 'account_login' %}">Login</a></li>
+                        <li><a href="{% url 'account_signup' %}">Register</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+        </header>
+
+        <main class="py-12">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+    </div> {# End of main centered container #}
+
+    <footer class="footer footer-center p-10 bg-base-200 text-base-content rounded-t-box mt-12">
+        <aside>
+            <p class="font-bold text-lg">
+                Your Product Inc. <br/>Providing reliable service since 2023
+            </p>
+            <p>Copyright © {% now "Y" %} - All right reserved</p>
+        </aside>
+        <nav>
+            <div class="grid grid-flow-col gap-4">
+                <a class="link link-hover">About us</a>
+                <a class="link link-hover">Contact</a>
+                <a class="link link-hover">Jobs</a>
+            </div>
+        </nav>
+    </footer>
+
+{% if debug %}
+    {% django_browser_reload_script %}
+{% endif %}
+</body>
+</html>

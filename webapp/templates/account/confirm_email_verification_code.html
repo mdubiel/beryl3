@@ -1,0 +1,38 @@
+{% extends "allauth/layouts/base.html" %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block head_title %}{% trans "Confirm Email Address" %}{% endblock head_title %}
+
+{% block allauth_content %}
+<div class="flex justify-center">
+    <form method="post" action="{{ form.action }}">
+        {% csrf_token %}
+
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+            <legend class="fieldset-legend">{% trans "Confirm Email" %}</legend>
+
+            <p class="text-sm py-2">
+                {% blocktrans %}We have sent a verification code to your email address. Please enter the code below to verify your account.{% endblocktrans %}
+            </p>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error my-2">
+                    <span>{{ form.non_field_errors.as_text }}</span>
+                </div>
+            {% endif %}
+
+            {# Code Field #}
+            <label class="label" for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+            {% render_field form.code class="input w-full" placeholder="123456" %}
+            {% if form.code.errors %}
+                <div class="text-error text-sm mt-1">
+                    {{ form.code.errors.as_text }}
+                </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary mt-4 w-full">{% trans "Confirm" %}</button>
+        </fieldset>
+    </form>
+</div>
+{% endblock allauth_content %}
