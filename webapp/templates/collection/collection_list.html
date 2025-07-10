@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}All Collections{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        {# This is the active page, so we use a span #}
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'layout-list' size=16 %}
+            All Collections
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+
+<div class="mb-8 flex items-center justify-between">
+    <h1 class="text-3xl font-bold">All My Collections</h1>
+    <a href="{% url 'collection_create' %}" class="btn btn-primary">
+        {% lucide 'plus' size=16 class='mr-2' %} Create New Collection
+    </a>
+</div>
+
+<div class="bg-base-200 rounded-box shadow-xl">
+    <ul class="list">
+        {% for collection in collections %}
+            {% include "partials/_collection_list_item.html" with collection=collection %}
+        {% empty %}
+            <li class="p-8 text-center">You haven't created any collections yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

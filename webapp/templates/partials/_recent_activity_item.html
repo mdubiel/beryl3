@@ -1,0 +1,20 @@
+{% load lucide %}
+{% load humanize %}
+
+<li class="flex items-center gap-4 px-2 py-4 ml-2 mr-4 border-b border-base-300 last:border-b-0">
+
+    <div class="flex-shrink-0 {{ event.icon_style }} rounded-full p-2">
+        {% lucide event.icon size=16 class="text-white" %}
+    </div>
+    
+    <div class="flex-grow text-sm">
+        {{ event.description|safe }}
+    </div>
+
+    <div class="tooltip tooltip-left" data-tip="{{ event.created|date:'Y-m-d H:i' }}">
+        <div class="flex-shrink-0 text-xs text-base-content/60 whitespace-nowrap">
+            {# Use the `naturaltime` filter for the display text #}
+            {{ event.created|naturaltime }}
+        </div>
+    </div>
+</li>

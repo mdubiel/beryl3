@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}{{ item.name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{% url 'collection_list' %}">{% lucide 'layout-list' size=16 %} All Collections</a></li>
+    <li><a href="{{ collection.get_absolute_url }}">{% lucide 'package' size=16 %} {{ collection.name|truncatechars:20 }}</a></li>
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'scan-search' size=16 %}
+            {{ item.name|truncatechars:25 }}
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    {# Left column #}
+    <div class="lg:col-span-1">
+        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="rounded-box shadow-xl w-full object-cover">
+    </div>
+
+    {# Right column #}
+    <div class="lg:col-span-2 space-y-4">
+        
+        {# Action buttons #}
+        <div class="flex items-center justify-end gap-2">
+            <a href="{% url 'item_update' item.hash %}" class="btn btn-outline btn-sm">{% lucide 'pencil' size=16 class='mr-2' %} Edit Item</a>
+            {% include "partials/_item_delete_dropdown.html" with item=item %}
+        </div>
+        
+        {# Status Badge #}
+        <div>
+            <div class="badge
+                {% if item.status == 'IN_COLLECTION' %} badge-success
+                {% elif item.status == 'WANTED' %} badge-info
+                {% elif item.status == 'RESERVED' %} badge-warning
+                {% elif item.status == 'LENT_OUT' %} badge-neutral
+                {% else %} badge-ghost
+                {% endif %}">
+                {{ item.get_status_display }}
+            </div>
+        </div>
+
+        {# Main Details #}
+        <h1 class="text-5xl font-bold">{{ item.name }}</h1>
+        <p class="text-lg opacity-80">
+            Part of the <a href="{{ collection.get_absolute_url }}" class="link">{{ collection.name }}</a> collection.
+        </p>
+        <p class="pt-4">
+            {{ item.description|default:"No description provided."|linebreaks }}
+        </p>
+
+        {# Audit Info #}
+        <div class="text-xs opacity-60 pt-8 border-t border-base-300">
+            Added by {{ item.created_by.username }} on {{ item.created|date:"F j, Y" }} &middot; Last updated {{ item.updated|timesince }} ago.
+        </div>
+    </div>
+</div>
+{% endblock %}

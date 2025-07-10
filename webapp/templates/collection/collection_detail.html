@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}{{ collection.name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <a href="{% url 'collection_list' %}">
+            {% lucide 'layout-list' size=16 %}
+            All Collections
+        </a>
+    </li>
+    <li>
+        {# Active page #}
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'package' size=16 %}
+            {{ collection.name|truncatechars:25 }}
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+
+{# Top action buttons (owner) #}
+{% if request.user == collection.created_by %}
+<div class="mb-8 flex items-center justify-end gap-2">
+    <a href="{% url "item_create" collection.hash %}" class="btn btn-secondary">{% lucide 'plus' size=16 class='mr-2' %} Add New Item</a>
+    <a href="{% url "collection_update" collection.hash %}" class="btn btn-outline">{% lucide 'pencil' size=16 class='mr-2' %} Edit Collection</a>
+    {% include "partials/_collection_delete_dropdown.html" with collection=collection %}
+</div>
+{% endif %}
+
+
+{# Hero, stats & image #}
+<div class="hero min-h-[400px] rounded-box overflow-hidden bg-base-100">
+    <div class="hero-content flex-col lg:flex-row-reverse w-full p-0">
+        <img src="{{ collection.image_url }}" class="w-full lg:max-w-sm rounded-lg shadow-2xl" />
+        <div class="p-8 text-center lg:text-left">
+            <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
+            <p class="py-6">{{ collection.description|default:"No description provided." }}</p>
+            
+            <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-100/60 backdrop-blur-sm">
+                <div class="stat">
+                    <div class="stat-title">Total Items</div>
+                    <div class="stat-value">{{ stats.total_items }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">In Collection</div>
+                    <div class="stat-value text-success">{{ stats.in_collection_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Wanted</div>
+                    <div class="stat-value text-info">{{ stats.wanted_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-title">Reserved</div>
+                    <div class="stat-value text-warning">{{ stats.reserved_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{# End Hero #}
+
+
+{# Items listing #}
+<div class="mt-12">
+    <h2 class="text-2xl font-bold mb-4">Items in this Collection</h2>
+
+    <ul class="list bg-base-100 border-base-300 rounded-box shadow-xl">
+        {# Loop through items and include the partial for each one #}
+        {% for item in items %}
+            {% include "partials/_item_list_item.html" with item=item %}
+        {% empty %}
+            <li class="p-4 text-center">This collection has no items yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+{# End items list #}
+
+{% endblock %}

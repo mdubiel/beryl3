@@ -1,0 +1,9 @@
+[MAIN]
+load-plugins=pylint_django
+init-hook='import sys; sys.path.append(".")'
+
+[TYPECHECK]
+generated-members=django.db.models.fields.Field.get_attname
+
+[pylint_django]
+django-settings-module=webapp.settings

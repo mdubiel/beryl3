@@ -1,0 +1,28 @@
+{% load i18n %}
+{% load lucide %}
+
+{% if collection.can_be_deleted %}
+    {# If collection is empty, show the confirmation dropdown #}
+    <div class="dropdown dropdown-end">
+        <button tabindex="0" class="btn btn-ghost btn-square btn-sm text-error" title="Delete Collection">
+            {% lucide 'trash-2' size=18 %}
+        </button>
+        <div tabindex="0" class="dropdown-content card card-compact w-64 p-2 shadow bg-error text-error-content">
+            <div class="card-body">
+                <h3 class="card-title">Are you sure?</h3>
+                <p class="text-xs">This action cannot be undone.</p>
+                <form action="{% url 'collection_delete' collection.hash %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline w-full mt-2">Confirm Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    {# If collection has items, button is disabled with a helpful tooltip #}
+    <div class="tooltip" data-tip="Cannot delete a collection with items.">
+        <button class="btn btn-ghost btn-square btn-sm btn-disabled text-error/30">
+            {% lucide 'trash-2' size=18 %}
+        </button>
+    </div>
+{% endif %}

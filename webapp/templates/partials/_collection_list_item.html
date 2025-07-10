@@ -1,0 +1,66 @@
+{% load i18n %}
+{% load lucide %}
+
+{# Give the <li> a unique ID so HTMX can target it #}
+<li id="collection-row-{{ collection.hash }}" class="flex items-start gap-4 p-4 border-b border-base-300">
+
+    <div class="flex-shrink-0 w-20">
+        <div class="avatar">
+            <div class="w-20 h-20 rounded-box">
+                <img src="{{ collection.image_url }}" alt="{{ collection.name }}" class="object-cover"/>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-grow">
+        <a href="{% url 'collection_detail' collection.hash %}" class="link link-hover font-bold text-lg">{{ collection.name }}</a>
+        <p class="text-sm opacity-70 mt-1">
+            {{ collection.item_count }} items &middot; Updated {{ collection.updated|timesince }} ago
+        </p>
+    </div>
+
+    <div class="flex flex-col justify-between items-end flex-shrink-0 h-20">
+        
+        {# Top section: Visibility Status Badge #}
+        <div>
+            <div class="badge gap-1 {% if collection.visibility == 'PUBLIC' %}badge-accent{% elif collection.visibility == 'UNLISTED' %}badge-info{% else %}badge-neutral{% endif %}">
+                {% if collection.visibility == 'PUBLIC' %}{% lucide 'globe' size=12 %}{% elif collection.visibility == 'UNLISTED' %}{% lucide 'link' size=12 %}{% else %}{% lucide 'lock' size=12 %}{% endif %}
+                {{ collection.get_visibility_display }}
+            </div>
+        </div>
+
+        {# Bottom section: Action Buttons #}
+        <div class="flex items-center gap-1">
+            <a href="{% url "collection_update" collection.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Collection">
+                {% lucide 'pencil' size=18 %}
+            </a>
+            
+            {% include "partials/_collection_delete_dropdown.html" with collection=collection %}
+
+            {# Visibility Change Dropdown #}
+            <div class="dropdown dropdown-end dropdown-top">
+                <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Visibility">
+                    {% lucide 'ellipsis' size=18 %}
+                </button>
+                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                    <li class="menu-title"><span>Change Visibility</span></li>
+                    {% for visibility_value, visibility_label in collection.Visibility.choices %}
+                    <li>
+                        {% if collection.visibility == visibility_value %}
+                            <a class="disabled font-bold">{{ visibility_label }}</a>
+                        {% else %}
+                            <a  hx-post="{% url 'collection_update_visibility' collection.hash %}"
+                                hx-vals='{"new_visibility": "{{ visibility_value }}"}'
+                                hx-target="#collection-row-{{ collection.hash }}"
+                                hx-swap="outerHTML"
+                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                {{ visibility_label }}
+                            </a>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</li>

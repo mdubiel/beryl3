@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+# pylint: disable=missing-module-docstring
+# pylint: disable=line-too-long
+
 from pathlib import Path
 import os
 
@@ -47,9 +54,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'lucide',
     'nanoid_field',
     'widget_tweaks',
+    'django_htmx',
     'core.apps.CoreConfig',
     'web.apps.WebConfig',
     'api.apps.ApiConfig',
@@ -63,12 +72,12 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'webapp.logging_middleware.RequestUserInfoMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 ]
-
-
 
 ROOT_URLCONF = 'webapp.urls'
 
@@ -88,13 +97,11 @@ TEMPLATES = [
     },
 ]
 
-
 if DEBUG:
     INSTALLED_APPS.append("django_browser_reload")
     MIDDLEWARE.append("django_browser_reload.middleware.BrowserReloadMiddleware")
 
 WSGI_APPLICATION = 'webapp.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -117,18 +124,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -145,15 +147,14 @@ STATICFILES_DIRS = (
 # this should be done only for local files delivery
 # production should be on GCS/S3
 #STATIC_ROOT = BASE_DIR / "tmp" / "static"
-#logger.debug(f"STATIC_ROOT = {STATIC_ROOT}")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login settings
-#LOGIN_REDIRECT_URL = 'index'  # Redirect to index after login
-#LOGOUT_REDIRECT_URL = 'index'  # Redirect to index after logout
+LOGIN_REDIRECT_URL = 'dashboard'  # Redirect to index after login
+LOGOUT_REDIRECT_URL = 'index'  # Redirect to index after logout
 #LOGIN_URL = '/login/'
 
 AUTHENTICATION_BACKENDS = [
@@ -176,29 +177,111 @@ ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
 # While you're here, it's a good idea to set a minimum password length
 ACCOUNT_PASSWORD_MIN_LENGTH = 8
 
-# ==============================================================================
 # EMAIL CONFIGURATION
-# ==============================================================================
-
 # Check for the development flag in your environment variables.
 # os.getenv('USE_INBUCKET', 'False') == 'True' is a safe way to read a boolean
 # from an environment variable.
 
 if env('USE_INBUCKET'):
-    # --- DEVELOPMENT EMAIL SETTINGS (using Inbucket) ---
+    # DEVELOPMENT EMAIL SETTINGS (using Inbucket)
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = env('EMAIL_HOST')
-    EMAIL_PORT = env('INBUCKET_SMTP_PORT') # Reads the SMTP port from .env
+    EMAIL_PORT = env('INBUCKET_SMTP_PORT')
     EMAIL_HOST_USER = ''
     EMAIL_HOST_PASSWORD = ''
     EMAIL_USE_TLS = False
 
 else:
-    # --- PRODUCTION EMAIL SETTINGS ---
+    # PRODUCTION EMAIL SETTINGS
     # In production, you would have different env variables for a real service
     # e.g., SENDGRID_API_KEY = env('SENDGRID_API_KEY')
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Default from email is set for both environments from .env
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 
+# LOGGING CONFIGURATION
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        # Filter that uses the class from Step 1
+        "user_info": {
+            "()": "webapp.logging_middleware.RequestUserInfoFilter",
+        }
+    },
+    # FORMATTERS
+    # Define how your log messages will look.
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+        "json": {
+            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
+        },
+        "webapp_json": {
+            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(user)s %(path)s %(message)s",
+        },
+    },
+    # HANDLERS
+    # Define where your logs will go.
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/django.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5 MB
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
+        "performance_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/performance.jsonl"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "json", 
+        },
+        "webapp_json_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/webapp.jsonl"),
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 5,
+            "formatter": "webapp_json",
+            "filters": ["user_info"],
+        },
+    },
+    # LOGGERS
+    # Define which loggers to use.
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "performance": {
+            # Use both handlers for development: JSON to the file, simple text to console
+            "handlers": ["performance_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "webapp": {
+            "handlers": ["console", "webapp_json_file"],
+            "level": "DEBUG", # Capture all log levels
+            "propagate": False,
+        },
+    },
+}
+
+# MEDIA FILE CONFIGURATION 
+# This is where user-uploaded files (like our generated images) will be stored.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

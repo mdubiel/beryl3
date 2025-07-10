@@ -1,5 +1,6 @@
 {% load static %}
 {% load lucide %}
+{% load django_htmx %}
 {% if debug %}
   {% load django_browser_reload %}
 {% endif %}
@@ -13,7 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Your Product{% endblock %} | Beryl</title>
     <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
-    {# <script defer src="{% static 'js/htmx.min.js' %}"></script> #}
+    {% htmx_script %}
 </head>
 
 <body class="bg-base-100 text-base-content font-sans">
@@ -22,6 +23,7 @@
     <div class="w-11/12 md:w-5/6 lg:w-4/5 mx-auto">
     
         {# Navbar #}
+        <div class="space-y-4 mt-4 mb-8">
         <header class="navbar mt-4">
         
             <div class="flex-1">
@@ -33,13 +35,13 @@
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar shadow-lg">
                         <div class="w-10 rounded-full">
-                            {# A placeholder for avatar #}
+                            {# Placeholder for avatar #}
                             <img alt="User Avatar" src="https://i.pravatar.cc/100?u={{ user.email }}" />
                         </div>
                     </div>
                     <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a href="#">Dashboard</a></li>
-                        <li><a href="#">Your collections</a></li>
+                        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li><a href="{% url 'collection_list' %}">Your collections</a></li>
                         <li></li> 
                         <li><a href="{% url 'account_email' %}">Account settings</a></li>
                         <li></li>
@@ -63,6 +65,27 @@
 
         </header>
 
+        <div class="text-sm breadcrumbs">
+            <ul>
+                {# Breadcrumbs #}
+                <li>
+                    {# This is the home link, always present #}
+                    <a  href="{% url 'dashboard' %}">
+                        {% lucide 'house' size=16 class="mr-2" %}
+                        Home
+                    </a>
+                </li>
+
+                {% block breadcrumbs %}
+                    {# Default breadcrumb for pages that don't define their own #}
+                {% endblock breadcrumbs %}
+            </ul>
+        </div>
+
+        </div> {# End of navbar and breadcrumbs #}
+
+        {# Main content area #}
+
         <main class="py-12">
             {% block content %}
             {% endblock %}
@@ -73,7 +96,7 @@
     <footer class="footer footer-center p-10 bg-base-200 text-base-content rounded-t-box mt-12">
         <aside>
             <p class="font-bold text-lg">
-                Your Product Inc. <br/>Providing reliable service since 2023
+                Beryl3 Inc. <br/>Letting your money to run away since 2025
             </p>
             <p>Copyright © {% now "Y" %} - All right reserved</p>
         </aside>
@@ -81,7 +104,6 @@
             <div class="grid grid-flow-col gap-4">
                 <a class="link link-hover">About us</a>
                 <a class="link link-hover">Contact</a>
-                <a class="link link-hover">Jobs</a>
             </div>
         </nav>
     </footer>

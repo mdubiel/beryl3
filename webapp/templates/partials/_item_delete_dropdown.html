@@ -1,0 +1,25 @@
+{% load i18n %}
+{% load lucide %}
+
+{% if item.can_be_deleted %}
+    <div class="dropdown dropdown-end">
+        <button tabindex="0" class="btn btn-ghost btn-square btn-sm text-error" title="Delete Item">
+            {% lucide 'trash-2' size=18 %}
+        </button>
+        <div tabindex="0" class="dropdown-content card card-compact w-64 p-2 shadow bg-error text-error-content">
+            <div class="card-body text-center">
+                <h3 class="font-bold">Are you sure?</h3>
+                <form action="{% url 'item_delete' item.hash %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline w-full mt-2">Confirm Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="tooltip" data-tip="Cannot delete item in its current state ({{ item.get_status_display }})">
+        <button class="btn btn-ghost btn-square btn-sm btn-disabled text-error/30">
+            {% lucide 'trash-2' size=18 %}
+        </button>
+    </div>
+{% endif %}
