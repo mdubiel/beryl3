@@ -1,0 +1,74 @@
+{% load i18n %}
+{% load lucide %}
+
+<li id="item-row-{{ item.hash }}" class="flex items-start gap-4 p-4 border-b border-base-300">
+
+    {# Left column for the image #}
+    <div class="flex-shrink-0 w-20">
+        <div class="avatar">
+            <div class="w-20 h-20 rounded-box">
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="object-cover"/>
+            </div>
+        </div>
+    </div>
+    
+    {# Middle column for title & description #}
+    <div class="flex-grow">
+      <a href="{{ item.get_absolute_url }}" class="link link-hover font-bold text-lg">{{ item.name }}</a>
+      <p class="text-sm opacity-70 mt-1">
+          {{ item.description|default:"No description." }}
+      </p>
+    </div>
+
+    {#  Right column for actions #}
+
+    <div class="flex flex-col justify-between items-end flex-shrink-0 h-20">
+        {# Top section of the right column (Status Badge) #}
+        <div>
+            <div class="badge
+                {% if item.status == 'IN_COLLECTION' %} badge-success
+                {% elif item.status == 'WANTED' %} badge-info
+                {% elif item.status == 'RESERVED' %} badge-warning
+                {% elif item.status == 'LENT_OUT' %} badge-neutral
+                {% else %} badge-ghost
+                {% endif %}">
+                {{ item.get_status_display }}
+            </div>
+        </div>
+
+        {# Bottom section of the right column (Action Buttons for Owner) #}
+        {% if request.user == item.collection.created_by %}
+        <div class="flex items-center gap-1">
+            <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
+                {% lucide 'pencil' size=18 %}
+            </a>
+            {% include "partials/_item_delete_dropdown.html" with item=item %}
+            <div class="dropdown dropdown-end dropdown-top">
+                <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">
+                    {% lucide 'ellipsis' size=18 %}
+                </button>
+                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                    <li class="menu-title"><span>Change Status</span></li>
+                    {% for status_value, status_label in item.Status.choices %}
+                    <li>
+                      {% if item.status == status_value %}
+                          {# This is the currently active status. We make it disabled and bold. #}
+                          <a class="disabled font-bold">{{ status_label }}</a>
+                      {% else %}
+                          {# These are the other, clickable options with the HTMX attributes. #}
+                          <a  hx-post="{% url 'item_update_status' item.hash %}"
+                              hx-vals='{"new_status": "{{ status_value }}"}'
+                              hx-target="#item-row-{{ item.hash }}"
+                              hx-swap="outerHTML"
+                              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                              {{ status_label }}
+                          </a>
+                      {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</li>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load lucide%}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block title %}Create New Collection{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <a href="{% url 'collection_list' %}">
+            {% lucide 'layout-list' size=16 %}
+            All Collections
+        </a>
+    </li>
+{% if collection %}
+    <li>
+        <a href="{{ collection.get_absolute_url }}">
+            {% lucide 'package' size=16 %}
+            {{ collection.name|truncatechars:20 }}
+        </a>
+    </li>
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'pencil' size=16 %}
+            Edit
+        </span>
+    </li>
+{% else %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'plus' size=16 %}
+            Create New
+        </span>
+    </li>
+{% endif %}
+
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="flex justify-center">
+    <form method="post" class="w-full">
+        {% csrf_token %}
+
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full max-w-2xl mx-auto border p-6">
+            <legend class="fieldset-legend">Create a New Collection</legend>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error my-2"><span>{{ form.non_field_errors.as_text }}</span></div>
+            {% endif %}
+
+            <label class="label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {% render_field form.name class="input input-bordered w-full" placeholder="e.g., Vintage Sci-Fi Novels" %}
+            {% if form.name.help_text %}<p class="text-xs text-base-content/70 mt-1 pl-1">{{ form.name.help_text }}</p>{% endif %}
+            {% if form.name.errors %}<div class="text-error text-sm mt-1">{{ form.name.errors.as_text }}</div>{% endif %}
+
+            <label class="label mt-4" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+            {% render_field form.description class="textarea textarea-bordered w-full h-24" placeholder="A short description of what this collection is about." %}
+            {% if form.description.errors %}<div class="text-error text-sm mt-1">{{ form.description.errors.as_text }}</div>{% endif %}
+
+            <label class="label mt-4" for="{{ form.image_url.id_for_label }}">{{ form.image_url.label }}</label>
+            {% render_field form.image_url class="input input-bordered w-full" placeholder="https://..." %}
+            {% if form.image_url.errors %}<div class="text-error text-sm mt-1">{{ form.image_url.errors.as_text }}</div>{% endif %}
+
+            <div class="flex items-center justify-between mt-6 gap-4">
+                
+                <button type="submit" class="btn btn-primary flex-grow">
+                    {% if collection %}
+                        Save Changes
+                    {% else %}
+                        Create Collection
+                    {% endif %}
+                </button>
+
+            </div>
+
+        </fieldset>
+    </form>
+</div>
+{% endblock %}

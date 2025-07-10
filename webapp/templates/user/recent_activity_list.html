@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}Recent Activity{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'history' size=16 %}
+            Activity Log
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="mb-8 flex items-center justify-between">
+    <h1 class="text-3xl font-bold">Your Activity Log</h1>
+</div>
+
+<div class="bg-base-100 rounded-box shadow-xl">
+    <ul>
+        {% for event in page_obj %}
+            {% include "partials/_recent_activity_item.html" with event=event %}
+        {% empty %}
+            <li class="p-8 text-center">You have no activity yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{# Pagination Controls #}
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center mt-8">
+    <div class="join">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="join-item btn">«</a>
+        {% else %}
+            <button class="join-item btn btn-disabled">«</button>
+        {% endif %}
+        
+        <button class="join-item btn">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</button>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="join-item btn">»</a>
+        {% else %}
+            <button class="join-item btn btn-disabled">»</button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

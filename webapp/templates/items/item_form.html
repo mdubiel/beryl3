@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+{% load widget_tweaks %}
+
+{% block title %}{% if item %}Edit Item{% else %}Add Item to {{ collection.name }}{% endif %}{% endblock %}
+
+{% block breadcrumbs %}
+    <li><a href="{% url 'collection_list' %}">{% lucide 'layout-list' size=16 %} All Collections</a></li>
+    <li><a href="{{ collection.get_absolute_url }}">{% lucide 'package' size=16 %} {{ collection.name|truncatechars:20 }}</a></li>
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% if item %}
+                {% lucide 'pencil' size=16 %} Edit Item
+            {% else %}
+                {% lucide 'plus' size=16 %} Add New Item
+            {% endif %}
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+
+{% block content %}
+<div class="flex justify-center">
+    <form method="post" class="w-full">
+        {% csrf_token %}
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full max-w-2xl mx-auto border p-6">
+            
+            <legend class="fieldset-legend">
+                {% if item %}Edit {{ item.name }}{% else %}Add New Item to "{{ collection.name }}"{% endif %}
+            </legend>
+            
+{% if form.non_field_errors %}<div class="alert alert-error my-2"><span>{{ form.non_field_errors.as_text }}</span></div>{% endif %}
+
+            <div class="form-control w-full mb-4">
+                <label class="label" for="{{ form.name.id_for_label }}"><span class="label-text">{{ form.name.label }}</span></label>
+                {% render_field form.name class="input input-bordered w-full" placeholder="e.g., Action Comics #1" %}
+                {% if form.name.errors %}<div class="text-error text-sm mt-1">{{ form.name.errors.as_text }}</div>{% endif %}
+            </div>
+
+            <div class="form-control w-full mb-4">
+                <label class="label" for="{{ form.status.id_for_label }}"><span class="label-text">{{ form.status.label }}</span></label>
+                {% render_field form.status class="select select-bordered w-full" %}
+                {% if form.status.errors %}<div class="text-error text-sm mt-1">{{ form.status.errors.as_text }}</div>{% endif %}
+            </div>
+
+            <div class="form-control w-full mb-4">
+                <label class="label" for="{{ form.description.id_for_label }}"><span class="label-text">{{ form.description.label }}</span></label>
+                {% render_field form.description class="textarea textarea-bordered w-full h-24" placeholder="e.g., First appearance of Superman. Good condition." %}
+                {% if form.description.errors %}<div class="text-error text-sm mt-1">{{ form.description.errors.as_text }}</div>{% endif %}
+            </div>
+
+            <div class="form-control w-full mb-4">
+                <label class="label" for="{{ form.image_url.id_for_label }}"><span class="label-text">{{ form.image_url.label }}</span></label>
+                {% render_field form.image_url class="input input-bordered w-full" placeholder="https://" %}
+                {% if form.image_url.errors %}<div class="text-error text-sm mt-1">{{ form.image_url.errors.as_text }}</div>{% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                {% if form.instance.pk %}
+                    {% lucide 'save' size=16 class='mr-2' %} Save Changes
+                {% else %}
+                    Add Item to Collection
+                {% endif %}
+            </button>
+        </fieldset>
+    </form>
+</div>
+{% endblock %}

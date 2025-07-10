@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+{# Top navigation actions #}
+<div class="mb-8 flex items-center justify-between">
+    <h1 class="text-3xl font-bold">Your Dashboard</h1>
+    <div class="flex gap-2">
+        <a href="{% url "collection_create" %}" class="btn btn-primary">{% lucide 'plus' size=16 class='mr-2' %} Create New List</a>
+        <a href="{% url "collection_list" %}" class="btn btn-ghost">View All Lists {% lucide 'arrow-right' size=16 class='ml-2' %}</a>
+    </div>
+</div>
+
+
+{# Stats #}
+<div class="stats stats-vertical lg:stats-horizontal shadow w-full mb-12">
+
+    <div class="stat">
+      <div class="stat-figure text-secondary">
+        {% lucide 'layout-list' size=32 %}
+      </div>
+      <div class="stat-title">Collection Lists</div>
+      <div class="stat-value">{{ stats.total_lists }}</div>
+      <div class="stat-desc">{{ stats.total_items }} total items</div>
+    </div>
+    
+    <div class="stat">
+      <div class="stat-figure text-success">
+        {% lucide 'archive' size=32 %}
+      </div>
+      <div class="stat-title">In Collection</div>
+      <div class="stat-value">{{ stats.in_collection_count }}</div>
+      <div class="stat-desc">Items you own</div>
+    </div>
+    
+    <div class="stat">
+      <div class="stat-figure text-info">
+        {% lucide 'star' size=32 %}
+      </div>
+      <div class="stat-title">Wanted</div>
+      <div class="stat-value">{{ stats.wanted_count }}</div>
+      <div class="stat-desc">On your wishlist</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-figure text-warning">
+          {% lucide 'gift' size=32 %}
+        </div>
+        <div class="stat-title">Reserved</div>
+        <div class="stat-value">{{ stats.reserved_count }}</div>
+        <div class="stat-desc">Gifts being purchased</div>
+      </div>
+    
+</div>
+{# End stats #}
+
+
+{# Main content #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+    {# left #}
+    <div class="lg:col-span-2">
+        <h2 class="text-2xl font-bold mb-4">Your Collections</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {# Loop through collection lists passed from the view #}
+            {% for list in collection_lists %}
+            <div class="card bg-base-200 shadow-xl image-full">
+                <figure><img src="{{ list.image_url }}" alt="{{ list.name }}" /></figure>
+                <div class="card-body justify-between">
+                    <div>
+                        <h2 class="card-title">{{ list.name }}</h2>
+                        <p>{{ list.item_count }} items</p>
+                    </div>
+                    <div class="card-actions justify-end">
+                        <a href="{% url 'collection_detail' list.hash %}" class="btn btn-primary btn-sm">View List</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {# A placeholder card to encourage creating more #}
+            <div class="card bg-base-200 shadow-xl">
+                <div class="card-body items-center text-center justify-center">
+                    <h2 class="card-title">Ready for a new collection?</h2>
+                    <p class="text-sm">Start tracking your next passion project.</p>
+                    <div class="card-actions mt-2">
+                        <a href="#" class="btn btn-outline btn-primary">Create List</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {# End left #}
+
+
+{# Right #}
+<div>
+    <h2 class="text-2xl font-bold mb-4">Recent Activity</h2>
+
+    <ul class="timeline timeline-compact timeline-vertical timeline-snap-icon">
+        
+        {% for event in timeline_events %}
+        <li>
+            {% if not forloop.first %}<hr class="bg-base-300"/>{% endif %}
+
+            <div class="timeline-middle">
+                <div class="bg-accent rounded-full p-2">{% lucide event.icon size=14 class="text-accent-content" %}</div>
+            </div>
+
+            <div class="timeline-end timeline-box">
+                <time class="font-mono italic text-xs">{{ event.created|date:"F j, Y" }}</time>
+                <div class="font-bold">{{ event.get_name_display }}</div>
+                   <div class="text-sm">
+                        {{ event.description|safe }}
+                    </div>
+            </div>
+
+            {% if not forloop.last %}<hr class="bg-base-300"/>{% endif %}
+        </li>
+        {% endfor %}
+        
+    </ul>
+    
+    {% if total_event_count > 6 %}
+        <div class="text-center text-xs text-base-content/70 mt-6">
+            <p>Showing only the last {{ timeline_events|length }} events.</p>
+            <p><a href="{% url 'recent_activity_list' %}" class="link link-hover text-info">Click here to see more.</a></p>
+        </div>
+    {% endif %}
+   
+</div>
+{# End right #}
+
+</div>
+{# End Main #}
+
+
+{# Call to action #}
+<div class="hero min-h-[300px] rounded-box overflow-hidden mt-12" style="background-image: url(https://picsum.photos/seed/cta/1200/400);">
+    <div class="hero-overlay bg-opacity-60"></div>
+    <div class="hero-content text-center text-neutral-content">
+      <div class="max-w-md">
+        <h1 class="mb-5 text-5xl font-bold">Share Your Passion</h1>
+        <p class="mb-5">Turn your collection into a shareable wishlist. Let friends and family know exactly what you're looking for and make gift-giving easy.</p>
+        <button class="btn btn-primary">Get Started</button>
+      </div>
+    </div>
+</div>
+{# Call to action #}
+
+
+{% endblock %}
