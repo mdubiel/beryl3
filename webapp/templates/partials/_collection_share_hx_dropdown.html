@@ -1,0 +1,37 @@
+{% load i18n %}
+{% load lucide %}
+
+<div id="collection-share-{{ collection.hash }}" class="dropdown dropdown-end dropdown-top">
+    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">
+        {% lucide 'ellipsis' size=18 %}
+    </button>
+    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+        <li class="menu-title"><span>Change Status</span></li>
+        {% for value, label in visibility_choices %}
+        <li>
+            {% if collection.visibility == value %}
+                <a class="disabled font-bold">{{ label }}</a>
+            {% else %}
+                <a  hx-post="{% url 'collection_update_visibility' collection.hash %}"
+                    hx-vals='{"new_visibility": "{{ value }}"}'
+                    hx-target="#collection-share-{{ collection.hash }}"
+                    hx-swap="outerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                    {{ label }}
+                </a>
+            {% endif %}
+        </li>
+        {% endfor %}
+
+        {% if collection.visibility != 'PRIVATE' %}
+            <div class="divider my-1"></div>
+            <div class="form-control">
+                <div class="join">
+                    <input id="share-link-dropdown-{{ collection.hash }}" type="text" value="{{ collection.get_sharable_url }}" readonly class="input input-bordered input-sm w-full join-item text-xs" />
+                    <button class="btn btn-sm join-item" onclick="copyToClipboard('share-link-dropdown-{{ collection.hash }}', this)">{% lucide 'copy' size=16 %}</button>
+                    <a href="{% url 'public_collection_view' collection.get_sharable_link %}" target="_blank" class="btn btn-sm join-item">{% lucide 'external-link' size=16 %}</a>
+                </div>
+            </div>
+        {% endif %}
+    </ul>
+</div>

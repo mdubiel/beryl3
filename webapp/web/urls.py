@@ -5,7 +5,7 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=line-too-long
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
@@ -29,6 +29,10 @@ urlpatterns = [
     path('collections/<str:hash>/', collection.collection_detail_view, name='collection_detail'),
     path('collections/<str:hash>/edit/', collection.collection_update_view, name='collection_update'),
     path('collections/<str:hash>/delete/', collection.collection_delete_view, name='collection_delete'),
+    
+
+    # Public view for sharable collections
+    path('share/collections/<str:hash>/', public.public_collection_view, name='public_collection_view'),
 
     # Item
     path('collections/<str:collection_hash>/add-item/', items.collection_item_create_view, name='item_create'),

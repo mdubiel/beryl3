@@ -15,6 +15,28 @@
     <title>{% block title %}Your Product{% endblock %} | Beryl</title>
     <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
     {% htmx_script %}
+
+    <script>
+        async function copyToClipboard(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            try {
+                await navigator.clipboard.writeText(input.value);
+                const originalIcon = button.innerHTML;
+                button.innerHTML = `{% lucide 'check' size=16 %}`;
+                button.disabled = true;
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                    button.disabled = false;
+                }, 1500);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);  // Keep the console error for debugging
+                alert("Failed to copy. Please try again or copy manually."); // User feedback
+            }
+        }
+    </script>
+    
 </head>
 
 <body class="bg-base-100 text-base-content font-sans">

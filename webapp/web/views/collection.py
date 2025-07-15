@@ -102,6 +102,7 @@ def collection_detail_view(request, hash):
         'collection': collection,
         'items': items,
         'stats': stats,
+        'visibility_choices': Collection.Visibility.choices,
     }
 
     logger.info("Rendering collection detail for collection '%s' [%s] owned by user '%s' [%s]", collection.name, collection.hash, request.user.username, request.user.id)
@@ -160,3 +161,4 @@ def collection_delete_view(request, hash):
     messages.success(request, "Collection '%s [%s]' was successfully deleted.", collection_name, collection.hash)
 
     return redirect('collection_list')
+

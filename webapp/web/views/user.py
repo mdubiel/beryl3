@@ -38,8 +38,8 @@ def dashboard_view(request):
 
     stats_data['total_lists'] = collections_with_counts.count()
 
-    timeline_events = RecentActivity.objects.filter(subject=user).select_related('created_by').order_by('-created')[:6]
-    total_event_count = RecentActivity.objects.filter(subject=user).count()
+    timeline_events = RecentActivity.objects.filter(subject=request.user).select_related('created_by').order_by('-created')[:6]
+    total_event_count = RecentActivity.objects.filter(subject=request.user).count()
 
     context = {
         "stats": stats_data,
