@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}{{ collection.name }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'package' size=16 %}
+            {{ collection.name }}
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+
+    {# Collection Header #}
+    <div class="flex flex-col md:flex-row items-center gap-8 mb-8">
+        <div class="flex-shrink-0">
+            <img src="{{ collection.image_url }}" alt="{{ collection.name }}" class="w-48 h-48 rounded-box shadow-xl object-cover">
+        </div>
+        <div class="text-center md:text-left">
+            <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
+            <p class="text-lg opacity-80 mt-2">
+                Owned by {{ collection.created_by.username }}
+            </p>
+            {% if collection.description %}
+            <p class="mt-4 max-w-2xl">
+                {{ collection.description|linebreaks }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Item List #}
+    <h2 class="text-3xl font-bold border-b border-base-300 pb-2 mb-4">Items in this collection ({{ items.count }})</h2>
+
+    {% if items %}
+        <ul class="space-y-2">
+            {% for item in items %}
+            <li class="flex items-center gap-4 p-4 border border-base-300 rounded-box bg-base-100">
+                <div class="flex-shrink-0 w-16 h-16">
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-16 h-16 rounded-box object-cover"/>
+                </div>
+                <div class="flex-grow">
+                  <p class="font-bold text-lg">{{ item.name }}</p>
+                  {% if item.description %}
+                  <p class="text-sm opacity-70 mt-1">
+                      {{ item.description|truncatewords:20 }}
+                  </p>
+                  {% endif %}
+                </div>
+                <div class="flex-shrink-0">
+                    <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% elif item.status == 'LENT_OUT' %}badge-neutral{% else %}badge-ghost{% endif %}">
+                        {{ item.get_status_display }}
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="text-center py-12">
+            <p class="text-lg opacity-70">This collection is currently empty.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

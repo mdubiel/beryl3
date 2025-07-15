@@ -29,6 +29,7 @@
     <a href="{% url "item_create" collection.hash %}" class="btn btn-secondary">{% lucide 'plus' size=16 class='mr-2' %} Add New Item</a>
     <a href="{% url "collection_update" collection.hash %}" class="btn btn-outline">{% lucide 'pencil' size=16 class='mr-2' %} Edit Collection</a>
     {% include "partials/_collection_delete_dropdown.html" with collection=collection %}
+    {% include "partials/_collection_share_hx_dropdown.html" with collection=collection %}
 </div>
 {% endif %}
 

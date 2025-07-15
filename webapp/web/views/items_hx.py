@@ -42,3 +42,4 @@ def update_item_status(request, hash):
     # Return the updated list item HTML fragment to HTMX
     logger.info("Returning updated item list item for item: '%s' [%s]", item.name, item.hash)
     return render(request, 'partials/_item_list_item.html', {'item': item})
+
