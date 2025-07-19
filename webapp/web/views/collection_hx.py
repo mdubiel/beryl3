@@ -7,13 +7,14 @@
 
 import logging
 
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from web.models import Collection
+
 from web.decorators import log_execution_time
+from web.models import Collection
 
 logger = logging.getLogger('webapp')
 

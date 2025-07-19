@@ -81,4 +81,19 @@
 </div>
 {# End items list #}
 
+{# Modal for attribute editing #}
+<dialog id="attribute-edit-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Attribute</h3>
+        <div id="attribute-edit-modal-content">
+            <!-- Content will be loaded here via HTMX -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
 {% endblock %}

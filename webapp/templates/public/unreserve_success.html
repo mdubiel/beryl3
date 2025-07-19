@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}Reservation Cancelled{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'check' size=16 %}
+            Reservation Cancelled
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        
+        {# Success Message #}
+        <div class="alert alert-success shadow-lg mb-8">
+            <div>
+                {% lucide 'check' size=24 %}
+                <div>
+                    <h3 class="font-bold">Reservation Successfully Cancelled!</h3>
+                    <div class="text-sm">Your reservation has been removed and the item is now available again.</div>
+                </div>
+            </div>
+        </div>
+
+        {# Item Details #}
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">
+                    {% lucide 'package' size=24 class='mr-2' %}
+                    Item Details
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold text-lg">{{ item.name }}</h3>
+                        {% if item.description %}
+                            <p class="text-sm opacity-70 mt-2">{{ item.description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-right">
+                        {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-24 h-24 object-cover rounded-lg ml-auto">
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p><strong>Collection:</strong> {{ collection.name }}</p>
+                        <p><strong>Owner:</strong> {{ collection.created_by.username }}</p>
+                    </div>
+                    <div>
+                        <p><strong>Your Email:</strong> {{ guest_email }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge badge-success">Available for Reservation</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Action Buttons #}
+        <div class="flex flex-col sm:flex-row gap-4 mt-8 justify-center">
+            <a href="{% url 'public_collection_view' collection.hash %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Back to Collection
+            </a>
+            <a href="{% url 'index' %}" class="btn btn-outline">
+                {% lucide 'house' size=16 class='mr-2' %}
+                Go Home
+            </a>
+        </div>
+
+        {# Additional Info #}
+        <div class="mt-8 p-4 bg-base-200 rounded-lg">
+            <p class="text-sm text-center opacity-70">
+                <strong>What happens next?</strong><br>
+                The item "{{ item.name }}" is now available for other people to reserve. 
+                If you change your mind, you can visit the collection again and reserve it.
+            </p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

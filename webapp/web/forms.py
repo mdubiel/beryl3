@@ -6,6 +6,7 @@
 # pylint: disable=line-too-long
 
 from django import forms
+
 from .models import Collection, CollectionItem
 
 class CollectionForm(forms.ModelForm):

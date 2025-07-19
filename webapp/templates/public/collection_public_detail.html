@@ -17,52 +17,95 @@
 <div class="container mx-auto px-4 py-8">
 
     {# Collection Header #}
-    <div class="flex flex-col md:flex-row items-center gap-8 mb-8">
-        <div class="flex-shrink-0">
-            <img src="{{ collection.image_url }}" alt="{{ collection.name }}" class="w-48 h-48 rounded-box shadow-xl object-cover">
-        </div>
-        <div class="text-center md:text-left">
-            <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
-            <p class="text-lg opacity-80 mt-2">
-                Owned by {{ collection.created_by.username }}
-            </p>
-            {% if collection.description %}
-            <p class="mt-4 max-w-2xl">
-                {{ collection.description|linebreaks }}
-            </p>
-            {% endif %}
+    <div class="hero bg-gradient-to-r from-base-200 to-base-100 rounded-box shadow-lg mb-8">
+        <div class="hero-content flex-col lg:flex-row gap-8 py-8">
+            <div class="flex-shrink-0">
+                <img src="{{ collection.image_url }}" alt="{{ collection.name }}" class="w-48 h-48 rounded-box shadow-xl object-cover">
+            </div>
+            <div class="text-center lg:text-left">
+                <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
+                <div class="flex items-center justify-center lg:justify-start gap-2 mt-2">
+                    {% lucide 'user' size=16 class='opacity-70' %}
+                    <p class="text-lg opacity-80">
+                        Owned by {{ collection.created_by.username }}
+                    </p>
+                </div>
+                {% if collection.description %}
+                <p class="mt-4 max-w-2xl opacity-90">
+                    {{ collection.description|linebreaks }}
+                </p>
+                {% endif %}
+                
+                {# Collection stats #}
+                <div class="flex flex-wrap gap-2 mt-4 justify-center lg:justify-start">
+                    <div class="badge badge-lg badge-primary">
+                        {% lucide 'package' size=14 class='mr-1' %}
+                        {{ items.count }} items
+                    </div>
+                    <div class="badge badge-lg badge-secondary">
+                        {% lucide 'eye' size=14 class='mr-1' %}
+                        {{ collection.get_visibility_display }}
+                    </div>
+                    {% if collection.created %}
+                    <div class="badge badge-lg badge-ghost">
+                        {% lucide 'calendar' size=14 class='mr-1' %}
+                        Created {{ collection.created|date:"M Y" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 
     {# Item List #}
-    <h2 class="text-3xl font-bold border-b border-base-300 pb-2 mb-4">Items in this collection ({{ items.count }})</h2>
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+        <h2 class="text-3xl font-bold">Items in this collection</h2>
+        <div class="badge badge-lg badge-neutral">
+            {{ items.count }} total items
+        </div>
+    </div>
 
     {% if items %}
-        <ul class="space-y-2">
-            {% for item in items %}
-            <li class="flex items-center gap-4 p-4 border border-base-300 rounded-box bg-base-100">
-                <div class="flex-shrink-0 w-16 h-16">
-                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-16 h-16 rounded-box object-cover"/>
-                </div>
-                <div class="flex-grow">
-                  <p class="font-bold text-lg">{{ item.name }}</p>
-                  {% if item.description %}
-                  <p class="text-sm opacity-70 mt-1">
-                      {{ item.description|truncatewords:20 }}
-                  </p>
-                  {% endif %}
-                </div>
-                <div class="flex-shrink-0">
-                    <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% elif item.status == 'LENT_OUT' %}badge-neutral{% else %}badge-ghost{% endif %}">
-                        {{ item.get_status_display }}
+        {# Item type distribution #}
+        {% regroup items by item_type as items_by_type %}
+        {% if items_by_type|length > 1 %}
+        <div class="bg-base-200 rounded-box p-4 mb-6">
+            <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                {% lucide 'tags' size=18 %}
+                Item Types
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                {% for item_type_group in items_by_type %}
+                    <div class="badge badge-outline badge-lg">
+                        {% if item_type_group.grouper %}
+                            {% lucide item_type_group.grouper.icon size=14 class='mr-1' %}
+                            {{ item_type_group.grouper.display_name }}
+                        {% else %}
+                            {% lucide 'package' size=14 class='mr-1' %}
+                            Generic
+                        {% endif %}
+                        <span class="ml-1 text-xs opacity-70">({{ item_type_group.list|length }})</span>
                     </div>
-                </div>
-            </li>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# Items grid #}
+        <div class="space-y-4">
+            {% for item in items %}
+                <li id="item-{{ item.hash }}-container" class="list-none">
+                    {% include 'partials/_item_public_card.html' with item=item %}
+                </li>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
         <div class="text-center py-12">
-            <p class="text-lg opacity-70">This collection is currently empty.</p>
+            <div class="max-w-md mx-auto">
+                {% lucide 'package-x' size=48 class='mx-auto text-base-content/40 mb-4' %}
+                <p class="text-lg opacity-70">This collection is currently empty.</p>
+                <p class="text-sm opacity-60 mt-2">Check back later for new items!</p>
+            </div>
         </div>
     {% endif %}
 

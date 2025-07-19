@@ -7,15 +7,16 @@
 
 import logging
 
-from django.shortcuts import redirect, render, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.decorators.http import require_POST
-from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from web.models import Collection, CollectionItem
+from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse
+from django.views.decorators.http import require_POST
+
 from web.decorators import log_execution_time
 from web.forms import CollectionForm
+from web.models import Collection, CollectionItem, ItemType
 
 logger = logging.getLogger('webapp')
 
@@ -103,6 +104,7 @@ def collection_detail_view(request, hash):
         'items': items,
         'stats': stats,
         'visibility_choices': Collection.Visibility.choices,
+        'item_types': ItemType.objects.all(),
     }
 
     logger.info("Rendering collection detail for collection '%s' [%s] owned by user '%s' [%s]", collection.name, collection.hash, request.user.username, request.user.id)
