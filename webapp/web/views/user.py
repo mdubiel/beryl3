@@ -6,12 +6,14 @@
 # pylint: disable=line-too-long
 
 import logging
-from django.shortcuts import render
+
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
 from django.core.paginator import Paginator
-from web.models import Collection, CollectionItem, RecentActivity
+from django.db.models import Count, Q
+from django.shortcuts import render
+
 from web.decorators import log_execution_time
+from web.models import Collection, CollectionItem, RecentActivity
 
 logger = logging.getLogger('webapp')
 

@@ -5,10 +5,11 @@
 # pylint: disable=missing-module-docstring
 # pylint: disable=line-too-long
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
+
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public
 
 
 urlpatterns = [
@@ -46,8 +47,17 @@ urlpatterns = [
     # HX actions
     path('collections/<str:hash>/update-visibility/', collection_hx.update_collection_visibility, name='collection_update_visibility'),
     path('items/<str:hash>/update-status/', items_hx.update_item_status, name='item_update_status'),
-]
+    path('items/<str:hash>/toggle-favorite/', items_hx.toggle_item_favorite, name='item_toggle_favorite'),
+    path('items/<str:hash>/change-type/', items_hx.change_item_type, name='item_change_type'),
+    path('items/<str:hash>/add-attribute/', items_hx.item_add_attribute, name='item_add_attribute'),
+    path('items/<str:hash>/edit-attribute/<str:attribute_name>/', items_hx.item_edit_attribute, name='item_edit_attribute'),
+    path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
+    path('items/<str:hash>/remove-attribute/<str:attribute_name>/', items_hx.item_remove_attribute, name='item_remove_attribute'),
 
+    path('item/<str:hash>/book/authenticated/', public.book_item_authenticated, name='book_item_authenticated'),
+    path('item/<str:hash>/book/guest/', public.book_item_guest, name='book_item_guest'),
+    path('item/<str:hash>/book/release/<str:token>/', public.unreserve_guest_item, name='unreserve_guest_item'),
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,105 @@
+{% load lucide %}
+
+<div class="card card-side bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+    <figure class="w-32 h-32 flex-shrink-0">
+        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+    </figure>
+    <div class="card-body flex-row items-start justify-between p-6">
+        <div class="flex-grow">
+            <div class="flex items-center gap-2 mb-2">
+                <h3 class="card-title text-xl">{{ item.name }}</h3>
+                {# Item type icon and label #}
+                {% if item.item_type %}
+                    <div class="badge badge-secondary badge-sm">
+                        {% lucide item.item_type.icon size=12 class='mr-1' %}
+                        {{ item.item_type.display_name }}
+                    </div>
+                {% endif %}
+                {# Favorite star #}
+                {% if item.is_favorite %}
+                    <div class="tooltip" data-tip="Owner's favorite">
+                        {% lucide 'star' size=16 class='text-warning fill-current' %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            {# Description #}
+            {% if item.description %}
+                <p class="text-sm opacity-70 mb-3">{{ item.description }}</p>
+            {% endif %}
+            
+            {# Status badge #}
+            <div class="mb-3">
+                <div class="badge {% if item.is_bookable %}badge-success{% else %}badge-warning{% endif %} badge-sm">
+                    {{ item.get_status_display }}
+                </div>
+            </div>
+            
+            {# Attributes display #}
+            {% if item.item_type %}
+                <div class="attributes-section">
+                    {% for attr_data in item.get_display_attributes %}
+                        <div class="badge badge-outline badge-sm mr-2 mb-1">
+                            <span class="text-xs">
+                                <strong>{{ attr_data.attribute.display_name }}:</strong> 
+                                {% if attr_data.attribute.attribute_type == 'URL' %}
+                                    <a href="{{ attr_data.value }}" target="_blank" class="link link-hover">
+                                        {{ attr_data.value|truncatechars:30 }}
+                                    </a>
+                                {% elif attr_data.attribute.attribute_type == 'BOOLEAN' %}
+                                    {% if attr_data.value %}Yes{% else %}No{% endif %}
+                                {% elif attr_data.attribute.attribute_type == 'DATE' %}
+                                    {{ attr_data.display_value }}
+                                {% else %}
+                                    {{ attr_data.value }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        {# Action buttons #}
+        <div class="card-actions justify-end flex-shrink-0">
+            {% if item.is_bookable %}
+                {% if request.user.is_authenticated %}
+                    {# Authenticated user: Simple POST to book #}
+                    <button class="btn btn-sm btn-primary"
+                            hx-post="{% url 'book_item_authenticated' item.hash %}"
+                            hx-target="#item-{{ item.hash }}-container"
+                            hx-swap="innerHTML"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                        {% lucide 'bookmark' size=14 class='mr-1' %}
+                        Reserve
+                    </button>
+                {% else %}
+                    {# Unauthenticated user: Dropdown with an inline form #}
+                    <div class="dropdown dropdown-end">
+                        <button tabindex="0" class="btn btn-sm btn-primary">
+                            {% lucide 'bookmark' size=14 class='mr-1' %}
+                            Reserve
+                        </button>
+                        <div tabindex="0" class="dropdown-content z-10 card card-compact w-64 p-2 shadow bg-base-200 text-base-content">
+                            <form hx-post="{% url 'book_item_guest' item.hash %}"
+                                  hx-target="#item-{{ item.hash }}-container"
+                                  hx-swap="innerHTML"
+                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'  
+                                  class="card-body p-2">
+                                <p class="text-sm font-semibold mb-1">Reserve as guest:</p>
+                                <div class="form-control">
+                                    <input type="email" name="email" placeholder="your.email@example.com" class="input input-bordered input-sm" required>
+                                </div>
+                                <p class="text-xs opacity-70 mt-1">We'll send you a confirmation email with a cancellation link.</p>
+                                <button type="submit" class="btn btn-success btn-sm mt-2">
+                                    {% lucide 'check' size=14 class='mr-1' %}
+                                    Confirm
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>

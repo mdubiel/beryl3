@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load lucide %}
+
+{% block title %}Unable to Cancel Reservation{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'x' size=16 %}
+            Error
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        
+        {# Error Message #}
+        <div class="alert alert-error shadow-lg mb-8">
+            <div>
+                {% lucide 'x' size=24 %}
+                <div>
+                    <h3 class="font-bold">Unable to Cancel Reservation</h3>
+                    <div class="text-sm">{{ error }}</div>
+                </div>
+            </div>
+        </div>
+
+        {# Item Details (if available) #}
+        {% if item %}
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-2xl mb-4">
+                    {% lucide 'package' size=24 class='mr-2' %}
+                    Item Details
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold text-lg">{{ item.name }}</h3>
+                        {% if item.description %}
+                            <p class="text-sm opacity-70 mt-2">{{ item.description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-right">
+                        {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-24 h-24 object-cover rounded-lg ml-auto">
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p><strong>Collection:</strong> {{ item.collection.name }}</p>
+                        <p><strong>Owner:</strong> {{ item.collection.created_by.username }}</p>
+                    </div>
+                    <div>
+                        <p><strong>Current Status:</strong> 
+                            <span class="badge {% if item.status == 'RESERVED' %}badge-warning{% else %}badge-info{% endif %}">
+                                {{ item.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Possible Solutions #}
+        <div class="card bg-base-200 shadow-lg mt-8">
+            <div class="card-body">
+                <h3 class="card-title text-lg">
+                    {% lucide 'info' size=20 class='mr-2' %}
+                    What can you do?
+                </h3>
+                
+                <ul class="list-disc list-inside space-y-2 mt-4">
+                    <li>Check if the cancellation link is still valid (links may expire)</li>
+                    <li>Ensure you're using the same email address you used for the reservation</li>
+                    <li>Contact the collection owner directly if you need assistance</li>
+                    {% if item %}
+                    <li>Visit the collection page to see the current status</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        {# Action Buttons #}
+        <div class="flex flex-col sm:flex-row gap-4 mt-8 justify-center">
+            {% if item %}
+            <a href="{% url 'public_collection_view' item.collection.hash %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Back to Collection
+            </a>
+            {% endif %}
+            <a href="{% url 'index' %}" class="btn btn-outline">
+                {% lucide 'house' size=16 class='mr-2' %}
+                Go Home
+            </a>
+        </div>
+
+        {# Contact Info #}
+        {% if item %}
+        <div class="mt-8 p-4 bg-base-200 rounded-lg">
+            <p class="text-sm text-center opacity-70">
+                <strong>Need help?</strong><br>
+                If you continue having issues, you can contact the collection owner 
+                <strong>{{ item.collection.created_by.username }}</strong> directly for assistance.
+            </p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

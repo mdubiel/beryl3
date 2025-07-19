@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f4f4f4;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .item-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎉 Reservation Confirmed!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hi there!</p>
+        
+        <p>Your reservation has been successfully confirmed for the following item:</p>
+        
+        <div class="item-details">
+            <h3>{{ item.name }}</h3>
+            <p><strong>Collection:</strong> {{ collection.name }}</p>
+            <p><strong>Collection Owner:</strong> {{ collection.created_by.username }}</p>
+            <p><strong>Your Email:</strong> {{ guest_email }}</p>
+        </div>
+        
+        <p>If you need to cancel your reservation, you can do so by clicking the button below:</p>
+        
+        <p style="text-align: center;">
+            <a href="{{ unreserve_url }}" class="button">Cancel My Reservation</a>
+        </p>
+        
+        <p><strong>Important:</strong> This cancellation link is unique to your reservation and should not be shared with others.</p>
+        
+        <p>Thank you for using our collection sharing service!</p>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated email. Please do not reply to this message.</p>
+    </div>
+</body>
+</html>

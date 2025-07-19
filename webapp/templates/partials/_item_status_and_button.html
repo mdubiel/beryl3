@@ -1,0 +1,47 @@
+{% comment %} The root is now the styled card, which is swapped by HTMX {% endcomment %}
+<div class="card card-side bg-base-100 shadow-md">
+    <figure class="w-24 h-24 flex-shrink-0">
+        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+    </figure>
+    <div class="card-body flex-row items-center justify-between p-4">
+        <div>
+            <h3 class="card-title text-lg">{{ item.name }}</h3>
+            <div class="badge {% if item.is_bookable %}badge-success{% else %}badge-warning{% endif %} badge-sm">
+                {{ item.get_status_display }}
+            </div>
+        </div>
+        <div class="card-actions justify-end">
+            {% if item.is_bookable %}
+                {% if request.user.is_authenticated %}
+                    {# Authenticated user: Simple POST to book #}
+                    <button class="btn btn-sm btn-primary"
+                            hx-post="{% url 'book_item_authenticated' item.hash %}"
+                            hx-target="#item-{{ item.hash }}-container"
+                            hx-swap="innerHTML"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                        Reserve
+                    </button>
+                {% else %}
+                    {# Unauthenticated user: Dropdown with an inline form #}
+                    <div class="dropdown dropdown-end">
+                        <button tabindex="0" class="btn btn-sm btn-primary">Reserve</button>
+                        <div tabindex="0" class="dropdown-content z-10 card card-compact w-64 p-2 shadow bg-base-200 text-base-content">
+                            <form hx-post="{% url 'book_item_guest' item.hash %}"
+                                  hx-target="#item-{{ item.hash }}-container"
+                                  hx-swap="innerHTML"
+                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'  
+                                  class="card-body p-2">
+                                <p class="text-sm font-semibold mb-1">Reserve as guest:</p>
+                                <div class="form-control">
+                                    <input type="email" name="email" placeholder="your.email@example.com" class="input input-bordered input-sm" required>
+                                </div>
+                                <p class="text-xs opacity-70 mt-1">We'll send you a confirmation email.</p>
+                                <button type="submit" class="btn btn-success btn-sm mt-2">Confirm</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>

@@ -7,13 +7,14 @@
 
 import logging
 
-from django.shortcuts import redirect, render, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.decorators.http import require_POST
-from web.models import Collection, CollectionItem
+
 from web.decorators import log_execution_time
 from web.forms import CollectionItemForm
+from web.models import Collection, CollectionItem
 
 logger = logging.getLogger('webapp')
 

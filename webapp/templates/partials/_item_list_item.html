@@ -18,6 +18,11 @@
       <p class="text-sm opacity-70 mt-1">
           {{ item.description|default:"No description." }}
       </p>
+      
+      {# Attributes display #}
+      {% if item.item_type %}
+          {% include "partials/_item_attributes.html" with item=item %}
+      {% endif %}
     </div>
 
     {#  Right column for actions #}
@@ -39,6 +44,53 @@
         {# Bottom section of the right column (Action Buttons for Owner) #}
         {% if request.user == item.collection.created_by %}
         <div class="flex items-center gap-1">
+            {# Favorite Star Button #}
+            <button class="btn btn-ghost btn-square btn-sm" 
+                    title="{% if item.is_favorite %}Remove from favorites{% else %}Add to favorites{% endif %}"
+                    hx-post="{% url 'item_toggle_favorite' item.hash %}"
+                    hx-target="#item-row-{{ item.hash }}"
+                    hx-swap="outerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                {% if item.is_favorite %}
+                    {% lucide 'star' size=18 class='text-warning fill-current' %}
+                {% else %}
+                    {% lucide 'star' size=18 class='text-base-content/40' %}
+                {% endif %}
+            </button>
+            
+            {# Item Type Selector #}
+            <div class="dropdown dropdown-end dropdown-top">
+                <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Item Type">
+                    {% if item.item_type %}
+                        {% lucide item.item_type.icon size=18 %}
+                    {% else %}
+                        {% lucide 'package' size=18 %}
+                    {% endif %}
+                </button>
+                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                    <li class="menu-title"><span>Item Type</span></li>
+                    {% for item_type in item_types %}
+                    <li>
+                        {% if item.item_type == item_type %}
+                            <a class="disabled font-bold">
+                                {% lucide item_type.icon size=16 %}
+                                {{ item_type.display_name }}
+                            </a>
+                        {% else %}
+                            <a hx-post="{% url 'item_change_type' item.hash %}"
+                               hx-vals='{"item_type_id": "{{ item_type.id }}"}'
+                               hx-target="#item-row-{{ item.hash }}"
+                               hx-swap="outerHTML"
+                               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                {% lucide item_type.icon size=16 %}
+                                {{ item_type.display_name }}
+                            </a>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
             <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
                 {% lucide 'pencil' size=18 %}
             </a>

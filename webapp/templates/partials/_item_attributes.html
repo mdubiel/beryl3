@@ -1,0 +1,43 @@
+{% load lucide %}
+
+<div class="mt-2" id="item-attributes-{{ item.hash }}">
+    {% for attr_data in item.get_display_attributes %}
+    <div class="badge badge-outline badge-sm mr-1 mb-1 inline-flex items-center gap-1">
+        <span class="text-xs">{{ attr_data.attribute.display_name }}: {{ attr_data.value }}</span>
+        {% if request.user == item.collection.created_by %}
+        <div class="flex items-center gap-1 ml-1">
+            <button class="btn btn-ghost btn-xs p-0 w-4 h-4" 
+                    title="Edit {{ attr_data.attribute.display_name }}"
+                    hx-get="{% url 'item_edit_attribute' item.hash attr_data.attribute.name %}"
+                    hx-target="#attribute-edit-modal-content"
+                    hx-trigger="click"
+                    onclick="document.getElementById('attribute-edit-modal').showModal()">
+                {% lucide 'pencil' size=12 %}
+            </button>
+            <button class="btn btn-ghost btn-xs p-0 w-4 h-4 text-error" 
+                    title="Remove {{ attr_data.attribute.display_name }}"
+                    hx-delete="{% url 'item_remove_attribute' item.hash attr_data.attribute.name %}"
+                    hx-target="#item-attributes-{{ item.hash }}"
+                    hx-swap="outerHTML"
+                    hx-confirm="Remove {{ attr_data.attribute.display_name }}?"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                {% lucide 'x' size=12 %}
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    {# Add new attribute button #}
+    {% if request.user == item.collection.created_by %}
+    <button class="badge badge-primary badge-sm hover:badge-primary-focus cursor-pointer"
+            title="Add new attribute"
+            hx-get="{% url 'item_add_attribute' item.hash %}"
+            hx-target="#attribute-edit-modal-content"
+            hx-trigger="click"
+            onclick="document.getElementById('attribute-edit-modal').showModal()">
+        {% lucide 'plus' size=12 class='mr-1' %}
+        Add Attribute
+    </button>
+    {% endif %}
+</div>
