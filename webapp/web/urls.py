@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys
 
 
 urlpatterns = [
@@ -54,9 +54,46 @@ urlpatterns = [
     path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
     path('items/<str:hash>/remove-attribute/<str:attribute_name>/', items_hx.item_remove_attribute, name='item_remove_attribute'),
 
+    # Item move/copy operations
+    path('items/<str:item_hash>/move/', items.move_item_to_collection, name='move_item'),
+    path('items/<str:item_hash>/copy/', items.copy_item_to_collection, name='copy_item'),
+    path('items/<str:item_hash>/collections/', items.get_user_collections_for_move_copy, name='get_collections_for_move_copy'),
+
     path('item/<str:hash>/book/authenticated/', public.book_item_authenticated, name='book_item_authenticated'),
     path('item/<str:hash>/book/guest/', public.book_item_guest, name='book_item_guest'),
     path('item/<str:hash>/book/release/<str:token>/', public.unreserve_guest_item, name='unreserve_guest_item'),
+
+    # System administration
+    path('sys/', sys.sys_dashboard, name='sys_dashboard'),
+    path('sys/users/', sys.sys_users, name='sys_users'),
+    path('sys/users/<int:user_id>/profile/', sys.sys_user_profile, name='sys_user_profile'),
+    path('sys/activity/', sys.sys_activity, name='sys_activity'),
+    path('sys/metrics/', sys.sys_metrics, name='sys_metrics'),
+    path('sys/metrics/prometheus/', sys.sys_prometheus_metrics, name='sys_prometheus_metrics'),
+    path('sys/backup/', sys.sys_backup, name='sys_backup'),
+    
+    # System HTMX endpoints
+    path('sys/users/<int:user_id>/toggle-active/', sys.sys_user_toggle_active, name='sys_user_toggle_active'),
+    path('sys/users/<int:user_id>/reset-password/', sys.sys_user_reset_password, name='sys_user_reset_password'),
+    path('sys/users/<int:user_id>/unlock-account/', sys.sys_user_unlock_account, name='sys_user_unlock_account'),
+    path('sys/users/<int:user_id>/verify-email/', sys.sys_user_force_email_verification, name='sys_user_verify_email'),
+    path('sys/activity/cleanup/', sys.sys_activity_cleanup, name='sys_activity_cleanup'),
+    
+    # Item type management
+    path('sys/item-types/', sys.sys_item_types, name='sys_item_types'),
+    path('sys/item-types/<int:item_type_id>/', sys.sys_item_type_detail, name='sys_item_type_detail'),
+    path('sys/item-types/create/', sys.sys_item_type_create, name='sys_item_type_create'),
+    path('sys/item-types/<int:item_type_id>/update/', sys.sys_item_type_update, name='sys_item_type_update'),
+    path('sys/item-types/<int:item_type_id>/delete/', sys.sys_item_type_delete, name='sys_item_type_delete'),
+    
+    # Item attribute management
+    path('sys/item-types/<int:item_type_id>/attributes/create/', sys.sys_item_attribute_create, name='sys_item_attribute_create'),
+    path('sys/attributes/<int:attribute_id>/update/', sys.sys_item_attribute_update, name='sys_item_attribute_update'),
+    path('sys/attributes/<int:attribute_id>/delete/', sys.sys_item_attribute_delete, name='sys_item_attribute_delete'),
+    
+    # HTMX endpoints
+    path('sys/validate-lucide-icon/', sys.sys_validate_lucide_icon, name='sys_validate_lucide_icon'),
+    path('sys/lucide-icon-search/', sys.sys_lucide_icon_search, name='sys_lucide_icon_search'),
 ]
 
 if settings.DEBUG:

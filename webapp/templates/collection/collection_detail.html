@@ -96,4 +96,226 @@
     </div>
 </dialog>
 
+{# Modal for move/copy operations #}
+<dialog id="move-copy-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" id="move-copy-modal-title">Move Item</h3>
+        <div class="py-4">
+            <p class="mb-4">Select the destination collection for <span id="move-copy-item-name" class="font-semibold"></span>:</p>
+            
+            <div id="collections-loading" class="flex justify-center py-4">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+            
+            <div id="collections-list" class="space-y-2 max-h-64 overflow-y-auto" style="display: none;">
+                <!-- Collections will be loaded here -->
+            </div>
+            
+            <div id="move-copy-error" class="alert alert-error mt-4" style="display: none;">
+                <span>Error loading collections. Please try again.</span>
+            </div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Cancel</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+{# Confirmation modal for successful operations #}
+<dialog id="confirmation-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-success">✅ Success!</h3>
+        <div class="py-4">
+            <p id="confirmation-message" class="mb-6">Operation completed successfully.</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a id="go-to-collection-link" href="#" class="btn btn-primary flex-1">
+                    {% lucide 'folder' size=16 class='mr-2' %}
+                    Go to Collection
+                </a>
+                <a id="view-item-link" href="#" class="btn btn-outline flex-1">
+                    {% lucide 'eye' size=16 class='mr-2' %}
+                    View Item Details
+                </a>
+            </div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-sm btn-ghost">Close</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+{# Result notification area #}
+<div id="move-copy-result" class="fixed top-4 right-4 z-50" style="display: none;">
+    <!-- Success/error messages will appear here -->
+</div>
+
+<script>
+let currentItemHash = null;
+let currentOperation = null;
+
+function showMoveModal(itemHash, itemName) {
+    currentItemHash = itemHash;
+    currentOperation = 'move';
+    document.getElementById('move-copy-modal-title').textContent = 'Move Item';
+    document.getElementById('move-copy-item-name').textContent = itemName;
+    loadCollectionsForMoveOrCopy(itemHash);
+    document.getElementById('move-copy-modal').showModal();
+}
+
+function showCopyModal(itemHash, itemName) {
+    currentItemHash = itemHash;
+    currentOperation = 'copy';
+    document.getElementById('move-copy-modal-title').textContent = 'Copy Item';
+    document.getElementById('move-copy-item-name').textContent = itemName;
+    loadCollectionsForMoveOrCopy(itemHash);
+    document.getElementById('move-copy-modal').showModal();
+}
+
+function loadCollectionsForMoveOrCopy(itemHash) {
+    // Reset UI
+    document.getElementById('collections-loading').style.display = 'block';
+    document.getElementById('collections-list').style.display = 'none';
+    document.getElementById('move-copy-error').style.display = 'none';
+    
+    fetch(`/items/${itemHash}/collections/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('collections-loading').style.display = 'none';
+            
+            if (data.collections && data.collections.length > 0) {
+                displayCollections(data.collections);
+                document.getElementById('collections-list').style.display = 'block';
+            } else {
+                document.getElementById('move-copy-error').innerHTML = 
+                    '<span>No other collections available. Create another collection first.</span>';
+                document.getElementById('move-copy-error').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading collections:', error);
+            document.getElementById('collections-loading').style.display = 'none';
+            document.getElementById('move-copy-error').style.display = 'block';
+        });
+}
+
+function displayCollections(collections) {
+    const listElement = document.getElementById('collections-list');
+    listElement.innerHTML = '';
+    
+    collections.forEach(collection => {
+        const collectionDiv = document.createElement('div');
+        collectionDiv.className = 'card bg-base-200 p-4 cursor-pointer hover:bg-base-300 transition-colors';
+        collectionDiv.onclick = () => performMoveOrCopy(collection.id, collection.name);
+        
+        collectionDiv.innerHTML = `
+            <div class="flex justify-between items-center">
+                <div>
+                    <h4 class="font-semibold">${collection.name}</h4>
+                    <p class="text-sm opacity-70">${collection.item_count} items</p>
+                </div>
+                <div class="text-right">
+                    <button class="btn btn-primary btn-sm">
+                        ${currentOperation === 'move' ? 'Move Here' : 'Copy Here'}
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        listElement.appendChild(collectionDiv);
+    });
+}
+
+function performMoveOrCopy(targetCollectionId, targetCollectionName) {
+    const url = `/items/${currentItemHash}/${currentOperation}/`;
+    const formData = new FormData();
+    formData.append('target_collection_id', targetCollectionId);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('move-copy-modal').close();
+        
+        if (data.success) {
+            // Show confirmation modal with navigation options
+            showConfirmationModal(data, targetCollectionName);
+            
+            if (currentOperation === 'move') {
+                // Remove the item from current view since it was moved
+                const itemRow = document.getElementById(`item-row-${currentItemHash}`);
+                if (itemRow) {
+                    itemRow.remove();
+                }
+            }
+            // For copy, item stays in current collection
+            
+        } else {
+            showNotification('error', data.error || 'Operation failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('move-copy-modal').close();
+        showNotification('error', 'An error occurred. Please try again.');
+    });
+}
+
+function showConfirmationModal(data, targetCollectionName) {
+    const modal = document.getElementById('confirmation-modal');
+    const message = document.getElementById('confirmation-message');
+    const collectionLink = document.getElementById('go-to-collection-link');
+    const itemLink = document.getElementById('view-item-link');
+    
+    // Set the confirmation message
+    const operationText = currentOperation === 'move' ? 'moved to' : 'copied to';
+    message.textContent = `Item successfully ${operationText} "${targetCollectionName}".`;
+    
+    // Set the collection link
+    collectionLink.href = data.new_collection_url;
+    
+    // Set the item link - for moves, use the same item hash in new collection
+    // For copies, use the new copied item hash
+    if (currentOperation === 'copy' && data.copied_item_hash) {
+        itemLink.href = `/items/${data.copied_item_hash}/`;
+    } else {
+        itemLink.href = `/items/${currentItemHash}/`;
+    }
+    
+    // Show the modal
+    modal.showModal();
+}
+
+function showNotification(type, message) {
+    const resultDiv = document.getElementById('move-copy-result');
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+    const icon = type === 'success' ? '✅' : '❌';
+    
+    resultDiv.innerHTML = `
+        <div class="alert ${alertClass} shadow-lg">
+            <span>${icon} ${message}</span>
+        </div>
+    `;
+    
+    resultDiv.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        resultDiv.style.display = 'none';
+    }, 5000);
+}
+</script>
+
 {% endblock %}

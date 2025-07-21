@@ -1,0 +1,319 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}System Metrics - Beryl Admin{% endblock %}
+
+{% block page_title %}System Metrics{% endblock %}
+{% block page_description %}Analytics and performance metrics for the application{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'sys_prometheus_metrics' %}" class="btn btn-square btn-sm btn-primary" title="Prometheus Metrics Endpoint" target="_blank">
+    {% lucide 'activity' size=16 %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- User Metrics -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="text-lg font-bold terminal-accent mb-4">
+                <span class="terminal-text">></span> USER METRICS
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'users' size=18 class='text-primary' %}
+                        <div class="stat-title">Total Users</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ user_metrics.total }}</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'activity' size=18 class='text-primary' %}
+                        <div class="stat-title">Active (30d)</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ user_metrics.active_30d }}</div>
+                    <div class="stat-desc">{{ user_metrics.active_7d }} in 7d</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'user-plus' size=18 class='text-primary' %}
+                        <div class="stat-title">New (30d)</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ user_metrics.new_30d }}</div>
+                    <div class="stat-desc">{{ user_metrics.new_7d }} in 7d</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'trending-up' size=18 class='text-primary' %}
+                        <div class="stat-title">Growth Rate</div>
+                    </div>
+                    <div class="stat-value text-primary">
+                        {% if user_metrics.total > 0 %}
+                            {% widthratio user_metrics.new_30d user_metrics.total 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="stat-desc">Monthly</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'zap' size=18 class='text-primary' %}
+                        <div class="stat-title">Retention</div>
+                    </div>
+                    <div class="stat-value text-primary">
+                        {% if user_metrics.total > 0 %}
+                            {% widthratio user_metrics.active_30d user_metrics.total 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="stat-desc">30-day</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collection & Item Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Collection Metrics -->
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-4">
+                    <span class="terminal-text">></span> COLLECTION METRICS
+                </h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Total</div>
+                        <div class="stat-value text-primary">{{ collection_metrics.total }}</div>
+                    </div>
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Public</div>
+                        <div class="stat-value text-primary">{{ collection_metrics.public }}</div>
+                    </div>
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Private</div>
+                        <div class="stat-value text-primary">{{ collection_metrics.private }}</div>
+                    </div>
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Unlisted</div>
+                        <div class="stat-value text-primary">{{ collection_metrics.unlisted }}</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm terminal-text">
+                    <div>Created (30d): <span class="terminal-accent">{{ collection_metrics.created_30d }}</span></div>
+                    <div>Created (7d): <span class="terminal-accent">{{ collection_metrics.created_7d }}</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Metrics -->
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-4">
+                    <span class="terminal-text">></span> ITEM METRICS
+                </h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Total Items</div>
+                        <div class="stat-value text-primary">{{ item_metrics.total }}</div>
+                    </div>
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Favorites</div>
+                        <div class="stat-value text-primary">{{ item_metrics.favorites }}</div>
+                    </div>
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Reserved</div>
+                        <div class="stat-value text-primary">{{ item_metrics.reserved }}</div>
+                    </div>
+                    <div class="stat border border-primary shadow-sm">
+                        <div class="stat-title">Wanted</div>
+                        <div class="stat-value text-primary">{{ item_metrics.wanted }}</div>
+                    </div>
+                </div>
+                <div class="mt-4 text-sm terminal-text">
+                    <div>Created (30d): <span class="terminal-accent">{{ item_metrics.created_30d }}</span></div>
+                    <div>Created (7d): <span class="terminal-accent">{{ item_metrics.created_7d }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity & Distribution Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Activity Metrics -->
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-4">
+                    <span class="terminal-text">></span> ACTIVITY METRICS
+                </h4>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="terminal-text">Total Events</span>
+                        <span class="terminal-accent font-mono">{{ activity_metrics.total }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="terminal-text">Last 30 Days</span>
+                        <span class="terminal-accent font-mono">{{ activity_metrics.last_30d }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="terminal-text">Last 7 Days</span>
+                        <span class="terminal-accent font-mono">{{ activity_metrics.last_7d }}</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h5 class="terminal-accent text-sm mb-3">Top Actions:</h5>
+                    <div class="space-y-2">
+                        {% for action in activity_metrics.top_actions %}
+                        <div class="flex justify-between items-center">
+                            <span class="terminal-text text-sm">{{ action.name }}</span>
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 bg-primary bg-opacity-20 h-1">
+                                    <div class="bg-primary h-1" 
+                                         style="width: {% widthratio action.count activity_metrics.top_actions.0.count 100 %}%"></div>
+                                </div>
+                                <span class="terminal-accent text-xs font-mono">{{ action.count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Type Distribution -->
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-4">
+                    <span class="terminal-text">></span> ITEM TYPE DISTRIBUTION
+                </h4>
+                <div class="space-y-3">
+                    {% for type_data in item_type_distribution %}
+                    <div class="flex justify-between items-center">
+                        <span class="terminal-text text-sm">
+                            {% if type_data.item_type__display_name %}
+                                {{ type_data.item_type__display_name }}
+                            {% else %}
+                                Generic
+                            {% endif %}
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-24 bg-primary bg-opacity-20 h-2">
+                                <div class="bg-primary h-2" 
+                                     style="width: {% widthratio type_data.count item_metrics.total 100 %}%"></div>
+                            </div>
+                            <span class="terminal-accent text-xs font-mono">{{ type_data.count }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="terminal-text opacity-60 text-center">// No item type data available</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Indicators -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="text-lg font-bold terminal-accent mb-4">
+                <span class="terminal-text">></span> PERFORMANCE INDICATORS
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">
+                        {% if collection_metrics.total > 0 %}
+                            {% widthratio item_metrics.total collection_metrics.total 1 %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </div>
+                    <div class="text-sm terminal-text">Avg Items/Collection</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">
+                        {% if item_metrics.total > 0 %}
+                            {% widthratio item_metrics.favorites item_metrics.total 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="text-sm terminal-text">Favorite Rate</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">
+                        {% if item_metrics.total > 0 %}
+                            {% widthratio item_metrics.reserved item_metrics.total 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="text-sm terminal-text">Reservation Rate</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">
+                        {% if user_metrics.total > 0 %}
+                            {% widthratio collection_metrics.public user_metrics.total 100 %}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="text-sm terminal-text">Sharing Rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export and Actions -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="text-lg font-bold terminal-accent mb-4">
+                <span class="terminal-text">></span> EXPORT & ACTIONS
+            </h4>
+            <div class="flex flex-wrap gap-4">
+                <button class="btn btn-primary" onclick="exportMetrics('json')">
+                    {% lucide 'download' size=14 class='mr-2' %}
+                    Export JSON
+                </button>
+                <button class="btn btn-primary" onclick="exportMetrics('csv')">
+                    {% lucide 'file-text' size=14 class='mr-2' %}
+                    Export CSV
+                </button>
+                <button class="btn btn-outline border-blue-500 text-blue-500" onclick="refreshMetrics()">
+                    {% lucide 'rotate-cw' size=14 class='mr-2' %}
+                    Refresh
+                </button>
+            </div>
+            <div class="mt-4 text-sm terminal-text opacity-70">
+                Last updated: <span id="last-updated">{{ now|date:"Y-m-d H:i:s" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportMetrics(format) {
+    // Placeholder for export functionality
+    alert(`Export to ${format.toUpperCase()} not yet implemented`);
+}
+
+function refreshMetrics() {
+    window.location.reload();
+}
+
+// Auto-update timestamp
+setInterval(() => {
+    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+}, 60000);
+</script>
+{% endblock %}

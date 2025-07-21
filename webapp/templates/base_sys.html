@@ -1,0 +1,222 @@
+{% load static %}
+{% load lucide %}
+<!DOCTYPE html>
+<html lang="en" data-theme="beryl-navy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Beryl System Management{% endblock %}</title>
+    
+    <!-- Admin Panel CSS -->
+    <link href="{% static 'css/tailwind-admin.css' %}" rel="stylesheet">
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="min-h-screen">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 sidebar">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-600">
+                <h1 class="text-xl font-bold terminal-text">
+                    <span class="terminal-accent">></span> BERYL.SYS
+                </h1>
+                <p class="text-sm opacity-80 terminal-text">System Management Panel</p>
+                <div class="text-xs mt-2 terminal-accent">
+                    <span class="blinking-cursor">ADMIN_MODE</span>
+                </div>
+            </div>
+            
+            <!-- User Info -->
+            <div class="p-4 border-b border-gray-600">
+                <div class="text-sm terminal-text">
+                    <div><span class="terminal-accent">USER:</span> {{ user.email }}</div>
+                    <div><span class="terminal-accent">PERMS:</span> {% if user.groups.all %}{% for group in user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}NONE{% endif %}</div>
+                    <div><span class="terminal-accent">TIME:</span> <span id="current-time"></span></div>
+                </div>
+                <div class="mt-3 flex gap-2">
+                    <a href="{% url 'account_logout' %}" class="btn btn-xs btn-primary">
+                        {% lucide 'log-out' size=12 class='mr-1' %} LOGOUT
+                    </a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-xs btn-outline">
+                        {% lucide 'arrow-left' size=12 class='mr-1' %} MAIN
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <nav class="p-2">
+                <div class="text-xs font-bold terminal-accent mb-2 px-2">SYSTEM MODULES:</div>
+                
+                <a href="{% url 'sys_dashboard' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if request.resolver_match.url_name == 'sys_dashboard' %}active{% endif %}">
+                    {% lucide 'monitor' size=14 class='inline mr-2' %} Dashboard
+                </a>
+                
+                <a href="{% url 'sys_users' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'users' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'users' size=14 class='inline mr-2' %} Users
+                </a>
+                
+                <a href="{% url 'sys_item_types' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'item_type' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'package' size=14 class='inline mr-2' %} Item Types
+                </a>
+                
+                <a href="{% url 'sys_activity' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'activity' size=14 class='inline mr-2' %} Activity Logs
+                </a>
+                
+                <a href="{% url 'sys_metrics' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'metrics' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'trending-up' size=14 class='inline mr-2' %} Metrics
+                </a>
+                
+                <a href="{% url 'sys_backup' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'backup' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'database' size=14 class='inline mr-2' %} Backup & Restore
+                </a>
+                
+                <div class="border-t border-gray-600 mt-3 pt-3">
+                    <div class="text-xs font-bold terminal-accent mb-2 px-2">EXTERNAL SERVICES:</div>
+                    
+                    {% if EXTERNAL_DB_URL %}
+                    <a href="{{ EXTERNAL_DB_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
+                        {% lucide 'database' size=14 class='inline mr-2' %} Database Admin
+                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
+                    </a>
+                    {% endif %}
+                    
+                    {% if EXTERNAL_INBUCKET_URL %}
+                    <a href="{{ EXTERNAL_INBUCKET_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
+                        {% lucide 'mail' size=14 class='inline mr-2' %} Email Debug
+                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
+                    </a>
+                    {% endif %}
+                    
+                    {% if debug %}
+                    <a href="http://192.168.1.102:9000/monitor" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
+                        {% lucide 'inbox' size=14 class='inline mr-2' %} Inbucket
+                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
+                    </a>
+                    {% endif %}
+                    
+                    {% if EXTERNAL_MONITORING_URL %}
+                    <a href="{{ EXTERNAL_MONITORING_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
+                        {% lucide 'activity' size=14 class='inline mr-2' %} Monitoring
+                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
+                    </a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 terminal-bg">
+            <!-- Top Bar -->
+            <div class="border-b border-gray-300 p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold terminal-text">
+                            <span class="terminal-accent">$</span> {% block page_title %}System Dashboard{% endblock %}
+                        </h2>
+                        <p class="text-sm terminal-text opacity-80">{% block page_description %}Administrative interface for Beryl collection management system{% endblock %}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        {% block header_actions %}{% endblock %}
+                        <div class="text-right">
+                            <div class="text-xs terminal-accent">
+                                <div>SESSION: {{ request.session.session_key|truncatechars:8 }}</div>
+                                <div>UPTIME: <span id="uptime">--:--:--</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Content -->
+            <div class="p-6">
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-2">
+                            <div class="flex items-center gap-2">
+                                {% if message.tags == 'error' %}
+                                    {% lucide 'x' size=16 %}
+                                {% elif message.tags == 'warning' %}
+                                    {% lucide 'triangle-alert' size=16 %}
+                                {% elif message.tags == 'success' %}
+                                    {% lucide 'check' size=16 %}
+                                {% else %}
+                                    {% lucide 'info' size=16 %}
+                                {% endif %}
+                                <span class="terminal-text">{{ message }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% block content %}
+                <div class="terminal-text">
+                    <p>// System interface loaded successfully</p>
+                    <p>// Awaiting commands...</p>
+                </div>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript for dynamic elements -->
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+        
+        // Update uptime (simplified - shows time since page load)
+        let startTime = Date.now();
+        function updateUptime() {
+            const elapsed = Date.now() - startTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            const uptimeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            const uptimeElement = document.getElementById('uptime');
+            if (uptimeElement) {
+                uptimeElement.textContent = uptimeString;
+            }
+        }
+        
+        // Update every second
+        setInterval(() => {
+            updateTime();
+            updateUptime();
+        }, 1000);
+        
+        // Initialize
+        updateTime();
+        updateUptime();
+        
+        // Add terminal-style loading for HTMX requests
+        document.addEventListener('htmx:beforeRequest', function(e) {
+            const target = e.target;
+            if (target) {
+                target.style.opacity = '0.6';
+                target.style.cursor = 'wait';
+            }
+        });
+        
+        document.addEventListener('htmx:afterRequest', function(e) {
+            const target = e.target;
+            if (target) {
+                target.style.opacity = '1';
+                target.style.cursor = 'default';
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

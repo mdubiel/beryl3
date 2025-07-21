@@ -94,6 +94,29 @@
             <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
                 {% lucide 'pencil' size=18 %}
             </a>
+            
+            {# Move/Copy dropdown #}
+            <div class="dropdown dropdown-end dropdown-top">
+                <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Move or Copy Item">
+                    {% lucide 'move' size=18 %}
+                </button>
+                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-64 z-10">
+                    <li class="menu-title"><span>Move or Copy Item</span></li>
+                    <li>
+                        <a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
+                            {% lucide 'arrow-right-left' size=16 %}
+                            Move to another collection
+                        </a>
+                    </li>
+                    <li>
+                        <a onclick="showCopyModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
+                            {% lucide 'copy' size=16 %}
+                            Copy to another collection
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
             {% include "partials/_item_delete_dropdown.html" with item=item %}
             <div class="dropdown dropdown-end dropdown-top">
                 <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">

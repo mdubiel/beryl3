@@ -1,0 +1,208 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Item Types - Beryl Admin{% endblock %}
+
+{% block page_title %}Item Type Management{% endblock %}
+{% block page_description %}Define and manage different types of collectible items{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Summary and Actions -->
+    <div class="flex justify-between items-center">
+        <div class="terminal-text">
+            <span class="terminal-accent">{{ total_count }}</span> item types defined
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="create_modal.showModal()">
+            {% lucide 'plus' size=14 class='mr-1' %}
+            Add Item Type
+        </button>
+    </div>
+
+    <!-- Item Types Table -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> ITEM TYPES
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ITEM TYPE</th>
+                            <th>ATTRIBUTES</th>
+                            <th>USAGE</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item_type in item_types %}
+                        <tr id="item-type-{{ item_type.id }}">
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    {% if item_type.icon %}
+                                        {% lucide item_type.icon size=20 class='text-blue-500' %}
+                                    {% else %}
+                                        {% lucide 'package' size=20 class='text-gray-500' %}
+                                    {% endif %}
+                                    <div>
+                                        <a href="{% url 'sys_item_type_detail' item_type.id %}" class="font-semibold terminal-text hover:text-blue-500 transition-colors">{{ item_type.display_name }}</a>
+                                        {% if item_type.description %}
+                                            <div class="text-sm opacity-70 mt-1">{{ item_type.description|truncatechars:50 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="terminal-accent font-mono">{{ item_type.attribute_count }}</span>
+                            </td>
+                            <td>
+                                <span class="terminal-text">{{ item_type.collectionitem_set.count }} items</span>
+                            </td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <a href="{% url 'sys_item_type_detail' item_type.id %}" 
+                                       class="btn btn-xs btn-primary" 
+                                       title="View Details & Attributes">
+                                        {% lucide 'eye' size=12 %}
+                                    </a>
+                                    <button class="btn btn-xs btn-secondary" onclick="edit_modal_{{ item_type.id }}.showModal()"
+                                           title="Edit Item Type">
+                                        {% lucide 'pencil' size=12 %}
+                                    </button>
+                                    {% if item_type.can_be_deleted %}
+                                        <form method="post" action="{% url 'sys_item_type_delete' item_type.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-xs btn-error"
+                                                    onclick="return confirm('Are you sure you want to delete &quot;{{ item_type.display_name|escapejs }}&quot;? This action cannot be undone.')"
+                                                    title="Delete Item Type">
+                                                {% lucide 'trash-2' size=12 %}
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button class="btn btn-xs btn-disabled" 
+                                                disabled
+                                                title="Cannot delete: {{ item_type.deletion_blocked_reason }}">
+                                            {% lucide 'trash-2' size=12 %}
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center opacity-60 py-8">
+                                // No item types defined yet
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> ABOUT ITEM TYPES
+            </h4>
+            <div class="text-sm terminal-text space-y-2 opacity-80">
+                <p>• Item types define categories of collectible items (books, LEGO sets, vinyl records, etc.)</p>
+                <p>• Each type can have custom attributes to store specific metadata</p>
+                <p>• Users can assign types to their items for better organization and filtering</p>
+                <p>• Icons use Lucide icon names (e.g., 'book', 'music', 'gamepad-2') - <a href="https://lucide.dev/icons/" target="_blank" class="link terminal-accent">Browse available icons</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<dialog id="create_modal" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg">Create Item Type</h3>
+        <form action="{% url 'sys_item_type_create' %}" method="post" class="space-y-4 mt-4">
+            {% csrf_token %}
+            <div>
+                <label class="label">
+                    <span class="label-text">Display Name</span>
+                </label>
+                <input type="text" name="display_name" 
+                       class="input input-bordered w-full" 
+                       placeholder="e.g., Books, LEGO Sets, Vinyl Records" required>
+            </div>
+            
+            <div>
+                <label class="label">
+                    <span class="label-text">Description (Optional)</span>
+                </label>
+                <textarea name="description" 
+                          class="textarea textarea-bordered w-full" 
+                          placeholder="Brief description of this item type"
+                          rows="2"></textarea>
+            </div>
+            
+            {% include 'components/lucide_icon_input.html' with field_name='icon' field_id='create_icon' %}
+            
+            <div class="modal-action">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" class="btn" onclick="create_modal.close()">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Edit Modals for each item type -->
+{% for item_type in item_types %}
+<dialog id="edit_modal_{{ item_type.id }}" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg">Edit Item Type</h3>
+        <form action="{% url 'sys_item_type_update' item_type.id %}" method="post" class="space-y-4 mt-4">
+            {% csrf_token %}
+            <div>
+                <label class="label">
+                    <span class="label-text">Display Name</span>
+                </label>
+                <input type="text" name="display_name" 
+                       class="input input-bordered w-full" 
+                       value="{{ item_type.display_name }}"
+                       placeholder="e.g., Books, LEGO Sets, Vinyl Records" required>
+            </div>
+            
+            <div>
+                <label class="label">
+                    <span class="label-text">Description (Optional)</span>
+                </label>
+                <textarea name="description" 
+                          class="textarea textarea-bordered w-full" 
+                          placeholder="Brief description of this item type"
+                          rows="2">{{ item_type.description|default:"" }}</textarea>
+            </div>
+            
+            {% include 'components/lucide_icon_input.html' with field_name='icon' field_id='edit_icon_'|add:item_type.id field_value=item_type.icon %}
+            
+            <div class="modal-action">
+                <button type="submit" class="btn btn-primary">Update</button>
+                <button type="button" class="btn" onclick="edit_modal_{{ item_type.id }}.close()">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endfor %}
+
+
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Delete Attribute Confirmation - Beryl Admin{% endblock %}
+
+{% block page_title %}Delete Attribute - {{ attribute.display_name }}{% endblock %}
+{% block page_description %}Confirm deletion of attribute with impact report{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'sys_item_type_detail' item_type.id %}" class="btn btn-square btn-sm btn-primary" title="Cancel">
+    {% lucide 'arrow-left' size=16 %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Warning Alert -->
+    <div class="alert alert-warning">
+        <div>
+            {% lucide 'alert-triangle' size=20 %}
+            <span><strong>Warning:</strong> This attribute is being used by {{ usage_count }} item{{ usage_count|pluralize }}. Deletion will affect existing data.</span>
+        </div>
+    </div>
+
+    <!-- Attribute Info -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> ATTRIBUTE TO DELETE
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="text-sm terminal-text opacity-70 mb-1">Attribute Name</div>
+                    <div class="font-semibold text-lg">{{ attribute.display_name }}</div>
+                </div>
+                <div>
+                    <div class="text-sm terminal-text opacity-70 mb-1">Item Type</div>
+                    <div class="font-semibold text-lg">{{ item_type.display_name }}</div>
+                </div>
+                <div>
+                    <div class="text-sm terminal-text opacity-70 mb-1">Attribute Type</div>
+                    <div class="badge badge-outline">{{ attribute.get_attribute_type_display }}</div>
+                </div>
+                <div>
+                    <div class="text-sm terminal-text opacity-70 mb-1">Required</div>
+                    <div class="{% if attribute.required %}text-warning{% else %}text-success{% endif %}">
+                        {% if attribute.required %}Yes{% else %}No{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Report -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> USAGE REPORT
+            </h3>
+            
+            <div class="mb-4">
+                <div class="stat">
+                    <div class="stat-title">Items Using This Attribute</div>
+                    <div class="stat-value text-warning">{{ usage_count }}</div>
+                </div>
+            </div>
+
+            {% if items_with_attribute %}
+            <div class="mb-4">
+                <h4 class="font-semibold mb-2">Affected Items:</h4>
+                <div class="space-y-2">
+                    {% for item in items_with_attribute %}
+                    <div class="flex items-center gap-3 p-2 bg-base-200 rounded">
+                        <div class="flex-1">
+                            <div class="font-medium">{{ item.name }}</div>
+                            <div class="text-sm opacity-70">{{ item.collection.name }} • {{ item.get_status_display }}</div>
+                        </div>
+                        <div class="text-sm opacity-60">
+                            {% if item.attributes %}
+                                {% for key, value in item.attributes.items %}
+                                    {% if key == attribute.name %}
+                                        Value: <span class="font-mono">{{ value|default:"(empty)" }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                Value: <span class="font-mono">(empty)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if show_more %}
+                    <div class="text-center text-sm opacity-70 py-2">
+                        ... and {{ usage_count|add:"-10" }} more items
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> DELETION OPTIONS
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Soft Delete Option -->
+                <div class="card bg-base-200">
+                    <div class="card-body">
+                        <h4 class="card-title text-success">
+                            {% lucide 'archive' size=18 class='inline mr-2' %}
+                            Soft Delete (Recommended)
+                        </h4>
+                        <p class="text-sm opacity-80">
+                            Remove attribute definition but keep existing values in items. 
+                            Values will no longer be displayed but data is preserved.
+                        </p>
+                        <div class="card-actions justify-end">
+                            <form method="post" action="{% url 'sys_item_attribute_delete' attribute.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success">
+                                    {% lucide 'archive' size=14 class='mr-1' %}
+                                    Soft Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Force Delete Option -->
+                <div class="card bg-base-200 border border-error">
+                    <div class="card-body">
+                        <h4 class="card-title text-error">
+                            {% lucide 'trash-2' size=18 class='inline mr-2' %}
+                            Force Delete (Destructive)
+                        </h4>
+                        <p class="text-sm opacity-80">
+                            Permanently remove attribute definition AND delete all values 
+                            from {{ usage_count }} item{{ usage_count|pluralize }}. This cannot be undone.
+                        </p>
+                        <div class="card-actions justify-end">
+                            <form method="post" action="{% url 'sys_item_attribute_delete' attribute.id %}" 
+                                  onsubmit="return confirm('Are you absolutely sure? This will permanently delete the attribute and remove values from {{ usage_count }} items. This action cannot be undone.')">
+                                {% csrf_token %}
+                                <input type="hidden" name="force_delete" value="true">
+                                <button type="submit" class="btn btn-error">
+                                    {% lucide 'trash-2' size=14 class='mr-1' %}
+                                    Force Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cancel Option -->
+            <div class="mt-6 text-center">
+                <a href="{% url 'sys_item_type_detail' item_type.id %}" class="btn btn-ghost">
+                    {% lucide 'x' size=14 class='mr-1' %}
+                    Cancel - Keep Attribute
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
