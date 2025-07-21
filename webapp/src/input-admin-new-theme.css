@@ -1,0 +1,150 @@
+/* Beryl Admin Panel CSS - Custom DaisyUI Theme
+ * Based on the beautiful sidebar colors you love
+ */
+
+/* Importing Tailwind CSS and DaisyUI with custom theme */
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: {
+    "beryl-admin": {
+      // Primary colors based on sidebar accent blue
+      "primary": "#74b9ff",
+      "primary-content": "#ffffff",
+      
+      // Secondary colors based on sidebar grays
+      "secondary": "#34495e", 
+      "secondary-content": "#ecf0f1",
+      
+      // Accent colors
+      "accent": "#74b9ff",
+      "accent-content": "#ffffff",
+      
+      // Neutral colors from sidebar palette
+      "neutral": "#2c3e50",
+      "neutral-content": "#ecf0f1",
+      
+      // Base colors - light background for content
+      "base-100": "#ffffff",    // Main content background (light)
+      "base-200": "#f8f9fa",    // Secondary background
+      "base-300": "#ecf0f1",    // Border/divider color
+      "base-content": "#2c3e50", // Main text color
+      
+      // Info, success, warning, error (keeping current good colors)
+      "info": "#3498db",
+      "info-content": "#ffffff",
+      
+      "success": "#74b9ff",     // Using our blue instead of green
+      "success-content": "#ffffff",
+      
+      "warning": "#f39c12",
+      "warning-content": "#ffffff",
+      
+      "error": "#e74c3c",
+      "error-content": "#ffffff",
+      
+      // Special sidebar colors (custom CSS variables)
+      "--sidebar-bg": "linear-gradient(180deg, #34495e 0%, #2c3e50 100%)",
+      "--sidebar-text": "#ecf0f1",
+      "--sidebar-text-muted": "#bdc3c7",
+      "--sidebar-accent": "#74b9ff",
+      "--sidebar-hover": "rgba(116, 185, 255, 0.15)",
+      "--sidebar-active": "rgba(116, 185, 255, 0.2)",
+      
+      // Terminal-like colors for special elements
+      "--terminal-accent": "#3498db",
+      "--terminal-text": "#34495e",
+      "--terminal-border": "#7f8c8d",
+    }
+  };
+}
+
+@layer base {
+  /* Apply theme to root */
+  :root {
+    color-scheme: light;
+  }
+  
+  body {
+    font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  }
+}
+
+@layer components {
+  /* Sidebar components using our beautiful colors */
+  .sidebar {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--terminal-border);
+    color: var(--sidebar-text);
+  }
+  
+  .sidebar-text {
+    color: var(--sidebar-text);
+  }
+  
+  .sidebar-text-muted {
+    color: var(--sidebar-text-muted);
+  }
+  
+  .sidebar-accent {
+    color: var(--sidebar-accent);
+  }
+  
+  /* Menu items in sidebar */
+  .menu .menu-item:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-accent);
+  }
+  
+  .menu .menu-item.active {
+    background: var(--sidebar-active);
+    color: var(--sidebar-accent);
+    border-left: 3px solid var(--sidebar-accent);
+  }
+  
+  /* Terminal-style elements */
+  .terminal-bg {
+    background: linear-gradient(135deg, #ecf0f1 0%, #ffffff 50%, #ecf0f1 100%);
+    border: 1px solid var(--terminal-border);
+    box-shadow: 0 2px 10px rgba(52, 73, 94, 0.1);
+  }
+  
+  .terminal-text {
+    color: var(--terminal-text);
+  }
+  
+  .terminal-accent {
+    color: var(--terminal-accent);
+    font-weight: 500;
+  }
+  
+  /* Responsive table hover */
+  .table tbody tr:hover {
+    background: rgba(116, 185, 255, 0.05);
+  }
+  
+  /* Custom button styles matching sidebar */
+  .btn-sidebar {
+    background: var(--sidebar-hover);
+    border-color: var(--sidebar-accent);
+    color: var(--sidebar-accent);
+  }
+  
+  .btn-sidebar:hover {
+    background: var(--sidebar-active);
+    border-color: var(--sidebar-accent);
+    color: var(--sidebar-accent);
+  }
+}
+
+@layer utilities {
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+  
+  .blinking-cursor::after {
+    content: '▊';
+    animation: blink 1.5s infinite;
+    color: var(--sidebar-accent);
+  }
+}

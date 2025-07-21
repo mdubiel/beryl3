@@ -94,6 +94,61 @@ class ItemType(BerylModel):
     
     def __str__(self):
         return str(self.display_name)
+    
+    @property
+    def can_be_deleted(self):
+        """
+        Check if this item type can be deleted (no attributes and no items using it)
+        """
+        attributes_count = self.attributes.filter(is_deleted=False).count()
+        items_count = self.items.filter(is_deleted=False).count()
+        return attributes_count == 0 and items_count == 0
+    
+    @property
+    def deletion_blocked_reason(self):
+        """
+        Get the reason why deletion is blocked
+        """
+        attributes_count = self.attributes.filter(is_deleted=False).count()
+        items_count = self.items.filter(is_deleted=False).count()
+        
+        if attributes_count > 0 and items_count > 0:
+            return f"Has {attributes_count} attribute{'s' if attributes_count != 1 else ''} and {items_count} item{'s' if items_count != 1 else ''}"
+        elif attributes_count > 0:
+            return f"Has {attributes_count} attribute{'s' if attributes_count != 1 else ''} defined"
+        elif items_count > 0:
+            return f"Used by {items_count} item{'s' if items_count != 1 else ''}"
+        else:
+            return None
+    
+    def delete(self, using=None, keep_parents=False):
+        """
+        Override delete method to prevent deletion if:
+        1. There are attributes defined for this item type
+        2. There are collection items using this item type
+        """
+        from django.core.exceptions import PermissionDenied
+        
+        # Check for attributes
+        attributes_count = self.attributes.filter(is_deleted=False).count()
+        if attributes_count > 0:
+            raise PermissionDenied(
+                f"Cannot delete item type '{self.display_name}'. "
+                f"It has {attributes_count} attribute{'s' if attributes_count != 1 else ''} defined. "
+                f"Delete all attributes first."
+            )
+        
+        # Check for collection items using this type
+        items_count = self.items.filter(is_deleted=False).count()
+        if items_count > 0:
+            raise PermissionDenied(
+                f"Cannot delete item type '{self.display_name}'. "
+                f"It is being used by {items_count} item{'s' if items_count != 1 else ''}. "
+                f"Remove or change the type of all items first."
+            )
+        
+        # If all checks pass, proceed with soft delete
+        super().delete(using=using, keep_parents=keep_parents)
 
 
 class ItemAttribute(BerylModel):

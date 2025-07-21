@@ -3,7 +3,8 @@
 # Variables for commands and paths
 TAILWIND_CLI = npx @tailwindcss/cli
 TAILWIND_INPUT_CSS = src/input.css
-TAILWIND_OUTPUT_CSS = static/css/tailwind.css
+TAILWIND_INPUT_ADMIN_CSS = src/input-admin.css
+TAILWIND_OUTPUT_ADMIN_CSS = static/css/tailwind-admin.css
 
 PYTHON = python
 MANAGE_PY = uv run $(PYTHON) manage.py
@@ -25,6 +26,14 @@ build-css:
 build-css-watch:
 	@echo "Building Tailwind CSS: $(TAILWIND_INPUT_CSS) -> $(TAILWIND_OUTPUT_CSS)..."
 	$(TAILWIND_CLI) -i $(TAILWIND_INPUT_CSS) -o $(TAILWIND_OUTPUT_CSS) -w
+	@echo "Tailwind CSS build complete."
+build-admin-css:
+	@echo "Building Tailwind CSS: $(TAILWIND_INPUT_ADMIN_CSS) -> $(TAILWIND_OUTPUT__ADMIN_CSS)..."
+	$(TAILWIND_CLI) -i $(TAILWIND_INPUT_ADMIN_CSS) -o $(TAILWIND_OUTPUT_ADMIN_CSS)
+	@echo "Tailwind CSS build complete."
+build-admin-css-watch:
+	@echo "Building Tailwind CSS: $(TAILWIND_INPUT_ADMIN_CSS) -> $(TAILWIND_OUTPUT_ADMIN_CSS)..."
+	$(TAILWIND_CLI) -i $(TAILWIND_INPUT_ADMIN_CSS) -o $(TAILWIND_OUTPUT_ADMIN_CSS) -w
 	@echo "Tailwind CSS build complete."
 # Target to run the Django development server
 run-dev-server:

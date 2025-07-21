@@ -1,0 +1,273 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Activity Logs - Beryl Admin{% endblock %}
+
+{% block page_title %}Activity Logs{% endblock %}
+{% block page_description %}Monitor and analyze system activity and user actions{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filters and Actions -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="terminal-accent text-lg font-bold">
+                    <span class="terminal-text">></span> ACTIVITY FILTERS
+                </h3>
+                <button class="btn btn-error btn-sm"
+                        hx-delete="{% url 'sys_activity_cleanup' %}?days=90"
+                        hx-confirm="Delete activity logs older than 90 days?"
+                        hx-target="#cleanup-result">
+                    {% lucide 'trash-2' size=14 class='mr-1' %}
+                    Cleanup Old Logs
+                </button>
+            </div>
+            
+            <div id="cleanup-result" class="mb-4"></div>
+            
+            <form method="get">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div>
+                        <label for="action" class="block text-sm font-medium terminal-text mb-1">Action Type</label>
+                        <select id="action" name="action" class="select select-bordered w-full">
+                            <option value="">All Actions</option>
+                            {% for action in distinct_actions %}
+                            <option value="{{ action }}" {% if action_filter == action %}selected{% endif %}>
+                                {{ action }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="user" class="block text-sm font-medium terminal-text mb-1">User</label>
+                        <select id="user" name="user" class="select select-bordered w-full">
+                            <option value="">All Users</option>
+                            {% for user in recent_users %}
+                            <option value="{{ user.id }}" {% if user_filter == user.id|stringformat:"s" %}selected{% endif %}>
+                                {{ user.email|truncatechars:25 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="date_from" class="block text-sm font-medium terminal-text mb-1">Date From</label>
+                        <input type="date" 
+                               id="date_from"
+                               name="date_from" 
+                               value="{{ date_from }}" 
+                               class="input input-bordered w-full">
+                    </div>
+                    
+                    <div>
+                        <label for="date_to" class="block text-sm font-medium terminal-text mb-1">Date To</label>
+                        <input type="date" 
+                               id="date_to"
+                               name="date_to" 
+                               value="{{ date_to }}" 
+                               class="input input-bordered w-full">
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button type="submit" class="btn btn-primary w-full">
+                            {% lucide 'filter' size=16 class='mr-2' %}
+                            FILTER
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="flex justify-between items-center">
+        <div class="terminal-text">
+            <span class="terminal-accent">{{ total_count }}</span> activity entries found
+            {% if action_filter or user_filter or date_from or date_to %}
+                <span class="text-sm opacity-70">(filtered)</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'sys_activity' %}" class="btn btn-outline  text-blue-500 btn-sm">
+            {% lucide 'x' size=14 class='mr-1' %}
+            Clear Filters
+        </a>
+    </div>
+
+    <!-- Activity Table -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr class="">
+                            <th>TIMESTAMP</th>
+                            <th>ACTION</th>
+                            <th>ACTOR</th>
+                            <th>SUBJECT</th>
+                            <th>TARGET</th>
+                            <th>DETAILS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in page_obj %}
+                        <tr class="hover:bg-blue-100">
+                            <td class=" text-xs font-mono">
+                                {{ activity.created|date:"M d H:i:s" }}
+                            </td>
+                            <td class=" text-sm">
+                                {{ activity.get_name_display }}
+                            </td>
+                            <td class=" text-sm">
+                                {% if activity.created_by %}
+                                    <div class="flex items-center gap-1">
+                                        {% lucide 'user' size=12 class='text-blue-500' %}
+                                        <span class="font-mono">{{ activity.created_by.email|truncatechars:20 }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="terminal-accent">SYSTEM</span>
+                                {% endif %}
+                            </td>
+                            <td class=" text-sm">
+                                {% if activity.subject %}
+                                    <span class="font-mono">{{ activity.subject.email|truncatechars:20 }}</span>
+                                {% else %}
+                                    <span class="opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                            <td class=" text-sm">
+                                {% if activity.target_repr %}
+                                    <span class="font-mono">{{ activity.target_repr|truncatechars:25 }}</span>
+                                {% else %}
+                                    <span class="opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                            <td class=" text-xs">
+                                {% if activity.details %}
+                                    <details class="dropdown">
+                                        <summary class="btn btn-xs btn-ghost terminal-text">
+                                            {% lucide 'info' size=12 %}
+                                        </summary>
+                                        <div class="dropdown-content z-10 p-2 shadow bg-blue-900 bg-opacity-90 border  rounded text-xs max-w-xs">
+                                            <pre class="terminal-text text-xs whitespace-pre-wrap">{{ activity.details|pprint }}</pre>
+                                        </div>
+                                    </details>
+                                {% else %}
+                                    <span class="opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center terminal-text opacity-60 py-8">
+                                // No activity logs found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="flex justify-center mt-6">
+                <div class="btn-group">
+                    {% if page_obj.has_previous %}
+                        <a href="?{% if action_filter %}action={{ action_filter }}&{% endif %}{% if user_filter %}user={{ user_filter }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+                           class="btn btn-sm btn-primary">
+                            {% lucide 'chevron-left' size=14 %}
+                        </a>
+                    {% endif %}
+                    
+                    <span class="btn btn-sm btn-primary btn-active">
+                        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?{% if action_filter %}action={{ action_filter }}&{% endif %}{% if user_filter %}user={{ user_filter }}&{% endif %}{% if date_from %}date_from={{ date_from }}&{% endif %}{% if date_to %}date_to={{ date_to }}&{% endif %}page={{ page_obj.next_page_number }}" 
+                           class="btn btn-sm btn-primary">
+                            {% lucide 'chevron-right' size=14 %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Activity Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-3">
+                    <span class="terminal-text">></span> RECENT ACTIONS
+                </h4>
+                <div class="space-y-2">
+                    {% for action in distinct_actions|slice:":5" %}
+                    <div class="flex justify-between items-center">
+                        <span class="terminal-text text-sm">{{ action }}</span>
+                        <a href="?action={{ action }}" class="btn btn-xs btn-ghost terminal-accent">
+                            {% lucide 'arrow-right' size=12 %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-3">
+                    <span class="terminal-text">></span> ACTIVE USERS
+                </h4>
+                <div class="space-y-2">
+                    {% for user in recent_users|slice:":5" %}
+                    <div class="flex justify-between items-center">
+                        <span class="terminal-text text-sm font-mono">{{ user.email|truncatechars:20 }}</span>
+                        <a href="?user={{ user.id }}" class="btn btn-xs btn-ghost terminal-accent">
+                            {% lucide 'arrow-right' size=12 %}
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal-bg">
+            <div class="p-6">
+                <h4 class="text-lg font-bold terminal-accent mb-3">
+                    <span class="terminal-text">></span> SYSTEM STATUS
+                </h4>
+                <div class="space-y-2 text-sm">
+                    <div class="terminal-text">Monitoring: <span class="terminal-accent">ACTIVE</span></div>
+                    <div class="terminal-text">Retention: <span class="terminal-accent">90 DAYS</span></div>
+                    <div class="terminal-text">Log Level: <span class="terminal-accent">INFO</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh every 30 seconds for real-time monitoring
+setInterval(() => {
+    if (!document.querySelector('form input:focus') && !document.querySelector('form select:focus')) {
+        // Only refresh if user isn't actively filtering
+        // window.location.reload();
+    }
+}, 30000);
+
+// Handle cleanup responses
+document.addEventListener('htmx:afterRequest', function(evt) {
+    if (evt.detail.xhr.responseURL.includes('cleanup')) {
+        const response = JSON.parse(evt.detail.xhr.responseText);
+        const target = evt.target;
+        if (response.success) {
+            target.innerHTML = `<div class="alert alert-success"><span class="terminal-text">${response.message}</span></div>`;
+            setTimeout(() => target.innerHTML = '', 5000);
+        }
+    }
+});
+</script>
+{% endblock %}

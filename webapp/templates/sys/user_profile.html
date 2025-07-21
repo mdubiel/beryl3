@@ -1,0 +1,442 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}{{ profile_user.first_name }} {{ profile_user.last_name }} - User Profile - Beryl Admin{% endblock %}
+
+{% block page_title %}
+    User Profile: 
+    {% if profile_user.first_name or profile_user.last_name %}
+        {{ profile_user.first_name }} {{ profile_user.last_name }}
+    {% else %}
+        {{ profile_user.email }}
+    {% endif %}
+{% endblock %}
+{% block page_description %}Comprehensive user information and activity overview{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'sys_users' %}" class="btn btn-square btn-sm btn-primary" title="Back to Users List">
+    {% lucide 'arrow-left' size=16 %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- User Overview -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> USER INFORMATION & EMAILS
+            </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- User Basic Information -->
+                <div class="space-y-4">
+                    <!-- Name and ID -->
+                    <div class="flex items-center gap-3">
+                        {% if profile_user.is_superuser %}
+                            {% lucide 'crown' size=20 class='text-yellow-500' %}
+                        {% elif profile_user.is_staff %}
+                            {% lucide 'shield' size=20 class='text-blue-500' %}
+                        {% else %}
+                            {% lucide 'user' size=20 class='text-gray-500' %}
+                        {% endif %}
+                        <div>
+                            <div class="font-semibold terminal-text">
+                                {% if profile_user.first_name or profile_user.last_name %}
+                                    {{ profile_user.first_name }} {{ profile_user.last_name }}
+                                {% else %}
+                                    <span class="italic opacity-60">No name set</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs terminal-text opacity-75">User ID: {{ profile_user.id }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm terminal-text">Status:</span>
+                        {% if profile_user.is_active %}
+                            <span class="badge badge-success badge-sm">ACTIVE</span>
+                        {% else %}
+                            <span class="badge badge-error badge-sm">INACTIVE</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Groups -->
+                    <div>
+                        <span class="text-sm terminal-text mb-2 block">Groups:</span>
+                        {% for group in user_groups %}
+                            <span class="badge badge-outline badge-sm mr-1 mb-1">{{ group.name }}</span>
+                        {% empty %}
+                            <span class="text-xs terminal-text opacity-60">No groups assigned</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Permissions -->
+                    <div class="text-xs terminal-text space-y-1">
+                        <div class="flex items-center gap-2">
+                            {% if profile_user.is_superuser %}
+                                {% lucide 'check' size=12 class='text-green-500' %}
+                            {% else %}
+                                {% lucide 'x' size=12 class='text-red-500' %}
+                            {% endif %}
+                            <span>Superuser</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% if profile_user.is_staff %}
+                                {% lucide 'check' size=12 class='text-green-500' %}
+                            {% else %}
+                                {% lucide 'x' size=12 class='text-red-500' %}
+                            {% endif %}
+                            <span>Staff access</span>
+                        </div>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="text-xs terminal-text space-y-1">
+                        <div>Joined: {{ profile_user.date_joined|date:"M d, Y H:i" }}</div>
+                        <div>
+                            Last login: 
+                            {% if profile_user.last_login %}
+                                {{ profile_user.last_login|date:"M d, Y H:i" }}
+                            {% else %}
+                                <span class="opacity-60">Never</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Addresses -->
+                <div class="space-y-3">
+                    <h4 class="text-sm terminal-accent font-medium">Email Addresses:</h4>
+                    
+                    <!-- User table email -->
+                    {% if profile_user.email %}
+                    <div class="flex items-center gap-2">
+                        {% lucide 'database' size=12 class='text-purple-500' %}
+                        <div class="text-sm">
+                            <div class="font-mono">{{ profile_user.email }}</div>
+                            <div class="text-xs text-purple-500">User table</div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Django-allauth emails -->
+                    {% for email in email_addresses %}
+                    <div class="flex items-center gap-2">
+                        {% if email.verified %}
+                            {% lucide 'check' size=12 class='text-green-500' %}
+                        {% else %}
+                            {% lucide 'clock' size=12 class='text-yellow-500' %}
+                        {% endif %}
+                        <div class="text-sm">
+                            <div class="font-mono">
+                                {{ email.email }}
+                                {% if email.primary %}
+                                    <span class="text-blue-500 text-xs">(primary)</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                {% if email.verified %}Verified{% else %}Pending verification{% endif %}
+                                • Allauth
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    {% if not profile_user.email %}
+                    <div class="text-sm terminal-text opacity-60 italic">No email addresses configured</div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Statistics -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> ACTIVITY OVERVIEW
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_activity_stats.total_activities }}</div>
+                    <div class="text-sm terminal-text">Total Activities</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_activity_stats.activities_30d }}</div>
+                    <div class="text-sm terminal-text">Last 30 Days</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_activity_stats.activities_7d }}</div>
+                    <div class="text-sm terminal-text">Last 7 Days</div>
+                </div>
+                <div class="text-center">
+                    {% if user_activity_stats.last_activity %}
+                        <div class="text-lg terminal-accent font-mono">{{ user_activity_stats.last_activity.created|date:"M d" }}</div>
+                        <div class="text-sm terminal-text">Last Activity</div>
+                    {% else %}
+                        <div class="text-lg terminal-text opacity-60">--</div>
+                        <div class="text-sm terminal-text">Last Activity</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Statistics Overview -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> COLLECTION & ITEM OVERVIEW
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_stats.total_collections }}</div>
+                    <div class="text-sm terminal-text">Collections</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_stats.public_collections }}</div>
+                    <div class="text-sm terminal-text">Public</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_stats.private_collections }}</div>
+                    <div class="text-sm terminal-text">Private</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_stats.unlisted_collections }}</div>
+                    <div class="text-sm terminal-text">Unlisted</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_stats.total_items }}</div>
+                    <div class="text-sm terminal-text">Total Items</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl terminal-accent font-mono">{{ user_stats.favorite_items }}</div>
+                    <div class="text-sm terminal-text">Favorites</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collections Table -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> USER COLLECTIONS
+            </h3>
+            {% if collection_stats %}
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>COLLECTION</th>
+                            <th>VISIBILITY</th>
+                            <th>ITEMS</th>
+                            <th>FAVORITES</th>
+                            <th>STATUS BREAKDOWN</th>
+                            <th>CREATED</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for collection_data in collection_stats %}
+                        <tr>
+                            <td>
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <div class="font-medium terminal-text">{{ collection_data.collection.name }}</div>
+                                        {% if collection_data.collection.visibility == 'PUBLIC' or collection_data.collection.visibility == 'UNLISTED' %}
+                                            <a href="{% url 'public_collection_view' collection_data.collection.hash %}" 
+                                               target="_blank"
+                                               class="text-blue-500 hover:text-blue-600" 
+                                               title="View public collection">
+                                                {% lucide 'external-link' size=12 %}
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                    <div class="font-mono text-xs text-gray-500">{{ collection_data.collection.hash }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if collection_data.collection.visibility == 'PUBLIC' %}
+                                    <span class="badge badge-success badge-sm">PUBLIC</span>
+                                {% elif collection_data.collection.visibility == 'PRIVATE' %}
+                                    <span class="badge badge-error badge-sm">PRIVATE</span>
+                                {% else %}
+                                    <span class="badge badge-warning badge-sm">UNLISTED</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="terminal-accent font-mono">{{ collection_data.stats.total_items }}</span>
+                            </td>
+                            <td>
+                                <span class="terminal-accent font-mono">{{ collection_data.stats.favorites }}</span>
+                            </td>
+                            <td>
+                                <div class="text-sm font-mono">
+                                    <span class="text-green-600">{{ collection_data.stats.in_collection }}</span> / 
+                                    <span class="text-blue-600">{{ collection_data.stats.wanted }}</span> / 
+                                    <span class="text-orange-600">{{ collection_data.stats.reserved }}</span> / 
+                                    <span class="text-purple-600">{{ collection_data.stats.sold }}</span> / 
+                                    <span class="text-gray-600">{{ collection_data.stats.given_away }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-sm">{{ collection_data.collection.created|date:"M d, Y" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Status Legend -->
+            <div class="mt-4 text-xs terminal-text opacity-75">
+                <div class="flex flex-wrap gap-4">
+                    <div class="flex items-center gap-1">
+                        <span class="text-green-600 font-mono font-bold">■</span>
+                        <span>In Collection</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-blue-600 font-mono font-bold">■</span>
+                        <span>Wanted</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-orange-600 font-mono font-bold">■</span>
+                        <span>Reserved</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-purple-600 font-mono font-bold">■</span>
+                        <span>Sold</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-gray-600 font-mono font-bold">■</span>
+                        <span>Given Away</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-8 terminal-text opacity-60">
+                // No collections found for this user
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> RECENT ACTIVITY
+            </h3>
+            {% if recent_activities %}
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>TIMESTAMP</th>
+                            <th>ACTION</th>
+                            <th>ACTOR</th>
+                            <th>TARGET</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in recent_activities %}
+                        <tr>
+                            <td class="text-xs font-mono">{{ activity.created|date:"M d H:i:s" }}</td>
+                            <td class="text-sm">{{ activity.get_name_display }}</td>
+                            <td class="text-sm">
+                                {% if activity.created_by %}
+                                    <span class="font-mono">{{ activity.created_by.email|truncatechars:20 }}</span>
+                                {% else %}
+                                    <span class="terminal-accent">SYSTEM</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm">
+                                {% if activity.target_repr %}
+                                    <span class="font-mono">{{ activity.target_repr|truncatechars:30 }}</span>
+                                {% else %}
+                                    <span class="opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 terminal-text opacity-60">
+                // No recent activity found for this user
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> ADMIN ACTIONS
+            </h3>
+            <div class="flex flex-wrap gap-4">
+                <a href="{% url 'admin:auth_user_change' profile_user.id %}" 
+                   target="_blank"
+                   class="btn btn-primary">
+                    {% lucide 'pencil' size=14 class='mr-2' %}
+                    Edit in Django Admin
+                </a>
+                
+                <a href="{% url 'sys_users' %}" class="btn btn-outline border-blue-500 text-blue-500">
+                    {% lucide 'arrow-left' size=14 class='mr-2' %}
+                    Back to Users List
+                </a>
+                
+                {% if profile_user != request.user %}
+                <button class="btn {% if profile_user.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                        hx-post="{% url 'sys_user_toggle_active' profile_user.id %}"
+                        hx-target="#status-result"
+                        hx-swap="innerHTML">
+                    {% if profile_user.is_active %}
+                        {% lucide 'user-minus' size=14 class='mr-2' %}
+                        Deactivate User
+                    {% else %}
+                        {% lucide 'user-plus' size=14 class='mr-2' %}
+                        Activate User
+                    {% endif %}
+                </button>
+                
+                <button class="btn btn-info"
+                        hx-post="{% url 'sys_user_reset_password' profile_user.id %}"
+                        hx-target="#status-result"
+                        hx-swap="innerHTML"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-confirm="Send password reset email to this user?">
+                    {% lucide 'key' size=14 class='mr-2' %}
+                    Reset Password
+                </button>
+                
+                <button class="btn btn-accent"
+                        hx-post="{% url 'sys_user_unlock_account' profile_user.id %}"
+                        hx-target="#status-result"
+                        hx-swap="innerHTML"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-confirm="Unlock this user's account?">
+                    {% lucide 'lock-open' size=14 class='mr-2' %}
+                    Unlock Account
+                </button>
+                
+                <button class="btn btn-secondary"
+                        hx-post="{% url 'sys_user_verify_email' profile_user.id %}"
+                        hx-target="#status-result"
+                        hx-swap="innerHTML"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-confirm="Force verify all email addresses for this user?">
+                    {% lucide 'mail-check' size=14 class='mr-2' %}
+                    Verify Emails
+                </button>
+                {% endif %}
+            </div>
+            <div id="status-result" class="mt-4"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
