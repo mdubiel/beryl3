@@ -93,6 +93,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'web.context_processors.external_services',
+                'web.context_processors.user_avatar',
             ],
         },
     },
@@ -285,6 +287,60 @@ LOGGING = {
 }
 
 # MEDIA FILE CONFIGURATION 
-# This is where user-uploaded files (like our generated images) will be stored.
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Configurable storage backend (local filesystem or Google Cloud Storage)
+
+# Google Cloud Storage Configuration
+USE_GCS_STORAGE = env.bool('USE_GCS_STORAGE', default=False)
+GCS_BUCKET_NAME = env('GCS_BUCKET_NAME', default='')
+GCS_PROJECT_ID = env('GCS_PROJECT_ID', default='')
+GCS_CREDENTIALS_PATH = env('GCS_CREDENTIALS_PATH', default='')
+GCS_LOCATION = env('GCS_LOCATION', default='media')
+
+# Set up GCS credentials if path is provided
+if GCS_CREDENTIALS_PATH and os.path.exists(GCS_CREDENTIALS_PATH):
+    # Set the Google Application Credentials environment variable
+    # This is the standard way for Google libraries to find credentials
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GCS_CREDENTIALS_PATH
+
+# Media URL and storage configuration
+if not DEBUG or USE_GCS_STORAGE:
+    # Production or GCS mode
+    MEDIA_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/{GCS_LOCATION}/'
+    # Django 4.2+ uses STORAGES setting instead of DEFAULT_FILE_STORAGE
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.gcloud.GoogleCloudStorage',
+            'OPTIONS': {
+                'bucket_name': GCS_BUCKET_NAME,
+                'project_id': GCS_PROJECT_ID,
+                'querystring_auth': False,
+                'location': GCS_LOCATION,
+                # Remove default_acl for uniform bucket-level access
+                # 'default_acl': 'publicRead',
+            }
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        }
+    }
+else:
+    # Local development mode
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'local_cdn', 'media')
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'OPTIONS': {
+                'location': MEDIA_ROOT,
+                'base_url': MEDIA_URL,
+            }
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        }
+    }
+    
+# Create local media directory if it doesn't exist
+if DEBUG and not USE_GCS_STORAGE:
+    os.makedirs(os.path.join(BASE_DIR, 'local_cdn', 'media', 'collections'), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, 'local_cdn', 'media', 'items'), exist_ok=True)

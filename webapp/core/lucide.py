@@ -40,7 +40,7 @@ class LucideIcons:
     _VALID_ICONS = {
         # Navigation & Interface
         'arrow-down', 'arrow-left', 'arrow-right', 'arrow-up', 'chevron-down', 'chevron-left', 
-        'chevron-right', 'chevron-up', 'menu', 'more-horizontal', 'more-vertical', 'x', 'x-circle',
+        'chevron-right', 'chevron-up', 'menu', 'ellipsis', 'x', 'x-circle',
         'x-octagon', 'x-square', 'plus', 'plus-circle', 'plus-square', 'minus', 'check', 
         'check-circle', 'external-link', 'link', 'link-2',
         

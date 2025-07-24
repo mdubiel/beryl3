@@ -7,6 +7,154 @@
 
 /* Importing Tailwind CSS and DaisyUI */
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: emerald --default, coffee --prefersdark;
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "berylfe";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(96% 0.005 247.858);
+  --color-base-200: oklch(92% 0.008 247.858);
+  --color-base-300: oklch(85% 0.015 247.858);
+  --color-base-content: oklch(25% 0.025 257.281);
+  --color-primary: oklch(65% 0.15 260);
+  --color-primary-content: oklch(98% 0.003 247.858);
+  --color-secondary: oklch(72% 0.12 320);
+  --color-secondary-content: oklch(98% 0.003 247.858);
+  --color-accent: oklch(75% 0.18 85);
+  --color-accent-content: oklch(25% 0.025 257.281);
+  --color-neutral: oklch(35% 0.035 257.281);
+  --color-neutral-content: oklch(95% 0.005 247.858);
+  --color-info: oklch(68% 0.16 240);
+  --color-info-content: oklch(98% 0.003 247.858);
+  --color-success: oklch(65% 0.14 145);
+  --color-success-content: oklch(98% 0.003 247.858);
+  --color-warning: oklch(75% 0.16 65);
+  --color-warning-content: oklch(25% 0.025 257.281);
+  --color-error: oklch(68% 0.15 15);
+  --color-error-content: oklch(98% 0.003 247.858);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.1875rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
 }
+
+/* Bridge DaisyUI theme variables to utility classes */
+.bg-base-100 { background-color: var(--color-base-100); }
+.bg-base-200 { background-color: var(--color-base-200); }  
+.bg-base-300 { background-color: var(--color-base-300); }
+.text-base-content { color: var(--color-base-content); }
+.bg-primary { background-color: var(--color-primary); }
+.text-primary { color: var(--color-primary); }
+.text-primary-content { color: var(--color-primary-content); }
+.bg-secondary { background-color: var(--color-secondary); }
+.text-secondary { color: var(--color-secondary); }
+.text-secondary-content { color: var(--color-secondary-content); }
+.bg-accent { background-color: var(--color-accent); }
+.text-accent { color: var(--color-accent); }
+.bg-neutral { background-color: var(--color-neutral); }
+.text-neutral { color: var(--color-neutral); }
+.bg-info { background-color: var(--color-info); }
+.text-info { color: var(--color-info); }
+.bg-success { background-color: var(--color-success); }
+.text-success { color: var(--color-success); }
+.bg-warning { background-color: var(--color-warning); }
+.text-warning { color: var(--color-warning); }
+.bg-error { background-color: var(--color-error); }
+.text-error { color: var(--color-error); }
+
+/* Monospace Font Utilities for Showcase */
+.font-fira-code { font-family: 'Fira Code', monospace; }
+.font-jetbrains-mono { font-family: 'JetBrains Mono', monospace; }
+.font-source-code-pro { font-family: 'Source Code Pro', monospace; }
+.font-space-mono { font-family: 'Space Mono', monospace; }
+.font-ibm-plex-mono { font-family: 'IBM Plex Mono', monospace; }
+.font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+.font-system-mono { font-family: 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace; }
+
+/* ASCII Art Headers */
+.ascii-header {
+  font-family: 'Fira Code', monospace;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  white-space: pre;
+  font-feature-settings: "liga" 0;
+}
+
+/* Main site uses Space Mono by default */
+body {
+  font-family: 'Space Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+}
+
+/* Remove arrow from details elements */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* DaisyUI handles dropdown behavior natively - no custom CSS needed */
+
+/* Modern styling improvements */
+.divider {
+  @apply border-base-300 opacity-40;
+}
+
+/* Smooth rounded elements */
+.card {
+  @apply rounded-xl shadow-sm border border-base-300/20;
+}
+
+/* Icon backgrounds - smoother corners */
+[class*="bg-primary/20"], [class*="bg-secondary/20"], [class*="bg-accent/20"], 
+[class*="bg-info/20"], [class*="bg-success/20"], [class*="bg-warning/20"] {
+  @apply rounded-xl;
+}
+
+/* Enhanced button styling */
+.btn {
+  @apply shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+/* Smoother inputs */
+.input {
+  @apply border-base-300/50 focus:border-primary shadow-sm;
+}
+
+/* Hero section improvements */
+.ascii-header {
+  @apply drop-shadow-sm;
+}
+
+/* Button group styling */
+.btn-group {
+  @apply flex;
+}
+
+.btn-group > .btn,
+.btn-group > .dropdown > .btn {
+  @apply border-l-0 rounded-none;
+}
+
+/* First button in group */
+.btn-group > .btn:first-child,
+.btn-group > .dropdown:first-child > .btn {
+  @apply border-l rounded-l-lg;
+}
+
+/* Last button in group */
+.btn-group > .btn:last-child,
+.btn-group > .dropdown:last-child > .btn {
+  @apply rounded-r-lg;
+}
+
+
+
+

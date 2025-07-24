@@ -61,6 +61,10 @@
                     {% lucide 'package' size=14 class='inline mr-2' %} Item Types
                 </a>
                 
+                <a href="{% url 'sys_link_patterns' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'link_pattern' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'link' size=14 class='inline mr-2' %} Link Patterns
+                </a>
+                
                 <a href="{% url 'sys_activity' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'activity' size=14 class='inline mr-2' %} Activity Logs
                 </a>
@@ -71,6 +75,14 @@
                 
                 <a href="{% url 'sys_backup' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'backup' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'database' size=14 class='inline mr-2' %} Backup & Restore
+                </a>
+                
+                <a href="{% url 'sys_media_browser' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'media' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'image' size=14 class='inline mr-2' %} Media Browser
+                </a>
+                
+                <a href="{% url 'sys_settings' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'settings' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'settings' size=14 class='inline mr-2' %} Settings
                 </a>
                 
                 <div class="border-t border-gray-600 mt-3 pt-3">

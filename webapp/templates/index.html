@@ -1,65 +1,138 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load lucide %}
 
 {% block content %}
 
-        <section class="hero min-h-[40vh] bg-base-200 rounded-box mb-12 shadow-inner">
-            <div class="hero-content text-center">
-                <div class="max-w-md">
-                    <h1 class="text-5xl font-bold">Unleash Your Creativity</h1>
-                    <p class="py-6">Discover the power of our platform to organize your ideas, track your progress, and connect with a vibrant community. Start creating your personalized lists today!</p>
-                    <button class="btn btn-primary btn-lg">Register Now</button>
-                    <p class="mt-4 text-sm">Already a member? <a href="#" class="link link-primary">Login here</a></p>
+        <!-- ASCII Art Welcome -->
+        <section class="py-16 text-center">
+            <div class="ascii-header text-primary text-lg mb-8">
+██████╗ ███████╗██████╗ ██╗   ██╗██╗     ██████╗ 
+██╔══██╗██╔════╝██╔══██╗╚██╗ ██╔╝██║     ╚════██╗
+██████╔╝█████╗  ██████╔╝ ╚████╔╝ ██║      █████╔╝
+██╔══██╗██╔══╝  ██╔══██╗  ╚██╔╝  ██║      ╚═══██╗
+██████╔╝███████╗██║  ██║   ██║   ███████╗██████╔╝
+╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═════╝ 
+            </div>
+            <p class="text-base-content/80 text-lg">Built by nerds, for nerds</p>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Call to Action -->
+        <section class="py-16 text-center">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-3xl font-bold mb-6 text-primary">Ready to organize your collections?</h2>
+                <p class="text-lg text-base-content/80 mb-8">Start tracking your items, create wish lists, and share your collections with the world.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'account_signup' %}" class="btn btn-primary btn-lg">
+                        {% lucide 'user-plus' size='20' class='mr-2' %}
+                        Create Account
+                    </a>
+                    <a href="{% url 'account_login' %}" class="btn btn-outline btn-lg">
+                        {% lucide 'log-in' size='20' class='mr-2' %}
+                        Login
+                    </a>
                 </div>
             </div>
         </section>
 
-        <section class="flex flex-col items-center justify-center bg-base-200 rounded-box p-8 mb-12 shadow-inner">
-            <h2 class="text-3xl font-bold mb-4 text-center">Stay Up-to-Date</h2>
-            <p class="text-center mb-6 max-w-lg">Get notified when we publish something new, and unsubscribe at any time.</p>
-            <div class="form-control w-full max-w-sm">
-                <div class="join">
-                    <input type="email" placeholder="Your email address" class="input input-bordered join-item w-full" />
-                    <button class="btn btn-primary join-item">Subscribe</button>
+        <div class="divider"></div>
+
+        <!-- Features Showcase -->
+        <section class="py-16 bg-base-200">
+            <div class="max-w-6xl mx-auto px-4">
+                <h2 class="text-3xl font-bold text-center mb-12 text-primary">What you can do with Beryl3</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Collection Management -->
+                    <div class="card bg-base-100 shadow-lg border border-primary/20">
+                        <div class="card-body text-center">
+                            <div class="mx-auto mb-4 w-16 h-16 bg-primary/20 rounded flex items-center justify-center">
+                                {% lucide 'folder-open' size='32' class='text-primary' %}
+                            </div>
+                            <h3 class="card-title justify-center text-primary">Organize Collections</h3>
+                            <p class="text-base-content/80">Create unlimited collections for your LEGO sets, books, vinyl records, or any items you love.</p>
+                        </div>
+                    </div>
+
+                    <!-- Item Tracking -->
+                    <div class="card bg-base-100 shadow-lg border border-primary/20">
+                        <div class="card-body text-center">
+                            <div class="mx-auto mb-4 w-16 h-16 bg-secondary/20 rounded flex items-center justify-center">
+                                {% lucide 'package' size='32' class='text-secondary' %}
+                            </div>
+                            <h3 class="card-title justify-center text-secondary">Track Everything</h3>
+                            <p class="text-base-content/80">Mark items as favorites, track what you want, and organize with custom attributes and types.</p>
+                        </div>
+                    </div>
+
+                    <!-- Public Sharing -->
+                    <div class="card bg-base-100 shadow-lg border border-primary/20">
+                        <div class="card-body text-center">
+                            <div class="mx-auto mb-4 w-16 h-16 bg-accent/20 rounded flex items-center justify-center">
+                                {% lucide 'share-2' size='32' class='text-accent' %}
+                            </div>
+                            <h3 class="card-title justify-center text-accent">Share Collections</h3>
+                            <p class="text-base-content/80">Make your collections public and let others discover your amazing items.</p>
+                        </div>
+                    </div>
+
+                    <!-- Guest Reservations -->
+                    <div class="card bg-base-100 shadow-lg border border-primary/20">
+                        <div class="card-body text-center">
+                            <div class="mx-auto mb-4 w-16 h-16 bg-info/20 rounded flex items-center justify-center">
+                                {% lucide 'calendar-check' size='32' class='text-info' %}
+                            </div>
+                            <h3 class="card-title justify-center text-info">Guest Reservations</h3>
+                            <p class="text-base-content/80">Allow visitors to reserve items via email - perfect for gift registries and wish lists.</p>
+                        </div>
+                    </div>
+
+                    <!-- Activity Logging -->
+                    <div class="card bg-base-100 shadow-lg border border-primary/20">
+                        <div class="card-body text-center">
+                            <div class="mx-auto mb-4 w-16 h-16 bg-success/20 rounded flex items-center justify-center">
+                                {% lucide 'activity' size='32' class='text-success' %}
+                            </div>
+                            <h3 class="card-title justify-center text-success">Activity Tracking</h3>
+                            <p class="text-base-content/80">Keep track of all changes to your collections with detailed activity logs.</p>
+                        </div>
+                    </div>
+
+                    <!-- Flexible Data -->
+                    <div class="card bg-base-100 shadow-lg border border-primary/20">
+                        <div class="card-body text-center">
+                            <div class="mx-auto mb-4 w-16 h-16 bg-warning/20 rounded flex items-center justify-center">
+                                {% lucide 'settings' size='32' class='text-warning' %}
+                            </div>
+                            <h3 class="card-title justify-center text-warning">Flexible Structure</h3>
+                            <p class="text-base-content/80">Add custom attributes and categorize items with dynamic types that fit your needs.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="mb-12">
-            <h2 class="text-4xl font-bold text-center mb-10">Inspiring User Stories</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="card w-full bg-base-100 shadow-xl image-full">
-                    <figure><img src="https://daisyui.com/images/stock/photo-1606107557195-edcd0c8677c7.jpg" alt="User Story 1" /></figure>
-                    <div class="card-body">
-                        <h2 class="card-title">Crafting a Design System</h2>
-                        <p>Most companies try to stay ahead of the curve when it comes to visual design, but for Planetaria we needed to create a brand that would still inspire us 100 years from now when humanity has spread across our entire solar system.</p>
-                        <div class="card-actions justify-end">
-                            <button class="btn btn-primary">Read More</button>
-                        </div>
-                    </div>
-                </div>
+        <div class="divider"></div>
 
-                <div class="card w-full bg-base-100 shadow-xl image-full">
-                    <figure><img src="https://daisyui.com/images/stock/photo-1609621838510-5ad474b7d25d.jpg" alt="User Story 2" /></figure>
-                    <div class="card-body">
-                        <h2 class="card-title">Introducing Animaginay</h2>
-                        <p>When you're building a website for a company as ambitious as Planetaria, you need to make sure you have the right tools.</p>
-                        <div class="card-actions justify-end">
-                            <button class="btn btn-primary">Read More</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card w-full bg-base-100 shadow-xl image-full">
-                    <figure><img src="https://daisyui.com/images/stock/photo-1494232410408-ab058f87c534.jpg" alt="User Story 3" /></figure>
-                    <div class="card-body">
-                        <h2 class="card-title">Navigating the Cosmos</h2>
-                        <p>Our intuitive navigation system ensures that even complex data sets are easy to explore, making discoveries accessible to everyone.</p>
-                        <div class="card-actions justify-end">
-                            <button class="btn btn-primary">Read More</button>
-                        </div>
-                    </div>
-                </div>
+        <!-- Newsletter Subscription -->
+        <section class="py-16">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-3xl font-bold mb-6 text-primary">Stay Updated</h2>
+                <p class="text-lg text-base-content/80 mb-8">Get the latest updates, tips, and new features delivered to your inbox.</p>
+                
+                <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                    <input type="email" placeholder="Enter your email" class="input input-bordered flex-1" required>
+                    <button type="submit" class="btn btn-primary">
+                        {% lucide 'mail' size='20' class='mr-2' %}
+                        Subscribe
+                    </button>
+                </form>
+                
+                <p class="text-sm text-base-content/60 mt-4">
+                    No spam, unsubscribe anytime. We respect your privacy.
+                </p>
             </div>
         </section>
 

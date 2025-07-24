@@ -36,22 +36,53 @@ def dashboard_view(request):
         in_collection_count=Count('id', filter=Q(status=CollectionItem.Status.IN_COLLECTION)),
         wanted_count=Count('id', filter=Q(status=CollectionItem.Status.WANTED)),
         reserved_count=Count('id', filter=Q(status=CollectionItem.Status.RESERVED)),
+        favourite_count=Count('id', filter=Q(is_favorite=True)),
     )
 
     stats_data['total_lists'] = collections_with_counts.count()
 
     timeline_events = RecentActivity.objects.filter(subject=request.user).select_related('created_by').order_by('-created')[:6]
     total_event_count = RecentActivity.objects.filter(subject=request.user).count()
+    
+    # Get favorite items for the favorites card
+    favorite_items = user_items.filter(is_favorite=True).select_related('collection').order_by('-updated')[:6]
 
     context = {
         "stats": stats_data,
         "collection_lists": collections_with_counts, # Pass the queryset directly to the template
         "timeline_events": timeline_events, # Pass the real data
         "total_event_count": total_event_count,
+        "favorite_items": favorite_items,
     }
 
     logger.debug("Rendering dashboard for user '%s'.", request.user.username)
     return render(request, "user/dashboard.html", context)
+
+@login_required
+@log_execution_time
+def favorites_view(request):
+    """
+    Displays all favorite items for the logged-in user.
+    """
+    logger.info("Favorites view accessed by user: '%s' (ID: %s)", request.user.username, request.user.id)
+
+    favorite_items = CollectionItem.objects.filter(
+        collection__created_by=request.user,
+        is_favorite=True
+    ).select_related('collection').order_by('-updated')
+
+    # Get item types for the dropdown functionality
+    from web.models import ItemType
+    item_types = ItemType.objects.all()
+    
+    context = {
+        "favorite_items": favorite_items,
+        "total_favorites": favorite_items.count(),
+        "item_types": item_types,
+    }
+
+    logger.debug("Rendering favorites for user '%s'.", request.user.username)
+    return render(request, "user/favorites.html", context)
 
 @login_required
 @log_execution_time

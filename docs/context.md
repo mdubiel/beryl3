@@ -1,0 +1,1 @@
+I'm working on my Django application. It is using Tailwild CSS and Daisy UI for layout and it is backed up with HTMX to perform quick and nice user actions.

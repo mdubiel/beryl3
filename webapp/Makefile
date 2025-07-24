@@ -4,6 +4,7 @@
 TAILWIND_CLI = npx @tailwindcss/cli
 TAILWIND_INPUT_CSS = src/input.css
 TAILWIND_INPUT_ADMIN_CSS = src/input-admin.css
+TAILWIND_OUTPUT_CSS = static/css/tailwind.css
 TAILWIND_OUTPUT_ADMIN_CSS = static/css/tailwind-admin.css
 
 PYTHON = python

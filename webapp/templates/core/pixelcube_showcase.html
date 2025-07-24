@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% load pixelcube %}
+{% load lucide %}
+
+{% block title %}Pixel Cube Showcase{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'box' size=16 %}
+            Pixel Cube Showcase
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-12">
+
+    <!-- Header -->
+    <div class="text-center">
+        <h1 class="text-4xl font-bold text-primary mb-4">🎮 Pixel Cube Generator</h1>
+        <p class="text-lg text-base-content/80">
+            Minecraft-inspired pixelized isometric cubes with retro gaming aesthetics
+        </p>
+    </div>
+
+    <!-- Template Tag Examples -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Template Tag Usage</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body">
+                    <h3 class="card-title">Basic Usage</h3>
+                    <div class="mockup-code text-sm">
+                        <pre><code>{% templatetag openvariable %} load pixelcube {% templatetag closevariable %}
+{% templatetag openvariable %} pixelcube size='l' {% templatetag closevariable %}
+{% templatetag openvariable %} pixelcube 'm' color='#FF0000' {% templatetag closevariable %}
+{% templatetag openvariable %} pixelcube size='xl' pattern='gradient' {% templatetag closevariable %}</code></pre>
+                    </div>
+                    <div class="flex items-center gap-4 mt-4">
+                        {% pixelcube size='l' cube_count=1 %}
+                        {% pixelcube 'm' color='#FF0000' cube_count=1 %}
+                        {% pixelcube size='xl' pattern='gradient' cube_count=1 %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body">
+                    <h3 class="card-title">Multiple Cubes & Backgrounds</h3>
+                    <div class="mockup-code text-sm">
+                        <pre><code>{% templatetag openvariable %} pixelcube size='l' cube_count=3 {% templatetag closevariable %}
+{% templatetag openvariable %} pixelcube 'l' cube_count=5 background='palette' {% templatetag closevariable %}
+{% templatetag openvariable %} pixelcube 'l' min_cubes=2 max_cubes=6 {% templatetag closevariable %}</code></pre>
+                    </div>
+                    <div class="flex items-center gap-4 mt-4">
+                        {% pixelcube size='l' cube_count=3 css_class='border border-base-300' %}
+                        {% pixelcube 'l' cube_count=5 background='palette' css_class='border border-base-300' %}
+                        {% pixelcube 'l' min_cubes=2 max_cubes=6 css_class='border border-base-300' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Multiple Cubes Demo -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Multiple Cubes Gallery</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="text-center">
+                <h3 class="font-bold mb-2">1 Cube</h3>
+                {% pixelcube size='l' cube_count=1 css_class='border border-base-300' %}
+            </div>
+            <div class="text-center">
+                <h3 class="font-bold mb-2">3 Cubes</h3>
+                {% pixelcube size='l' cube_count=3 css_class='border border-base-300' %}
+            </div>
+            <div class="text-center">
+                <h3 class="font-bold mb-2">5 Cubes</h3>
+                {% pixelcube size='l' cube_count=5 css_class='border border-base-300' %}
+            </div>
+            <div class="text-center">
+                <h3 class="font-bold mb-2">Random 1-10</h3>
+                {% pixelcube size='l' min_cubes=1 max_cubes=10 css_class='border border-base-300' %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Background Options -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Background Options</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body items-center">
+                    <h3 class="card-title">Transparent</h3>
+                    <div class="bg-gradient-to-br from-gray-200 to-gray-400 p-4 rounded-lg">
+                        {% pixelcube size='l' cube_count=3 background='transparent' %}
+                    </div>
+                    <code class="text-xs mt-2">background='transparent'</code>
+                </div>
+            </div>
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body items-center">
+                    <h3 class="card-title">Palette Color</h3>
+                    {% pixelcube size='l' cube_count=3 background='palette' %}
+                    <code class="text-xs mt-2">background='palette'</code>
+                </div>
+            </div>
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body items-center">
+                    <h3 class="card-title">Custom Color</h3>
+                    {% pixelcube size='l' cube_count=3 background='#2D3748' %}
+                    <code class="text-xs mt-2">background='#2D3748'</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Size Variations -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">T-Shirt Sizes</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+            {% for size_name, dimensions in sizes.items %}
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body items-center">
+                    <h3 class="card-title text-lg">{{ size_name|upper }}</h3>
+                    <p class="text-sm opacity-70">{{ dimensions.0 }}×{{ dimensions.1 }}px</p>
+                    <div class="my-4">
+                        {% pixelcube size=size_name css_class='border border-base-300' %}
+                    </div>
+                    <div class="text-xs opacity-60">
+                        <code>size='{{ size_name }}'</code>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Pattern Variations -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Pattern Types</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {% for pattern in patterns %}
+            <div class="card bg-base-200 shadow-lg">
+                <div class="card-body items-center">
+                    <h3 class="card-title">{{ pattern|title }}</h3>
+                    <div class="my-4">
+                        {% pixelcube size='l' pattern=pattern color='#4ECDC4' %}
+                    </div>
+                    <div class="text-xs opacity-60">
+                        <code>pattern='{{ pattern }}'</code>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Color Showcase -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Gaming Color Palette</h2>
+        <div class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-4">
+            {% pixelcube size='m' color='#FF0000' alt='Red Cube' %}
+            {% pixelcube size='m' color='#00FF00' alt='Green Cube' %}
+            {% pixelcube size='m' color='#0000FF' alt='Blue Cube' %}
+            {% pixelcube size='m' color='#FFFF00' alt='Yellow Cube' %}
+            {% pixelcube size='m' color='#FF00FF' alt='Magenta Cube' %}
+            {% pixelcube size='m' color='#00FFFF' alt='Cyan Cube' %}
+            {% pixelcube size='m' color='#FF4500' alt='Orange Cube' %}
+            {% pixelcube size='m' color='#8B4513' alt='Brown Cube' %}
+            {% pixelcube size='m' color='#9932CC' alt='Purple Cube' %}
+            {% pixelcube size='m' color='#32CD32' alt='Lime Cube' %}
+            {% pixelcube size='m' color='#4169E1' alt='Royal Blue Cube' %}
+            {% pixelcube size='m' color='#DC143C' alt='Crimson Cube' %}
+            {% pixelcube size='m' color='#228B22' alt='Forest Green Cube' %}
+            {% pixelcube size='m' color='#FF6347' alt='Tomato Cube' %}
+            {% pixelcube size='m' color='#6B8E23' alt='Olive Cube' %}
+            {% pixelcube size='m' color='#800080' alt='Purple Cube' %}
+        </div>
+    </section>
+
+    <!-- Random Gallery -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Random Gallery</h2>
+        <p class="text-base-content/70 mb-6">Each refresh generates new random cubes!</p>
+        <div class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+            {% for i in "123456789012345678901234" %}
+                {% pixelcube size='s' css_class='hover:scale-125 transition-transform cursor-pointer' %}
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- API Usage -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Direct Image API</h2>
+        <div class="card bg-base-200 shadow-lg">
+            <div class="card-body">
+                <h3 class="card-title">URL Parameters</h3>
+                <p class="mb-4">Generate images directly via URL:</p>
+                <div class="mockup-code text-sm mb-4">
+                    <pre><code>/core/pixelcube/?size=l&color=FF6B35&pattern=gradient&cubes=3
+/core/pixelcube/?size=xl&pattern=mixed&background=palette
+/core/pixelcube/?color=00FF00&pattern=solid&cubes=5&background=2D3748
+/core/pixelcube/?size=m&min_cubes=2&max_cubes=6&background=transparent</code></pre>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div class="text-center">
+                        <img src="/core/pixelcube/?size=l&color=FF6B35&pattern=gradient&cubes=3" alt="API Example 1" class="mx-auto border border-base-300">
+                        <p class="text-xs mt-2 opacity-70">3 Cubes, Gradient</p>
+                    </div>
+                    <div class="text-center">
+                        <img src="/core/pixelcube/?size=l&pattern=mixed&background=palette" alt="API Example 2" class="mx-auto border border-base-300">
+                        <p class="text-xs mt-2 opacity-70">Mixed + Palette Background</p>
+                    </div>
+                    <div class="text-center">
+                        <img src="/core/pixelcube/?size=l&color=00FF00&pattern=solid&cubes=5" alt="API Example 3" class="mx-auto border border-base-300">
+                        <p class="text-xs mt-2 opacity-70">5 Green Cubes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Demo -->
+    <section>
+        <h2 class="text-2xl font-bold mb-6 text-secondary">Interactive Demo</h2>
+        <div class="card bg-base-200 shadow-lg">
+            <div class="card-body">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-bold mb-4">Controls</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="label">Size:</label>
+                                <select id="demo-size" class="select select-bordered w-full">
+                                    <option value="xs">XS (16×16)</option>
+                                    <option value="s">S (32×32)</option>
+                                    <option value="m">M (64×64)</option>
+                                    <option value="l" selected>L (128×128)</option>
+                                    <option value="xl">XL (256×256)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Number of Cubes:</label>
+                                <select id="demo-cubes" class="select select-bordered w-full">
+                                    <option value="">Random (1-10)</option>
+                                    <option value="1">1 Cube</option>
+                                    <option value="2">2 Cubes</option>
+                                    <option value="3" selected>3 Cubes</option>
+                                    <option value="5">5 Cubes</option>
+                                    <option value="7">7 Cubes</option>
+                                    <option value="10">10 Cubes</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Pattern:</label>
+                                <select id="demo-pattern" class="select select-bordered w-full">
+                                    <option value="solid">Solid</option>
+                                    <option value="mixed">Mixed</option>
+                                    <option value="gradient">Gradient</option>
+                                    <option value="random" selected>Random</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Background:</label>
+                                <select id="demo-background" class="select select-bordered w-full">
+                                    <option value="transparent" selected>Transparent</option>
+                                    <option value="palette">Random from Palette</option>
+                                    <option value="custom">Custom Color</option>
+                                </select>
+                            </div>
+                            <div id="custom-bg-color" style="display: none;">
+                                <label class="label">Background Color:</label>
+                                <input type="color" id="demo-bg-color" class="input input-bordered w-full h-12" value="#2D3748">
+                            </div>
+                            <div>
+                                <label class="label">Cube Color (optional):</label>
+                                <input type="color" id="demo-color" class="input input-bordered w-full h-12">
+                            </div>
+                            <button onclick="updateDemo()" class="btn btn-primary w-full">Generate New Cubes</button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <h3 class="font-bold mb-4">Result</h3>
+                        <div class="bg-base-100 p-8 rounded-lg border border-base-300">
+                            <img id="demo-result" src="/core/pixelcube/?size=l&pattern=random&cubes=3" alt="Demo Result" class="mx-auto">
+                        </div>
+                        <div class="mt-4">
+                            <code id="demo-url" class="text-xs bg-base-300 p-2 rounded block">/core/pixelcube/?size=l&pattern=random&cubes=3</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script>
+function updateDemo() {
+    const size = document.getElementById('demo-size').value;
+    const cubes = document.getElementById('demo-cubes').value;
+    const pattern = document.getElementById('demo-pattern').value;
+    const background = document.getElementById('demo-background').value;
+    const bgColorInput = document.getElementById('demo-bg-color');
+    const colorInput = document.getElementById('demo-color');
+    
+    let url = `/core/pixelcube/?size=${size}&pattern=${pattern}`;
+    
+    // Add cube count parameter
+    if (cubes) {
+        url += `&cubes=${cubes}`;
+    }
+    
+    // Add background parameter
+    if (background === 'custom' && bgColorInput.value) {
+        const bgColor = bgColorInput.value.replace('#', '');
+        url += `&background=${bgColor}`;
+    } else if (background !== 'transparent') {
+        url += `&background=${background}`;
+    }
+    
+    // Add cube color parameter
+    if (colorInput.value) {
+        const color = colorInput.value.replace('#', '');
+        url += `&color=${color}`;
+    }
+    
+    // Update image
+    const img = document.getElementById('demo-result');
+    img.src = url + `&_=${Date.now()}`; // Cache busting
+    
+    // Update URL display
+    document.getElementById('demo-url').textContent = url;
+}
+
+// Show/hide custom background color input
+function toggleCustomBackground() {
+    const background = document.getElementById('demo-background').value;
+    const customBgDiv = document.getElementById('custom-bg-color');
+    
+    if (background === 'custom') {
+        customBgDiv.style.display = 'block';
+    } else {
+        customBgDiv.style.display = 'none';
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listener for background dropdown
+    document.getElementById('demo-background').addEventListener('change', toggleCustomBackground);
+    
+    // Initial setup
+    toggleCustomBackground();
+    updateDemo();
+});
+</script>
+
+{% endblock %}

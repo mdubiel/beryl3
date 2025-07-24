@@ -16,7 +16,7 @@ from django.db import transaction
 
 from web.decorators import log_execution_time
 from web.forms import CollectionItemForm
-from web.models import Collection, CollectionItem, RecentActivity
+from web.models import Collection, CollectionItem, RecentActivity, ItemType
 
 logger = logging.getLogger('webapp')
 
@@ -71,9 +71,13 @@ def collection_item_detail_view(request, hash):
         collection__created_by=request.user
     )
 
+    # Get all item types for the dropdown
+    item_types = ItemType.objects.filter(is_deleted=False).order_by('display_name')
+
     context = {
         'item': item,
         'collection': item.collection, # Pass collection for convenience
+        'item_types': item_types,
     }
     logger.info("Rendering detail view for item '%s' in collection '%s'", item.name, item.collection.name)
     return render(request, 'items/item_detail.html', context)

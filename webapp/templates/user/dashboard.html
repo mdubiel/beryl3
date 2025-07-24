@@ -54,10 +54,48 @@
         <div class="stat-value">{{ stats.reserved_count }}</div>
         <div class="stat-desc">Gifts being purchased</div>
       </div>
+
     
 </div>
 {# End stats #}
 
+{# Favorites Section #}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold flex items-center gap-2">
+            {% lucide 'heart' size=24 class='text-accent' %}
+            Your Favorites
+            <span class="badge badge-sm badge-accent">{{ stats.favourite_count }}</span>
+        </h2>
+        {% if stats.favourite_count > 0 %}
+        <a href="{% url 'favorites_list' %}" class="link text-sm">
+            {% if stats.favourite_count > 6 %}View all {{ stats.favourite_count }} favorites{% else %}View favorites{% endif %}
+        </a>
+        {% endif %}
+    </div>
+    
+    {% if favorite_items %}
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {% for item in favorite_items %}
+        <div class="card bg-base-200 shadow-lg hover:shadow-xl transition-shadow image-full">
+            <figure><img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-32 object-cover" /></figure>
+            <div class="card-body p-3 justify-end">
+                <div class="card-actions">
+                    <a href="{% url 'item_detail' item.hash %}" class="btn btn-primary btn-xs w-full">
+                        {{ item.name|truncatechars:12 }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-8 opacity-60">
+        <div class="text-lg mb-2">{% lucide 'heart' size=48 class='mx-auto mb-4 opacity-30' %}</div>
+        <p>No favorite items yet. Star items to see them here!</p>
+    </div>
+    {% endif %}
+</div>
 
 {# Main content #}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -110,7 +148,7 @@
             {% if not forloop.first %}<hr class="bg-base-300"/>{% endif %}
 
             <div class="timeline-middle">
-                <div class="bg-accent rounded-full p-2">{% lucide event.icon size=14 class="text-accent-content" %}</div>
+                <div class="bg-accent p-2 rounded-full">{% lucide event.icon size=14 class="text-accent-content" %}</div>
             </div>
 
             <div class="timeline-end timeline-box">
@@ -142,7 +180,7 @@
 
 
 {# Call to action #}
-<div class="hero min-h-[300px] rounded-box overflow-hidden mt-12" style="background-image: url(https://picsum.photos/seed/cta/1200/400);">
+<div class="hero min-h-[300px] overflow-hidden mt-12" style="background-image: url(https://picsum.photos/seed/cta/1200/400);">
     <div class="hero-overlay bg-opacity-60"></div>
     <div class="hero-content text-center text-neutral-content">
       <div class="max-w-md">

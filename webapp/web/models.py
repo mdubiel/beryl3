@@ -6,6 +6,7 @@
 # pylint: disable=line-too-long
 
 import logging
+import os
 import re
 import urllib.parse
 from datetime import datetime
@@ -14,6 +15,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.files.storage import default_storage
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -77,6 +79,205 @@ class BerylModel(models.Model):
         """A method to restore a soft-deleted object."""
         self.is_deleted = False
         self.save()
+
+
+class MediaFile(BerylModel):
+    """
+    Tracks all media files uploaded to the system and their storage backend status.
+    Provides centralized media file management with storage backend tracking.
+    """
+    
+    class MediaType(models.TextChoices):
+        COLLECTION_HEADER = "COLLECTION_HEADER", _("Collection Header Image")
+        COLLECTION_ITEM = "COLLECTION_ITEM", _("Collection Item Image")
+        AVATAR = "AVATAR", _("User Avatar")
+        OTHER = "OTHER", _("Other Media")
+    
+    class StorageBackend(models.TextChoices):
+        LOCAL = "LOCAL", _("Local Filesystem")
+        GCS = "GCS", _("Google Cloud Storage")
+        S3 = "S3", _("Amazon S3")
+    
+    # Basic file information
+    file_path = models.CharField(max_length=500, verbose_name=_("File Path"))
+    original_filename = models.CharField(max_length=255, verbose_name=_("Original Filename"))
+    file_size = models.BigIntegerField(null=True, blank=True, verbose_name=_("File Size (bytes)"))
+    content_type = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Content Type"))
+    
+    # Media categorization
+    media_type = models.CharField(
+        max_length=20,
+        choices=MediaType.choices,
+        default=MediaType.OTHER,
+        verbose_name=_("Media Type"),
+        db_index=True
+    )
+    
+    # Storage tracking
+    storage_backend = models.CharField(
+        max_length=10,
+        choices=StorageBackend.choices,
+        verbose_name=_("Storage Backend"),
+        db_index=True
+    )
+    
+    # File existence tracking
+    file_exists = models.BooleanField(default=True, verbose_name=_("File Exists in Storage"))
+    last_verified = models.DateTimeField(auto_now_add=True, verbose_name=_("Last Verified"))
+    
+    # Optional metadata
+    width = models.IntegerField(null=True, blank=True, verbose_name=_("Image Width"))
+    height = models.IntegerField(null=True, blank=True, verbose_name=_("Image Height"))
+    metadata = models.JSONField(default=dict, blank=True, verbose_name=_("Additional Metadata"))
+    
+    class Meta:
+        verbose_name = _("Media File")
+        verbose_name_plural = _("Media Files")
+        ordering = ["-created"]
+        indexes = [
+            models.Index(fields=['media_type', 'storage_backend']),
+            models.Index(fields=['file_exists', 'last_verified']),
+        ]
+    
+    def __str__(self):
+        return f"{self.original_filename} ({self.get_media_type_display()})"
+    
+    @property
+    def file_url(self):
+        """
+        Get the public URL for the file. Uses standard storage URL generation
+        which works with public GCS buckets and local storage.
+        """
+        try:
+            return default_storage.url(self.file_path)
+        except Exception as e:
+            logger.error(f"Error generating URL for {self.file_path}: {str(e)}")
+            return None
+    
+    @property
+    def formatted_file_size(self):
+        """
+        Get human-readable file size
+        """
+        if not self.file_size:
+            return "Unknown"
+        
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+    
+    def verify_file_exists(self):
+        """
+        Check if the file actually exists in storage and update the status
+        """
+        try:
+            exists = default_storage.exists(self.file_path)
+            self.file_exists = exists
+            self.last_verified = datetime.now()
+            self.save(update_fields=['file_exists', 'last_verified'])
+            return exists
+        except Exception as e:
+            logger.error(f"Error verifying MediaFile {self.hash}: {str(e)}")
+            self.file_exists = False
+            self.last_verified = datetime.now()
+            self.save(update_fields=['file_exists', 'last_verified'])
+            return False
+    
+    def delete_file(self):
+        """
+        Delete the actual file from storage (not the database record)
+        """
+        try:
+            if default_storage.exists(self.file_path):
+                default_storage.delete(self.file_path)
+                self.file_exists = False
+                self.save(update_fields=['file_exists'])
+                return True
+        except Exception as e:
+            logger.error(f"Error deleting file for MediaFile {self.hash}: {str(e)}")
+        return False
+    
+    @classmethod
+    def get_storage_statistics(cls):
+        """
+        Get comprehensive statistics about media file usage
+        """
+        from django.db.models import Count, Sum, Avg, Q
+        
+        # Basic counts
+        total_files = cls.objects.count()
+        active_files = cls.objects.filter(file_exists=True).count()
+        missing_files = cls.objects.filter(file_exists=False).count()
+        
+        # Storage backend distribution
+        storage_stats = cls.objects.values('storage_backend').annotate(
+            count=Count('id'),
+            total_size=Sum('file_size')
+        ).order_by('storage_backend')
+        
+        # Media type distribution
+        type_stats = cls.objects.values('media_type').annotate(
+            count=Count('id'),
+            total_size=Sum('file_size')
+        ).order_by('media_type')
+        
+        # Size statistics
+        size_stats = cls.objects.filter(file_size__isnull=False).aggregate(
+            total_size=Sum('file_size'),
+            average_size=Avg('file_size'),
+            min_size=models.Min('file_size'),
+            max_size=models.Max('file_size')
+        )
+        
+        # Recent activity
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        last_week = timezone.now() - timedelta(days=7)
+        recent_uploads = cls.objects.filter(created__gte=last_week).count()
+        
+        return {
+            'total_files': total_files,
+            'active_files': active_files,
+            'missing_files': missing_files,
+            'storage_distribution': list(storage_stats),
+            'type_distribution': list(type_stats),
+            'size_statistics': size_stats,
+            'recent_uploads': recent_uploads,
+            'orphaned_files': cls.objects.filter(
+                Q(media_type=cls.MediaType.COLLECTION_HEADER) |
+                Q(media_type=cls.MediaType.COLLECTION_ITEM)
+            ).filter(file_exists=False).count()
+        }
+    
+    @classmethod
+    def cleanup_missing_files(cls):
+        """
+        Remove database records for files that no longer exist in storage
+        """
+        missing_files = cls.objects.filter(file_exists=False)
+        count = missing_files.count()
+        missing_files.delete()
+        return count
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save to set storage backend based on current configuration
+        """
+        if not self.storage_backend:
+            # Determine storage backend based on current settings
+            use_gcs = getattr(settings, 'USE_GCS_STORAGE', False)
+            is_production = not getattr(settings, 'DEBUG', True)
+            
+            if is_production or use_gcs:
+                self.storage_backend = self.StorageBackend.GCS
+            else:
+                self.storage_backend = self.StorageBackend.LOCAL
+        
+        super().save(*args, **kwargs)
 
 
 class ItemType(BerylModel):
@@ -615,3 +816,99 @@ class RecentActivity(BerylModel):
         actor_name = getattr(self.created_by, 'username', 'System') if self.created_by else "System"
         subject_name = getattr(self.subject, 'username', 'Unknown') if self.subject else "Unknown"
         return f"'{self.name}' by {actor_name} for {subject_name}"
+
+
+class LinkPattern(BerylModel):
+    """
+    Defines URL patterns for automatic link recognition and display
+    """
+    display_name = models.CharField(max_length=100, verbose_name=_("Display Name"))
+    url_pattern = models.CharField(max_length=255, verbose_name=_("URL Pattern"), 
+                                  help_text=_("Use * as wildcard, e.g., https://www.amazon.de/*"))
+    icon = models.CharField(max_length=50, blank=True, null=True, verbose_name=_("Lucide Icon Name"))
+    description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+    
+    class Meta:
+        verbose_name = _("Link Pattern")
+        verbose_name_plural = _("Link Patterns")
+        ordering = ["display_name"]
+    
+    def __str__(self):
+        return f"{self.display_name} ({self.url_pattern})"
+    
+    def matches_url(self, url):
+        """
+        Check if a URL matches this pattern
+        """
+        import fnmatch
+        return fnmatch.fnmatch(url.lower(), self.url_pattern.lower())
+    
+    @classmethod
+    def find_matching_pattern(cls, url):
+        """
+        Find the first matching pattern for a given URL
+        """
+        for pattern in cls.objects.filter(is_active=True):
+            if pattern.matches_url(url):
+                return pattern
+        return None
+
+
+class CollectionItemLink(BerylModel):
+    """
+    Links associated with collection items (similar to attributes)
+    """
+    item = models.ForeignKey(CollectionItem, on_delete=models.CASCADE, related_name="links", verbose_name=_("Item"))
+    url = models.URLField(max_length=2000, verbose_name=_("URL"))
+    display_name = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Display Name"))
+    link_pattern = models.ForeignKey(LinkPattern, on_delete=models.SET_NULL, blank=True, null=True, 
+                                   related_name="links", verbose_name=_("Link Pattern"))
+    order = models.IntegerField(default=0, verbose_name=_("Display Order"))
+    
+    class Meta:
+        verbose_name = _("Collection Item Link")
+        verbose_name_plural = _("Collection Item Links")
+        ordering = ["item", "order", "display_name"]
+    
+    def __str__(self):
+        return f"{self.item.name} - {self.get_display_name()}"
+    
+    def get_display_name(self):
+        """
+        Get the display name for this link
+        """
+        if self.display_name:
+            return self.display_name
+        elif self.link_pattern:
+            return self.link_pattern.display_name
+        else:
+            # Fallback: extract domain from URL
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(self.url)
+                domain = parsed.netloc.lower()
+                # Remove www. prefix
+                if domain.startswith('www.'):
+                    domain = domain[4:]
+                return domain
+            except Exception:
+                return "Link"
+    
+    def get_icon(self):
+        """
+        Get the icon for this link
+        """
+        if self.link_pattern and self.link_pattern.icon:
+            return self.link_pattern.icon
+        return "external-link"  # Default icon
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save to automatically match URL patterns
+        """
+        # Find matching pattern if not already set
+        if not self.link_pattern and self.url:
+            self.link_pattern = LinkPattern.find_matching_pattern(self.url)
+        
+        super().save(*args, **kwargs)

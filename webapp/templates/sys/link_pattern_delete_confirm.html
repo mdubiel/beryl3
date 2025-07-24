@@ -1,0 +1,123 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Delete {{ link_pattern.display_name }} - Link Pattern - Beryl Admin{% endblock %}
+
+{% block page_title %}Delete Link Pattern{% endblock %}
+{% block page_description %}Confirm deletion of "{{ link_pattern.display_name }}" pattern{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'sys_link_pattern_detail' link_pattern.id %}" class="btn btn-ghost btn-sm">
+    {% lucide 'arrow-left' size=16 class='mr-2' %}
+    Back to Pattern
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Warning -->
+    <div class="alert alert-warning">
+        <div class="flex items-center gap-2">
+            {% lucide 'triangle-alert' size=20 %}
+            <div>
+                <h3 class="font-bold">Confirm Pattern Deletion</h3>
+                <div class="text-sm">This action cannot be undone.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pattern Information -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-danger text-lg font-bold mb-4">
+                <span class="terminal-text">></span> DELETION TARGET
+            </h3>
+            
+            <div class="bg-base-200 p-4 rounded-lg">
+                <div class="flex items-center gap-3 mb-3">
+                    {% if link_pattern.icon %}
+                        {% lucide link_pattern.icon size=24 class='text-primary' %}
+                    {% else %}
+                        {% lucide 'link' size=24 class='text-gray-400' %}
+                    {% endif %}
+                    <div>
+                        <div class="font-bold text-lg">{{ link_pattern.display_name }}</div>
+                        <div class="text-sm opacity-70">{{ link_pattern.url_pattern }}</div>
+                    </div>
+                </div>
+                
+                {% if link_pattern.description %}
+                <div class="text-sm mt-2 opacity-80">
+                    {{ link_pattern.description }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Check -->
+    {% if usage_count > 0 %}
+    <div class="alert alert-error">
+        <div class="flex items-center gap-2">
+            {% lucide 'x-circle' size=20 %}
+            <div>
+                <h3 class="font-bold">Cannot Delete Pattern</h3>
+                <div class="text-sm">
+                    This pattern is currently used by <strong>{{ usage_count }}</strong> link{{ usage_count|pluralize }}.
+                    You must remove all links using this pattern before it can be deleted.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex gap-3">
+        <a href="{% url 'sys_link_pattern_detail' link_pattern.id %}" class="btn btn-primary">
+            {% lucide 'arrow-left' size=16 class='mr-2' %}
+            Back to Pattern Details
+        </a>
+        <a href="{% url 'sys_link_patterns' %}" class="btn btn-ghost">
+            Back to List
+        </a>
+    </div>
+    
+    {% else %}
+    <!-- Deletion Form -->
+    <div class="terminal-bg border-error">
+        <div class="p-6">
+            <h3 class="terminal-danger text-lg font-bold mb-4">
+                <span class="terminal-text">></span> CONFIRM DELETION
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="bg-error bg-opacity-10 border border-error p-4 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        {% lucide 'alert-circle' size=20 class='text-error mt-0.5' %}
+                        <div class="text-sm">
+                            <div class="font-bold text-error mb-2">Warning: This action is permanent</div>
+                            <ul class="list-disc list-inside space-y-1 text-error opacity-90">
+                                <li>The pattern "{{ link_pattern.display_name }}" will be permanently deleted</li>
+                                <li>Future links matching this pattern will not be automatically recognized</li>
+                                <li>This change cannot be undone</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" class="flex gap-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error">
+                        {% lucide 'trash-2' size=16 class='mr-2' %}
+                        Yes, Delete Pattern
+                    </button>
+                    <a href="{% url 'sys_link_pattern_detail' link_pattern.id %}" class="btn btn-ghost">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
