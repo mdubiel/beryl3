@@ -21,12 +21,14 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.views.decorators.http import require_http_methods
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from allauth.account.models import EmailAddress
 from django.contrib import messages
 from django.conf import settings
 
 from web.decorators import log_execution_time
-from web.models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute
+from web.models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, MediaFile
 from core.lucide import LucideIcons
 
 logger = logging.getLogger('webapp')
@@ -83,9 +85,6 @@ def sys_dashboard(request):
         'recent_user_activity': recent_user_activity,
         'visibility_stats': visibility_stats,
         'status_stats': status_stats,
-        'EXTERNAL_DB_URL': getattr(settings, 'EXTERNAL_DB_URL', None),
-        'EXTERNAL_INBUCKET_URL': getattr(settings, 'EXTERNAL_INBUCKET_URL', None),
-        'EXTERNAL_MONITORING_URL': getattr(settings, 'EXTERNAL_MONITORING_URL', None),
         'debug': settings.DEBUG,
     }
     
@@ -365,12 +364,26 @@ def sys_metrics(request):
         'item_type__display_name'
     ).annotate(count=Count('id')).order_by('-count')
     
+    # Media storage metrics
+    media_stats = MediaFile.get_storage_statistics()
+    media_metrics = {
+        'total_files': media_stats.get('total_files', 0),
+        'active_files': media_stats.get('active_files', 0),
+        'missing_files': media_stats.get('missing_files', 0),
+        'recent_uploads': media_stats.get('recent_uploads', 0),
+        'total_size': media_stats.get('size_statistics', {}).get('total_size', 0),
+        'average_size': media_stats.get('size_statistics', {}).get('average_size', 0),
+        'storage_distribution': media_stats.get('storage_distribution', []),
+        'type_distribution': media_stats.get('type_distribution', []),
+    }
+    
     context = {
         'user_metrics': user_metrics,
         'collection_metrics': collection_metrics,
         'item_metrics': item_metrics,
         'activity_metrics': activity_metrics,
         'item_type_distribution': item_type_distribution,
+        'media_metrics': media_metrics,
         'debug': settings.DEBUG,
     }
     
@@ -539,6 +552,105 @@ def sys_prometheus_metrics(request):
             f'# TYPE beryl_items_by_type gauge',
         ])
         metrics.extend(type_metrics)
+        metrics.append('')
+    
+    # Media storage metrics
+    media_stats = MediaFile.get_storage_statistics()
+    
+    # Basic media file counts
+    metrics.extend([
+        f'# HELP beryl_media_files_total Total number of media files',
+        f'# TYPE beryl_media_files_total gauge',
+        f'beryl_media_files_total {media_stats.get("total_files", 0)}',
+        f'',
+        f'# HELP beryl_media_files_active Active media files in storage',
+        f'# TYPE beryl_media_files_active gauge',
+        f'beryl_media_files_active {media_stats.get("active_files", 0)}',
+        f'',
+        f'# HELP beryl_media_files_missing Missing media files',
+        f'# TYPE beryl_media_files_missing gauge',
+        f'beryl_media_files_missing {media_stats.get("missing_files", 0)}',
+        f'',
+        f'# HELP beryl_media_uploads_recent Recent media uploads (7 days)',
+        f'# TYPE beryl_media_uploads_recent gauge',
+        f'beryl_media_uploads_recent {media_stats.get("recent_uploads", 0)}',
+        f'',
+    ])
+    
+    # Storage size metrics
+    size_stats = media_stats.get('size_statistics', {})
+    if size_stats.get('total_size'):
+        metrics.extend([
+            f'# HELP beryl_media_storage_bytes Total storage used by media files',
+            f'# TYPE beryl_media_storage_bytes gauge',
+            f'beryl_media_storage_bytes {size_stats.get("total_size", 0)}',
+            f'',
+            f'# HELP beryl_media_average_size_bytes Average media file size',
+            f'# TYPE beryl_media_average_size_bytes gauge',
+            f'beryl_media_average_size_bytes {size_stats.get("average_size", 0)}',
+            f'',
+        ])
+    
+    # Storage distribution by backend
+    storage_metrics = []
+    for storage_data in media_stats.get('storage_distribution', []):
+        backend = storage_data.get('storage_backend', '').lower()
+        count = storage_data.get('count', 0)
+        total_size = storage_data.get('total_size', 0)
+        if backend:
+            storage_metrics.append(f'beryl_media_files_by_storage{{backend="{backend}"}} {count}')
+            if total_size:
+                storage_metrics.append(f'beryl_media_storage_by_backend{{backend="{backend}"}} {total_size}')
+    
+    if storage_metrics:
+        metrics.extend([
+            f'# HELP beryl_media_files_by_storage Media files by storage backend',
+            f'# TYPE beryl_media_files_by_storage gauge',
+        ])
+        # Add file count metrics
+        for metric in storage_metrics:
+            if 'beryl_media_files_by_storage' in metric:
+                metrics.append(metric)
+        metrics.extend([
+            f'',
+            f'# HELP beryl_media_storage_by_backend Storage usage by backend',
+            f'# TYPE beryl_media_storage_by_backend gauge',
+        ])
+        # Add storage size metrics
+        for metric in storage_metrics:
+            if 'beryl_media_storage_by_backend' in metric:
+                metrics.append(metric)
+        metrics.append('')
+    
+    # Media type distribution
+    media_type_metrics = []
+    for type_data in media_stats.get('type_distribution', []):
+        media_type = type_data.get('media_type', '').lower()
+        count = type_data.get('count', 0)
+        total_size = type_data.get('total_size', 0)
+        if media_type:
+            media_type_metrics.append(f'beryl_media_files_by_type{{type="{media_type}"}} {count}')
+            if total_size:
+                media_type_metrics.append(f'beryl_media_storage_by_type{{type="{media_type}"}} {total_size}')
+    
+    if media_type_metrics:
+        metrics.extend([
+            f'# HELP beryl_media_files_by_type Media files by media type',
+            f'# TYPE beryl_media_files_by_type gauge',
+        ])
+        # Add file count metrics
+        for metric in media_type_metrics:
+            if 'beryl_media_files_by_type' in metric:
+                metrics.append(metric)
+        metrics.extend([
+            f'',
+            f'# HELP beryl_media_storage_by_type Storage usage by media type',
+            f'# TYPE beryl_media_storage_by_type gauge',
+        ])
+        # Add storage size metrics
+        for metric in media_type_metrics:
+            if 'beryl_media_storage_by_type' in metric:
+                metrics.append(metric)
         metrics.append('')
     
     # System timestamp
@@ -1143,3 +1255,693 @@ def sys_lucide_icon_search(request):
     limited_results = matching_icons[:20]
     
     return JsonResponse({'icons': limited_results})
+
+
+@application_admin_required
+@log_execution_time
+def sys_link_patterns(request):
+    """List all link patterns"""
+    logger.info("Sys link patterns list requested by user '%s' [%s]", request.user.username, request.user.id)
+    
+    link_patterns = LinkPattern.objects.all().order_by('display_name')
+    
+    # Count usage for each pattern
+    for pattern in link_patterns:
+        pattern.usage_count = pattern.links.count()
+    
+    # Find most used pattern and calculate total links
+    most_used_pattern = None
+    total_links_count = 0
+    if link_patterns:
+        most_used_pattern = max(link_patterns, key=lambda p: p.usage_count, default=None)
+        if most_used_pattern and most_used_pattern.usage_count == 0:
+            most_used_pattern = None
+        total_links_count = sum(p.usage_count for p in link_patterns)
+    
+    context = {
+        'link_patterns': link_patterns,
+        'most_used_pattern': most_used_pattern,
+        'total_links_count': total_links_count,
+    }
+    
+    return render(request, 'sys/link_patterns.html', context)
+
+
+@application_admin_required
+@log_execution_time
+def sys_link_pattern_detail(request, link_pattern_id):
+    """View details of a specific link pattern"""
+    logger.info("Sys link pattern detail requested for ID '%s' by user '%s' [%s]", link_pattern_id, request.user.username, request.user.id)
+    
+    link_pattern = get_object_or_404(LinkPattern, id=link_pattern_id)
+    recent_links = link_pattern.links.select_related('item', 'item__collection').order_by('-created')[:10]
+    
+    context = {
+        'link_pattern': link_pattern,
+        'recent_links': recent_links,
+        'usage_count': link_pattern.links.count(),
+    }
+    
+    return render(request, 'sys/link_pattern_detail.html', context)
+
+
+@application_admin_required
+@log_execution_time
+def sys_link_pattern_create(request):
+    """Create a new link pattern"""
+    logger.info("Sys link pattern create requested by user '%s' [%s]", request.user.username, request.user.id)
+    
+    if request.method == 'POST':
+        display_name = request.POST.get('display_name', '').strip()
+        url_pattern = request.POST.get('url_pattern', '').strip()
+        icon = request.POST.get('icon', '').strip()
+        description = request.POST.get('description', '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not display_name or not url_pattern:
+            messages.error(request, 'Display name and URL pattern are required.')
+            return render(request, 'sys/link_pattern_form.html', {
+                'mode': 'create',
+                'form_data': request.POST
+            })
+        
+        # Validate icon if provided
+        if icon and not LucideIcons.is_valid(icon):
+            messages.error(request, f'Icon "{icon}" is not a valid Lucide icon.')
+            return render(request, 'sys/link_pattern_form.html', {
+                'mode': 'create',
+                'form_data': request.POST
+            })
+        
+        try:
+            link_pattern = LinkPattern.objects.create(
+                display_name=display_name,
+                url_pattern=url_pattern,
+                icon=icon if icon else None,
+                description=description if description else None,
+                is_active=is_active,
+                created_by=request.user
+            )
+            logger.info("User '%s' [%s] created LinkPattern '%s' [%s]", request.user.username, request.user.id, link_pattern.display_name, link_pattern.id)
+            messages.success(request, f'Link pattern "{display_name}" created successfully.')
+            return redirect('sys_link_pattern_detail', link_pattern_id=link_pattern.id)
+            
+        except Exception as e:
+            logger.error("Error creating link pattern: %s", str(e))
+            messages.error(request, 'An error occurred while creating the link pattern.')
+    
+    return render(request, 'sys/link_pattern_form.html', {'mode': 'create'})
+
+
+@application_admin_required
+@log_execution_time
+def sys_link_pattern_update(request, link_pattern_id):
+    """Update an existing link pattern"""
+    logger.info("Sys link pattern update requested for ID '%s' by user '%s' [%s]", link_pattern_id, request.user.username, request.user.id)
+    
+    link_pattern = get_object_or_404(LinkPattern, id=link_pattern_id)
+    
+    if request.method == 'POST':
+        display_name = request.POST.get('display_name', '').strip()
+        url_pattern = request.POST.get('url_pattern', '').strip()
+        icon = request.POST.get('icon', '').strip()
+        description = request.POST.get('description', '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not display_name or not url_pattern:
+            messages.error(request, 'Display name and URL pattern are required.')
+            return render(request, 'sys/link_pattern_form.html', {
+                'mode': 'update',
+                'link_pattern': link_pattern,
+                'form_data': request.POST
+            })
+        
+        # Validate icon if provided
+        if icon and not LucideIcons.is_valid(icon):
+            messages.error(request, f'Icon "{icon}" is not a valid Lucide icon.')
+            return render(request, 'sys/link_pattern_form.html', {
+                'mode': 'update',
+                'link_pattern': link_pattern,
+                'form_data': request.POST
+            })
+        
+        try:
+            link_pattern.display_name = display_name
+            link_pattern.url_pattern = url_pattern
+            link_pattern.icon = icon if icon else None
+            link_pattern.description = description if description else None
+            link_pattern.is_active = is_active
+            link_pattern.save()
+            
+            logger.info("User '%s' [%s] updated LinkPattern '%s' [%s]", request.user.username, request.user.id, link_pattern.display_name, link_pattern.id)
+            messages.success(request, f'Link pattern "{display_name}" updated successfully.')
+            return redirect('sys_link_pattern_detail', link_pattern_id=link_pattern.id)
+            
+        except Exception as e:
+            logger.error("Error updating link pattern: %s", str(e))
+            messages.error(request, 'An error occurred while updating the link pattern.')
+    
+    return render(request, 'sys/link_pattern_form.html', {
+        'mode': 'update',
+        'link_pattern': link_pattern
+    })
+
+
+@application_admin_required
+@log_execution_time
+def sys_link_pattern_delete(request, link_pattern_id):
+    """Delete a link pattern"""
+    logger.info("Sys link pattern delete requested for ID '%s' by user '%s' [%s]", link_pattern_id, request.user.username, request.user.id)
+    
+    link_pattern = get_object_or_404(LinkPattern, id=link_pattern_id)
+    usage_count = link_pattern.links.count()
+    
+    if request.method == 'POST':
+        if usage_count > 0:
+            messages.error(request, f'Cannot delete link pattern "{link_pattern.display_name}" because it is used by {usage_count} links.')
+            return redirect('sys_link_pattern_detail', link_pattern_id=link_pattern.id)
+        
+        pattern_name = link_pattern.display_name
+        link_pattern.delete()
+        logger.info("User '%s' [%s] deleted LinkPattern '%s' [%s]", request.user.username, request.user.id, pattern_name, link_pattern_id)
+        messages.success(request, f'Link pattern "{pattern_name}" deleted successfully.')
+        return redirect('sys_link_patterns')
+    
+    return render(request, 'sys/link_pattern_delete_confirm.html', {
+        'link_pattern': link_pattern,
+        'usage_count': usage_count
+    })
+
+
+@application_admin_required
+@log_execution_time
+def sys_settings(request):
+    """System settings overview showing all configuration values"""
+    logger.info("System settings accessed by admin user '%s' [%s]", request.user.username, request.user.id)
+    
+    # Import MediaFile to get media statistics
+    from web.models import MediaFile
+    
+    # Django settings
+    django_settings = {
+        'DEBUG': getattr(settings, 'DEBUG', False),
+        'SECRET_KEY': '***HIDDEN***' if getattr(settings, 'SECRET_KEY', None) else 'Not set',
+        'ALLOWED_HOSTS': getattr(settings, 'ALLOWED_HOSTS', []),
+        'TIME_ZONE': getattr(settings, 'TIME_ZONE', 'UTC'),
+        'LANGUAGE_CODE': getattr(settings, 'LANGUAGE_CODE', 'en-us'),
+        'USE_I18N': getattr(settings, 'USE_I18N', True),
+        'USE_TZ': getattr(settings, 'USE_TZ', True),
+        'SITE_ID': getattr(settings, 'SITE_ID', 1),
+    }
+    
+    # Database settings
+    database_config = getattr(settings, 'DATABASES', {}).get('default', {})
+    database_settings = {
+        'ENGINE': database_config.get('ENGINE', 'Not configured'),
+        'NAME': database_config.get('NAME', 'Not configured'),
+        'HOST': database_config.get('HOST', 'Not configured') if database_config.get('HOST') else 'localhost',
+        'PORT': database_config.get('PORT', 'Default') if database_config.get('PORT') else 'Default',
+        'USER': '***HIDDEN***' if database_config.get('USER') else 'Not set',
+        'PASSWORD': '***HIDDEN***' if database_config.get('PASSWORD') else 'Not set',
+    }
+    
+    # Email settings
+    email_settings = {
+        'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Not configured'),
+        'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'Not configured'),
+        'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'Not configured'),
+        'EMAIL_USE_TLS': getattr(settings, 'EMAIL_USE_TLS', False),
+        'EMAIL_USE_SSL': getattr(settings, 'EMAIL_USE_SSL', False),
+        'EMAIL_HOST_USER': '***HIDDEN***' if getattr(settings, 'EMAIL_HOST_USER', None) else 'Not set',
+        'EMAIL_HOST_PASSWORD': '***HIDDEN***' if getattr(settings, 'EMAIL_HOST_PASSWORD', None) else 'Not set',
+        'DEFAULT_FROM_EMAIL': getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not configured'),
+        'USE_INBUCKET': getattr(settings, 'USE_INBUCKET', False),
+        'INBUCKET_SMTP_PORT': getattr(settings, 'INBUCKET_SMTP_PORT', 2500),
+    }
+    
+    # Media/Storage settings
+    media_settings = {
+        'USE_GCS_STORAGE': getattr(settings, 'USE_GCS_STORAGE', False),
+        'GCS_BUCKET_NAME': getattr(settings, 'GCS_BUCKET_NAME', 'Not configured'),
+        'GCS_PROJECT_ID': getattr(settings, 'GCS_PROJECT_ID', 'Not configured'),
+        'GCS_LOCATION': getattr(settings, 'GCS_LOCATION', 'media'),
+        'GCS_CREDENTIALS_PATH': getattr(settings, 'GCS_CREDENTIALS_PATH', 'Not configured'),
+        'GCS_CREDENTIALS': '***CONFIGURED***' if getattr(settings, 'GCS_CREDENTIALS', None) else 'Not set',
+        'MEDIA_URL': getattr(settings, 'MEDIA_URL', '/media/'),
+        'MEDIA_ROOT': getattr(settings, 'MEDIA_ROOT', 'Not configured'),
+        'DEFAULT_FILE_STORAGE': getattr(settings, 'DEFAULT_FILE_STORAGE', 'django.core.files.storage.FileSystemStorage'),
+    }
+    
+    # Authentication settings
+    auth_settings = {
+        'LOGIN_REDIRECT_URL': getattr(settings, 'LOGIN_REDIRECT_URL', '/'),
+        'LOGOUT_REDIRECT_URL': getattr(settings, 'LOGOUT_REDIRECT_URL', '/'),
+        'LOGIN_URL': getattr(settings, 'LOGIN_URL', '/accounts/login/'),
+        'AUTHENTICATION_BACKENDS': getattr(settings, 'AUTHENTICATION_BACKENDS', []),
+        'ACCOUNT_EMAIL_REQUIRED': getattr(settings, 'ACCOUNT_EMAIL_REQUIRED', False),
+        'ACCOUNT_USERNAME_REQUIRED': getattr(settings, 'ACCOUNT_USERNAME_REQUIRED', True),
+        'ACCOUNT_AUTHENTICATION_METHOD': getattr(settings, 'ACCOUNT_AUTHENTICATION_METHOD', 'username'),
+        'ACCOUNT_EMAIL_VERIFICATION': getattr(settings, 'ACCOUNT_EMAIL_VERIFICATION', 'optional'),
+        'ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE': getattr(settings, 'ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE', True),
+        'ACCOUNT_PASSWORD_MIN_LENGTH': getattr(settings, 'ACCOUNT_PASSWORD_MIN_LENGTH', 8),
+    }
+    
+    # Static files settings
+    static_settings = {
+        'STATIC_URL': getattr(settings, 'STATIC_URL', '/static/'),
+        'STATIC_ROOT': getattr(settings, 'STATIC_ROOT', 'Not configured'),
+        'STATICFILES_DIRS': getattr(settings, 'STATICFILES_DIRS', []),
+    }
+    
+    # Installed apps (filtered to show only main apps)
+    all_apps = getattr(settings, 'INSTALLED_APPS', [])
+    custom_apps = [app for app in all_apps if not app.startswith('django.') and not app.startswith('allauth')]
+    django_apps = [app for app in all_apps if app.startswith('django.')]
+    allauth_apps = [app for app in all_apps if app.startswith('allauth')]
+    
+    app_settings = {
+        'TOTAL_APPS': len(all_apps),
+        'CUSTOM_APPS': custom_apps,
+        'DJANGO_APPS': django_apps,
+        'ALLAUTH_APPS': allauth_apps,
+    }
+    
+    # Middleware settings
+    middleware_settings = {
+        'MIDDLEWARE': getattr(settings, 'MIDDLEWARE', []),
+        'MIDDLEWARE_COUNT': len(getattr(settings, 'MIDDLEWARE', [])),
+    }
+    
+    # Security settings
+    security_settings = {
+        'SECURE_SSL_REDIRECT': getattr(settings, 'SECURE_SSL_REDIRECT', False),
+        'SECURE_HSTS_SECONDS': getattr(settings, 'SECURE_HSTS_SECONDS', 0),
+        'SECURE_HSTS_INCLUDE_SUBDOMAINS': getattr(settings, 'SECURE_HSTS_INCLUDE_SUBDOMAINS', False),
+        'SECURE_HSTS_PRELOAD': getattr(settings, 'SECURE_HSTS_PRELOAD', False),
+        'SECURE_CONTENT_TYPE_NOSNIFF': getattr(settings, 'SECURE_CONTENT_TYPE_NOSNIFF', True),
+        'SECURE_BROWSER_XSS_FILTER': getattr(settings, 'SECURE_BROWSER_XSS_FILTER', True),
+        'SESSION_COOKIE_SECURE': getattr(settings, 'SESSION_COOKIE_SECURE', False),
+        'CSRF_COOKIE_SECURE': getattr(settings, 'CSRF_COOKIE_SECURE', False),
+    }
+    
+    # Logging settings
+    logging_config = getattr(settings, 'LOGGING', {})
+    logging_settings = {
+        'VERSION': logging_config.get('version', 'Not configured'),
+        'DISABLE_EXISTING_LOGGERS': logging_config.get('disable_existing_loggers', False),
+        'FORMATTERS_COUNT': len(logging_config.get('formatters', {})),
+        'HANDLERS_COUNT': len(logging_config.get('handlers', {})),
+        'LOGGERS_COUNT': len(logging_config.get('loggers', {})),
+        'ROOT_LEVEL': logging_config.get('root', {}).get('level', 'Not configured'),
+    }
+    
+    # Get media file statistics if available
+    media_stats = {}
+    try:
+        media_stats = MediaFile.get_storage_statistics()
+    except Exception as e:
+        logger.error("Error getting media statistics: %s", str(e))
+        media_stats = {'error': 'Could not retrieve media statistics'}
+    
+    # Environment variables (filtered for security)
+    env_vars = {}
+    safe_env_vars = [
+        'DEBUG', 'ALLOWED_HOSTS', 'USE_INBUCKET', 'USE_GCS_STORAGE', 
+        'GCS_BUCKET_NAME', 'GCS_PROJECT_ID', 'GCS_LOCATION',
+        'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USE_TLS', 'DEFAULT_FROM_EMAIL',
+        'INBUCKET_SMTP_PORT', 'DB_ENGINE', 'PG_HOST', 'PG_PORT', 'PG_DB'
+    ]
+    
+    for var in safe_env_vars:
+        value = os.environ.get(var, 'Not set')
+        if var in ['SECRET_KEY', 'PG_PASSWORD', 'PG_USER', 'EMAIL_HOST_PASSWORD', 'EMAIL_HOST_USER']:
+            value = '***HIDDEN***' if value != 'Not set' else 'Not set'
+        env_vars[var] = value
+    
+    # System information
+    system_info = {
+        'Python_Version': f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
+        'Django_Version': getattr(settings, 'DJANGO_VERSION', 'Unknown'),
+        'BASE_DIR': str(settings.BASE_DIR),
+        'Project_Dir': str(getattr(settings, 'PROJECT_DIR', 'Not configured')),
+    }
+    
+    context = {
+        'django_settings': django_settings,
+        'database_settings': database_settings,
+        'email_settings': email_settings,
+        'media_settings': media_settings,
+        'auth_settings': auth_settings,
+        'static_settings': static_settings,
+        'app_settings': app_settings,
+        'middleware_settings': middleware_settings,
+        'security_settings': security_settings,
+        'logging_settings': logging_settings,
+        'env_vars': env_vars,
+        'system_info': system_info,
+        'media_stats': media_stats,
+    }
+    
+    return render(request, 'sys/settings.html', context)
+
+
+@application_admin_required
+@log_execution_time
+def sys_media_browser(request):
+    """Media file browser and management"""
+    logger.info("System media browser accessed by admin user '%s' [%s]", request.user.username, request.user.id)
+    
+    # Get filter parameters
+    folder_filter = request.GET.get('folder', '')
+    media_type_filter = request.GET.get('media_type', '')
+    storage_filter = request.GET.get('storage', '')
+    search = request.GET.get('search', '')
+    
+    # Build queryset
+    media_files = MediaFile.objects.select_related('created_by')
+    
+    if folder_filter:
+        media_files = media_files.filter(file_path__startswith=folder_filter)
+    
+    if media_type_filter:
+        media_files = media_files.filter(media_type=media_type_filter)
+        
+    if storage_filter:
+        media_files = media_files.filter(storage_backend=storage_filter)
+    
+    if search:
+        media_files = media_files.filter(
+            Q(original_filename__icontains=search) |
+            Q(name__icontains=search) |
+            Q(file_path__icontains=search)
+        )
+    
+    media_files = media_files.order_by('-created')
+    
+    # Pagination
+    paginator = Paginator(media_files, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Get statistics
+    stats = MediaFile.get_storage_statistics()
+    
+    # Get folder structure
+    folders = []
+    try:
+        # Try to list directories in storage
+        if hasattr(default_storage, 'listdir'):
+            # For file system storage
+            dirs, files = default_storage.listdir('')
+            folders = [d for d in dirs if d in ['collections', 'items', 'avatars', 'test']]
+        else:
+            # Default folders for GCS
+            folders = ['collections', 'items', 'avatars', 'test']
+    except Exception:
+        folders = ['collections', 'items', 'avatars', 'test']
+    
+    # Check for abandoned files
+    abandoned_count = 0
+    try:
+        abandoned_count = check_abandoned_files()
+    except Exception as e:
+        logger.error("Error checking abandoned files: %s", str(e))
+    
+    context = {
+        'page_obj': page_obj,
+        'folder_filter': folder_filter,
+        'media_type_filter': media_type_filter,
+        'storage_filter': storage_filter,
+        'search': search,
+        'stats': stats,
+        'folders': folders,
+        'abandoned_count': abandoned_count,
+        'media_types': MediaFile.MediaType.choices,
+        'storage_backends': MediaFile.StorageBackend.choices,
+        'total_count': media_files.count(),
+    }
+    
+    return render(request, 'sys/media_browser.html', context)
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_media_upload(request):
+    """Upload new media file"""
+    try:
+        folder = request.POST.get('folder', '').strip()
+        file_obj = request.FILES.get('file')
+        name = request.POST.get('name', '').strip()
+        media_type = request.POST.get('media_type', MediaFile.MediaType.OTHER)
+        
+        if not file_obj:
+            messages.error(request, 'No file provided')
+            return redirect('sys_media_browser')
+        
+        if not folder:
+            messages.error(request, 'Folder selection required')
+            return redirect('sys_media_browser')
+            
+        # Validate media type
+        if media_type not in dict(MediaFile.MediaType.choices):
+            media_type = MediaFile.MediaType.OTHER
+        
+        # Clean filename
+        original_filename = file_obj.name
+        safe_filename = original_filename.replace(" ", "_").replace("/", "_")
+        file_path = f"{folder}/{safe_filename}"
+        
+        # Save file to storage
+        saved_path = default_storage.save(file_path, file_obj)
+        
+        # Get file info
+        file_size = default_storage.size(saved_path)
+        content_type = getattr(file_obj, 'content_type', 'application/octet-stream')
+        
+        # Create MediaFile record
+        media_file = MediaFile.objects.create(
+            name=name or original_filename,
+            file_path=saved_path,
+            original_filename=original_filename,
+            file_size=file_size,
+            content_type=content_type,
+            media_type=media_type,
+            created_by=request.user
+        )
+        
+        logger.info("Admin user '%s' [%s] uploaded media file '%s' [%s] to '%s'", 
+                   request.user.username, request.user.id, media_file.name, media_file.hash, saved_path)
+        
+        messages.success(request, f"File '{original_filename}' uploaded successfully")
+        return redirect('sys_media_browser')
+        
+    except Exception as e:
+        logger.error("Media upload failed: %s", str(e))
+        messages.error(request, f'Upload failed: {str(e)}')
+        return redirect('sys_media_browser')
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_media_delete(request, media_file_hash):
+    """Delete media file and its storage"""
+    media_file = get_object_or_404(MediaFile, hash=media_file_hash)
+    
+    try:
+        file_path = media_file.file_path
+        filename = media_file.original_filename
+        
+        # Delete from storage if it exists
+        if default_storage.exists(file_path):
+            default_storage.delete(file_path)
+            logger.info("Deleted file from storage: %s", file_path)
+        
+        # Delete MediaFile record
+        media_file.delete()
+        
+        logger.info("Admin user '%s' [%s] deleted media file '%s' at '%s'", 
+                   request.user.username, request.user.id, filename, file_path)
+        
+        messages.success(request, f"File '{filename}' deleted successfully")
+        return redirect('sys_media_browser')
+        
+    except Exception as e:
+        logger.error("Media deletion failed: %s", str(e))
+        messages.error(request, f'Deletion failed: {str(e)}')
+        return redirect('sys_media_browser')
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_media_cleanup_abandoned(request):
+    """Clean up abandoned files (files in storage without MediaFile records)"""
+    try:
+        cleaned_count = cleanup_abandoned_files()
+        
+        logger.info("Admin user '%s' [%s] cleaned up %d abandoned files", 
+                   request.user.username, request.user.id, cleaned_count)
+        
+        messages.success(request, f"Cleaned up {cleaned_count} abandoned files")
+        return redirect('sys_media_browser')
+        
+    except Exception as e:
+        logger.error("Abandoned files cleanup failed: %s", str(e))
+        messages.error(request, f'Cleanup failed: {str(e)}')
+        return redirect('sys_media_browser')
+
+
+@application_admin_required
+@log_execution_time
+def sys_media_verify_all(request):
+    """Verify all media files exist in storage"""
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method')
+        return redirect('sys_media_browser')
+    
+    try:
+        # Get all media files
+        all_files = MediaFile.objects.all()
+        total_files = all_files.count()
+        
+        if total_files == 0:
+            messages.info(request, 'No media files to verify')
+            return redirect('sys_media_browser')
+        
+        # Verify each file
+        verified_count = 0
+        missing_count = 0
+        error_count = 0
+        
+        for media_file in all_files:
+            try:
+                if media_file.verify_file_exists():
+                    verified_count += 1
+                else:
+                    missing_count += 1
+            except Exception as e:
+                logger.error(f"Error verifying file {media_file.hash}: {str(e)}")
+                error_count += 1
+        
+        # Log the verification results
+        logger.info("Admin user '%s' [%s] verified %d files: %d found, %d missing, %d errors", 
+                   request.user.username, request.user.id, total_files, 
+                   verified_count, missing_count, error_count)
+        
+        # Create appropriate message based on results
+        if missing_count == 0 and error_count == 0:
+            messages.success(request, f"✅ All {verified_count} files verified successfully!")
+        elif missing_count > 0 and error_count == 0:
+            messages.warning(request, f"⚠️ Verified {total_files} files: {verified_count} found, {missing_count} missing")
+        elif error_count > 0:
+            messages.error(request, f"❌ Verified {total_files} files: {verified_count} found, {missing_count} missing, {error_count} errors")
+        
+        return redirect('sys_media_browser')
+        
+    except Exception as e:
+        logger.error("Media file verification failed: %s", str(e))
+        messages.error(request, f'Verification failed: {str(e)}')
+        return redirect('sys_media_browser')
+
+
+def check_abandoned_files():
+    """Check for files in storage that don't have MediaFile records"""
+    abandoned_count = 0
+    
+    try:
+        # Get all files from storage
+        storage_files = set()
+        
+        # For different storage backends, we need different approaches
+        if hasattr(default_storage, 'bucket'):
+            # GCS storage
+            from google.cloud import storage
+            try:
+                blobs = default_storage.bucket.list_blobs()
+                for blob in blobs:
+                    # Remove the location prefix if present
+                    path = blob.name
+                    location = getattr(settings, 'GCS_LOCATION', 'media')
+                    if path.startswith(f"{location}/"):
+                        path = path[len(f"{location}/"):]
+                    storage_files.add(path)
+            except Exception as e:
+                logger.error("Error listing GCS files: %s", str(e))
+                return 0
+                
+        elif hasattr(default_storage, 'location'):
+            # Local file system storage
+            import os
+            media_root = default_storage.location
+            for root, dirs, files in os.walk(media_root):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(file_path, media_root)
+                    storage_files.add(relative_path.replace('\\', '/'))
+        
+        # Get all MediaFile paths
+        media_file_paths = set(MediaFile.objects.values_list('file_path', flat=True))
+        
+        # Find abandoned files
+        abandoned_files = storage_files - media_file_paths
+        abandoned_count = len(abandoned_files)
+        
+        return abandoned_count
+        
+    except Exception as e:
+        logger.error("Error checking abandoned files: %s", str(e))
+        return 0
+
+
+def cleanup_abandoned_files():
+    """Clean up abandoned files from storage"""
+    cleaned_count = 0
+    
+    try:
+        # Get all files from storage
+        storage_files = set()
+        
+        if hasattr(default_storage, 'bucket'):
+            # GCS storage
+            from google.cloud import storage
+            try:
+                blobs = list(default_storage.bucket.list_blobs())
+                for blob in blobs:
+                    path = blob.name
+                    location = getattr(settings, 'GCS_LOCATION', 'media')
+                    if path.startswith(f"{location}/"):
+                        path = path[len(f"{location}/"):]
+                    storage_files.add(path)
+            except Exception as e:
+                logger.error("Error listing GCS files for cleanup: %s", str(e))
+                return 0
+                
+        elif hasattr(default_storage, 'location'):
+            # Local file system storage
+            import os
+            media_root = default_storage.location
+            for root, dirs, files in os.walk(media_root):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(file_path, media_root)
+                    storage_files.add(relative_path.replace('\\', '/'))
+        
+        # Get all MediaFile paths
+        media_file_paths = set(MediaFile.objects.values_list('file_path', flat=True))
+        
+        # Find and delete abandoned files
+        abandoned_files = storage_files - media_file_paths
+        
+        for file_path in abandoned_files:
+            try:
+                if default_storage.exists(file_path):
+                    default_storage.delete(file_path)
+                    cleaned_count += 1
+                    logger.info("Cleaned up abandoned file: %s", file_path)
+            except Exception as e:
+                logger.error("Error deleting abandoned file %s: %s", file_path, str(e))
+        
+        return cleaned_count
+        
+    except Exception as e:
+        logger.error("Error during abandoned files cleanup: %s", str(e))
+        return 0

@@ -14,6 +14,7 @@ dependencies = [
     "django-htmx>=1.23.1",
     "django-nanoid-field>=0.1.4",
     "django-widget-tweaks>=1.5.0",
+    "django-storages[google]>=1.14.4",
     "faker>=37.4.0",
     "lucide>=1.1.3",
     "pillow>=11.2.1",

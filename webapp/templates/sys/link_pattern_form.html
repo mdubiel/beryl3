@@ -1,0 +1,207 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}
+    {% if mode == 'create' %}Create New Link Pattern{% else %}Edit {{ link_pattern.display_name }}{% endif %} - Beryl Admin
+{% endblock %}
+
+{% block page_title %}
+    {% if mode == 'create' %}Create New Link Pattern{% else %}Edit Link Pattern{% endif %}
+{% endblock %}
+
+{% block page_description %}
+    {% if mode == 'create' %}
+        Define a new URL pattern for automatic link recognition
+    {% else %}
+        Modify the "{{ link_pattern.display_name }}" pattern
+    {% endif %}
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% if mode == 'update' %}{% url 'sys_link_pattern_detail' link_pattern.id %}{% else %}{% url 'sys_link_patterns' %}{% endif %}" 
+   class="btn btn-ghost btn-sm">
+    {% lucide 'arrow-left' size=16 class='mr-2' %}
+    {% if mode == 'update' %}Back to Pattern{% else %}Back to List{% endif %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Form -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-6">
+                <span class="terminal-text">></span> PATTERN CONFIGURATION
+            </h3>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-bold terminal-accent">Display Name *</span>
+                                <span class="label-text-alt">How this pattern appears to users</span>
+                            </label>
+                            <input type="text" name="display_name" 
+                                   class="input input-bordered" 
+                                   value="{% if mode == 'update' %}{{ link_pattern.display_name }}{% elif form_data %}{{ form_data.display_name }}{% endif %}"
+                                   placeholder="e.g., Amazon.de, YouTube, etc."
+                                   required>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-bold terminal-accent">URL Pattern *</span>
+                                <span class="label-text-alt">Use * as wildcard for matching</span>
+                            </label>
+                            <input type="text" name="url_pattern" 
+                                   class="input input-bordered font-mono text-sm" 
+                                   value="{% if mode == 'update' %}{{ link_pattern.url_pattern }}{% elif form_data %}{{ form_data.url_pattern }}{% endif %}"
+                                   placeholder="https://www.example.com/*"
+                                   required>
+                            <div class="label">
+                                <span class="label-text-alt text-xs">
+                                    Examples: <code>https://www.amazon.de/*</code>, <code>https://*.youtube.com/watch*</code>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-bold terminal-accent">Lucide Icon</span>
+                                <span class="label-text-alt">Optional icon for visual identification</span>
+                            </label>
+                            <div class="join w-full">
+                                <input type="text" name="icon" id="icon-input"
+                                       class="input input-bordered join-item flex-1" 
+                                       value="{% if mode == 'update' %}{{ link_pattern.icon|default:'' }}{% elif form_data %}{{ form_data.icon|default:'' }}{% endif %}"
+                                       placeholder="shopping-cart, video, link, etc."
+                                       hx-post="{% url 'sys_validate_lucide_icon' %}"
+                                       hx-trigger="input changed delay:500ms"
+                                       hx-target="#icon-validation"
+                                       hx-include="#icon-input">
+                                <div class="join-item bg-base-200 border border-base-300 border-l-0 px-3 flex items-center">
+                                    <div id="icon-preview">
+                                        {% if mode == 'update' and link_pattern.icon %}
+                                            {% lucide link_pattern.icon size=16 %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="icon-validation" class="mt-1"></div>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-bold terminal-accent">Status</span>
+                            </label>
+                            <label class="cursor-pointer label justify-start gap-3">
+                                <input type="checkbox" name="is_active" class="checkbox checkbox-primary"
+                                       {% if mode == 'create' or link_pattern.is_active %}checked{% endif %}>
+                                <span class="label-text">Pattern is active and available for matching</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-bold terminal-accent">Description</span>
+                        <span class="label-text-alt">Optional description for administrative purposes</span>
+                    </label>
+                    <textarea name="description" class="textarea textarea-bordered" rows="3"
+                              placeholder="Brief description of this pattern and its intended use...">{% if mode == 'update' %}{{ link_pattern.description|default:'' }}{% elif form_data %}{{ form_data.description|default:'' }}{% endif %}</textarea>
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="btn btn-primary">
+                        {% lucide 'save' size=16 class='mr-2' %}
+                        {% if mode == 'create' %}Create Pattern{% else %}Update Pattern{% endif %}
+                    </button>
+                    
+                    <a href="{% if mode == 'update' %}{% url 'sys_link_pattern_detail' link_pattern.id %}{% else %}{% url 'sys_link_patterns' %}{% endif %}" 
+                       class="btn btn-ghost">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pattern Examples -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> PATTERN EXAMPLES
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Common Patterns:</h4>
+                    <div class="space-y-2">
+                        <div>
+                            <code class="bg-base-200 px-2 py-1 rounded">https://www.amazon.com/*</code>
+                            <div class="text-xs opacity-70 mt-1">Matches all Amazon.com URLs</div>
+                        </div>
+                        <div>
+                            <code class="bg-base-200 px-2 py-1 rounded">https://www.youtube.com/watch*</code>
+                            <div class="text-xs opacity-70 mt-1">Matches YouTube video pages</div>
+                        </div>
+                        <div>
+                            <code class="bg-base-200 px-2 py-1 rounded">https://*.github.com/*</code>
+                            <div class="text-xs opacity-70 mt-1">Matches any GitHub subdomain</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Icon Suggestions:</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            {% lucide 'shopping-cart' size=14 %}
+                            <span>shopping-cart</span>
+                            <span class="text-xs opacity-70">- E-commerce sites</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% lucide 'video' size=14 %}
+                            <span>video</span>
+                            <span class="text-xs opacity-70">- Video platforms</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% lucide 'book' size=14 %}
+                            <span>book</span>
+                            <span class="text-xs opacity-70">- Documentation, books</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% lucide 'github' size=14 %}
+                            <span>github</span>
+                            <span class="text-xs opacity-70">- Code repositories</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Update icon preview when input changes
+document.getElementById('icon-input').addEventListener('input', function() {
+    const iconName = this.value.trim();
+    const preview = document.getElementById('icon-preview');
+    
+    if (iconName) {
+        // This is a simple preview - actual validation happens server-side
+        preview.innerHTML = `<span class="opacity-50 text-xs">${iconName}</span>`;
+    } else {
+        preview.innerHTML = '';
+    }
+});
+</script>
+{% endblock %}

@@ -24,13 +24,105 @@
     </div>
 
     {# Right column #}
-    <div class="lg:col-span-2 space-y-4">
+    <div class="lg:col-span-2 space-y-4 relative">
         
-        {# Action buttons #}
+        {# Action buttons - positioned in top right corner #}
+        {% if request.user == item.collection.created_by %}
         <div class="flex items-center justify-end gap-2">
-            <a href="{% url 'item_update' item.hash %}" class="btn btn-outline btn-sm">{% lucide 'pencil' size=16 class='mr-2' %} Edit Item</a>
-            {% include "partials/_item_delete_dropdown.html" with item=item %}
+            {# Main Actions Group - Item Type, Status, Move, Edit #}
+            <div class="btn-group">
+                {# Item Type Selector #}
+                <div class="dropdown dropdown-end dropdown-bottom">
+                    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Item Type">
+                        {% if item.item_type %}
+                            {% lucide item.item_type.icon size=18 %}
+                        {% else %}
+                            {% lucide 'package' size=18 %}
+                        {% endif %}
+                    </button>
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                        <li class="menu-title"><span>Item Type</span></li>
+                        {% for item_type in item_types %}
+                        <li>
+                            {% if item.item_type == item_type %}
+                                <a class="disabled font-bold">
+                                    {% lucide item_type.icon size=16 %}
+                                    {{ item_type.display_name }}
+                                </a>
+                            {% else %}
+                                <a hx-post="{% url 'item_change_type' item.hash %}"
+                                   hx-vals='{"item_type_id": "{{ item_type.id }}"}'
+                                   hx-target="body"
+                                   hx-swap="outerHTML"
+                                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                    {% lucide item_type.icon size=16 %}
+                                    {{ item_type.display_name }}
+                                </a>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <div class="dropdown dropdown-end dropdown-bottom">
+                    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">
+                        {% lucide 'list-checks' size=18 %}
+                    </button>
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                        <li class="menu-title"><span>Change Status</span></li>
+                        {% for status_value, status_label in item.Status.choices %}
+                        <li>
+                          {% if item.status == status_value %}
+                              {# This is the currently active status. We make it disabled and bold. #}
+                              <a class="disabled font-bold">{{ status_label }}</a>
+                          {% else %}
+                              {# These are the other, clickable options with the HTMX attributes. #}
+                              <a  hx-post="{% url 'item_update_status' item.hash %}"
+                                  hx-vals='{"new_status": "{{ status_value }}"}'
+                                  hx-target="body"
+                                  hx-swap="outerHTML"
+                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                  {{ status_label }}
+                              </a>
+                          {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                {# Move/Copy dropdown #}
+                <div class="dropdown dropdown-end dropdown-bottom">
+                    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Move or Copy Item">
+                        {% lucide 'move' size=18 %}
+                    </button>
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-64 z-10">
+                        <li class="menu-title"><span>Move or Copy Item</span></li>
+                        <li>
+                            <a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
+                                {% lucide 'arrow-right-left' size=16 %}
+                                Move to another collection
+                            </a>
+                        </li>
+                        <li>
+                            <a onclick="showCopyModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
+                                {% lucide 'copy' size=16 %}
+                                Copy to another collection
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
+                    {% lucide 'pencil' size=18 %}
+                </a>
+            </div>
+
+            {# Danger Actions Group - Delete #}
+            <div class="btn-group">
+                {% include "partials/_item_delete_dropdown.html" with item=item %}
+            </div>
         </div>
+        {% endif %}
         
         {# Status Badge #}
         <div>
@@ -46,13 +138,40 @@
         </div>
 
         {# Main Details #}
-        <h1 class="text-5xl font-bold">{{ item.name }}</h1>
+        <div class="flex items-center gap-3">
+            {# Favorite star - pure star without button styling #}
+            {% if request.user == item.collection.created_by %}
+            <button class="text-2xl hover:scale-110 transition-transform" 
+                    title="{% if item.is_favorite %}Remove from favorites{% else %}Add to favorites{% endif %}"
+                    hx-post="{% url 'item_toggle_favorite' item.hash %}"
+                    hx-target="body"
+                    hx-swap="outerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                {% if item.is_favorite %}
+                    {% lucide 'star' size=24 class='text-warning fill-current' %}
+                {% else %}
+                    {% lucide 'star' size=24 class='text-base-content/30 hover:text-warning' %}
+                {% endif %}
+            </button>
+            {% endif %}
+            
+            <h1 class="text-5xl font-bold">{{ item.name }}</h1>
+        </div>
+        
         <p class="text-lg opacity-80">
             Part of the <a href="{{ collection.get_absolute_url }}" class="link">{{ collection.name }}</a> collection.
         </p>
-        <p class="pt-4">
+        <div class="pt-4">
             {{ item.description|default:"No description provided."|linebreaks }}
-        </p>
+        </div>
+
+        {# Attributes display #}
+        {% if item.item_type %}
+            {% include "partials/_item_attributes_detail.html" with item=item %}
+        {% endif %}
+
+        {# Links display #}
+        {% include "partials/_item_links_detail.html" with item=item %}
 
         {# Audit Info #}
         <div class="text-xs opacity-60 pt-8 border-t border-base-300">
@@ -60,4 +179,271 @@
         </div>
     </div>
 </div>
+
+{# Attribute edit modal #}
+<dialog id="attribute-edit-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Attribute</h3>
+        <div id="attribute-edit-modal-content">
+            <!-- Content will be loaded here via HTMX -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+{# Link edit modal #}
+<dialog id="link-edit-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Link</h3>
+        <div id="link-edit-modal-content">
+            <!-- Content will be loaded here via HTMX -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+{# Modal for move/copy operations #}
+<dialog id="move-copy-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg" id="move-copy-modal-title">Move Item</h3>
+        <div class="py-4">
+            <p class="mb-4">Select the destination collection for <span id="move-copy-item-name" class="font-semibold"></span>:</p>
+            
+            <div id="collections-loading" class="flex justify-center py-4">
+                <span class="loading loading-spinner loading-md"></span>
+            </div>
+            
+            <div id="collections-list" class="space-y-2 max-h-64 overflow-y-auto" style="display: none;">
+                <!-- Collections will be loaded here -->
+            </div>
+            
+            <div id="move-copy-error" class="alert alert-error mt-4" style="display: none;">
+                <span>Error loading collections. Please try again.</span>
+            </div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Cancel</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+{# Confirmation modal for successful operations #}
+<dialog id="confirmation-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-success">✅ Success!</h3>
+        <div class="py-4">
+            <p id="confirmation-message" class="mb-6">Operation completed successfully.</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a id="go-to-collection-link" href="#" class="btn btn-primary flex-1">
+                    {% lucide 'folder' size=16 class='mr-2' %}
+                    Go to Collection
+                </a>
+                <a id="view-item-link" href="#" class="btn btn-outline flex-1">
+                    {% lucide 'eye' size=16 class='mr-2' %}
+                    View Item Details
+                </a>
+            </div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-sm btn-ghost">Close</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+// Handle attribute form submission via HTMX events
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle attribute form errors
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        // Check if this is for an attribute form
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-attributes-')) {
+            const errorDiv = document.getElementById('attribute-form-errors');
+            const errorMessage = document.getElementById('attribute-form-error-message');
+            
+            if (errorDiv && errorMessage) {
+                if (evt.detail.xhr.status === 400 || evt.detail.xhr.status === 500) {
+                    try {
+                        const response = JSON.parse(evt.detail.xhr.responseText);
+                        if (response.error) {
+                            errorMessage.textContent = response.error;
+                            errorDiv.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        errorMessage.textContent = 'An error occurred while saving the attribute.';
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle link form errors
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        // Check if this is for a link form
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-links-')) {
+            const errorDiv = document.getElementById('link-form-errors');
+            const errorMessage = document.getElementById('link-form-error-message');
+            
+            if (errorDiv && errorMessage) {
+                if (evt.detail.xhr.status === 400 || evt.detail.xhr.status === 500) {
+                    try {
+                        const response = JSON.parse(evt.detail.xhr.responseText);
+                        if (response.error) {
+                            errorMessage.textContent = response.error;
+                            errorDiv.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        errorMessage.textContent = 'An error occurred while saving the link.';
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle successful attribute and link form submissions
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Check if this is for an attribute form and successful
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-attributes-') && evt.detail.xhr.status === 200) {
+            const modal = document.getElementById('attribute-edit-modal');
+            if (modal) {
+                modal.close();
+            }
+        }
+        
+        // Check if this is for a link form and successful
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-links-') && evt.detail.xhr.status === 200) {
+            const modal = document.getElementById('link-edit-modal');
+            if (modal) {
+                modal.close();
+            }
+        }
+    });
+});
+
+// Move/Copy Item functionality
+function showMoveModal(itemHash, itemName) {
+    document.getElementById('move-copy-modal-title').textContent = 'Move Item';
+    document.getElementById('move-copy-item-name').textContent = itemName;
+    loadCollectionsForMoveOrCopy(itemHash, 'move');
+    document.getElementById('move-copy-modal').showModal();
+}
+
+function showCopyModal(itemHash, itemName) {
+    document.getElementById('move-copy-modal-title').textContent = 'Copy Item';
+    document.getElementById('move-copy-item-name').textContent = itemName;
+    loadCollectionsForMoveOrCopy(itemHash, 'copy');
+    document.getElementById('move-copy-modal').showModal();
+}
+
+function loadCollectionsForMoveOrCopy(itemHash, action) {
+    // Reset modal state
+    document.getElementById('collections-loading').style.display = 'flex';
+    document.getElementById('collections-list').style.display = 'none';
+    document.getElementById('move-copy-error').style.display = 'none';
+    
+    // Fetch collections via HTMX-style request
+    fetch(`/items/${itemHash}/collections-for-move-copy/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('collections-loading').style.display = 'none';
+            
+            if (data.collections && data.collections.length > 0) {
+                const collectionsList = document.getElementById('collections-list');
+                collectionsList.innerHTML = '';
+                
+                data.collections.forEach(collection => {
+                    const collectionDiv = document.createElement('div');
+                    collectionDiv.className = 'flex items-center justify-between p-3 border border-base-300 rounded-lg hover:bg-base-200 cursor-pointer';
+                    collectionDiv.onclick = () => performMoveOrCopy(itemHash, collection.hash, action);
+                    
+                    collectionDiv.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="avatar">
+                                <div class="w-10 h-10 rounded">
+                                    <img src="${collection.image_url}" alt="${collection.name}" class="object-cover">
+                                </div>
+                            </div>
+                            <div>
+                                <div class="font-semibold">${collection.name}</div>
+                                <div class="text-sm opacity-70">${collection.item_count} items</div>
+                            </div>
+                        </div>
+                        <div class="btn btn-sm btn-outline">${action === 'move' ? 'Move Here' : 'Copy Here'}</div>
+                    `;
+                    
+                    collectionsList.appendChild(collectionDiv);
+                });
+                
+                document.getElementById('collections-list').style.display = 'block';
+            } else {
+                document.getElementById('move-copy-error').style.display = 'block';
+                document.getElementById('move-copy-error').querySelector('span').textContent = 'No other collections available.';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading collections:', error);
+            document.getElementById('collections-loading').style.display = 'none';
+            document.getElementById('move-copy-error').style.display = 'block';
+        });
+}
+
+function performMoveOrCopy(itemHash, targetCollectionHash, action) {
+    const url = action === 'move' 
+        ? `/items/${itemHash}/move-to-collection/`
+        : `/items/${itemHash}/copy-to-collection/`;
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                     '{{ csrf_token }}';
+    
+    const formData = new FormData();
+    formData.append('target_collection_hash', targetCollectionHash);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('move-copy-modal').close();
+        
+        if (data.success) {
+            // Show success modal
+            document.getElementById('confirmation-message').textContent = data.message;
+            document.getElementById('go-to-collection-link').href = data.collection_url;
+            document.getElementById('view-item-link').href = data.item_url;
+            document.getElementById('confirmation-modal').showModal();
+        } else {
+            alert('Error: ' + (data.message || 'Operation failed'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('move-copy-modal').close();
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+
+{% csrf_token %}
 {% endblock %}

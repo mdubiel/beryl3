@@ -24,7 +24,7 @@
 - [x] [dd516c0](https://github.com/mdubiel/beryl3/commit/dd516c0d4670d767976e18beefb0c4e5094f8a5b) As a user, I want item types to have specific, relevant attributes (e.g., Author for Books, Set Number for LEGO) so that I can record detailed information.
 - [x] [dd516c0](https://github.com/mdubiel/beryl3/commit/dd516c0d4670d767976e18beefb0c4e5094f8a5b) As a user, I want each item to have common fields like name/title, description, and images, as well as type-specific attributes (e.g., 'Series' for comics, 'Author' for books), so that I can capture all necessary details.
 - [ ] (commit: ________) As a user, when entering attribute values (like an author's name), I want to select from previously used values *or* enter a new one within the same input field (like a ComboBox) so that data entry is faster and more consistent.
-- [ ] (commit: ________) As a user, I want to move or copy items between my lists so that I can reorganize my collections easily.
+- [x] [ebe768b](https://github.com/mdubiel/beryl3/commit/ebe768b815b0c929a8bfc0bf515953bdca841053) As a user, I want to move or copy items between my lists so that I can reorganize my collections easily.
 - [ ] (commit: ________) As a user, I want reserved items to automatically become unreserved after a configurable period (with a default setting) so that items don't stay reserved indefinitely if someone forgets.
 - [ ] (commit: ________) As a user who has reserved an item on someone else's list, I want to see a list of my reservations so that I can keep track of them.
 - [ ] (commit: ________) As a user, I want to add external links (e.g., to a shop or information page) to each item so that I can easily reference related web resources.
@@ -34,19 +34,19 @@
 
 - [ ] (commit: ________) As the application owner, I want to offer a premium subscription tier so that I can monetize the application and provide enhanced features.
 - [ ] (commit: ________) As the application owner, I want the free tier to have configurable limits on the number of lists and items per list so that I can encourage users to upgrade to the premium tier.
-- [ ] (commit: xxx) As the application owner, I want to view overall application usage statistics so that I can understand growth trends and feature popularity.
+- [x] [ebe768b](https://github.com/mdubiel/beryl3/commit/ebe768b815b0c929a8bfc0bf515953bdca841053) As the application owner, I want to view overall application usage statistics so that I can understand growth trends and feature popularity.
 - [ ] (commit: ________) As the application owner, I want a dedicated financial dashboard showing key metrics like Ok, so that I can track the financial health and growth of the subscription business.
 
 # Application Administration
 
-- [ ] (commit: ________) As an application administrator, I want a dedicated view to see a list of all users, including their list/item usage (used vs. permitted), list privacy status (public/private), links to public lists, and last login date, so that I can monitor user activity and platform usage.
-- [ ] (commit: xxx) As an application administrator, I want to be able to search and filter the user list view so that I can quickly find specific users or groups of users.
+- [x] [ebe768b](https://github.com/mdubiel/beryl3/commit/ebe768b815b0c929a8bfc0bf515953bdca841053) As an application administrator, I want a dedicated view to see a list of all users, including their list/item usage (used vs. permitted), list privacy status (public/private), links to public lists, and last login date, so that I can monitor user activity and platform usage.
+- [x] [ebe768b](https://github.com/mdubiel/beryl3/commit/ebe768b815b0c929a8bfc0bf515953bdca841053) As an application administrator, I want to be able to search and filter the user list view so that I can quickly find specific users or groups of users.
 - [ ] (commit: ________) As an application administrator, I want to access searchable activity logs for all users so that I can troubleshoot issues and monitor security.
 - [ ] (commit: ________) As an application administrator, I want the ability to adjust the free tier limits (number of lists and items) for individual users so that I can grant exceptions or reward specific users.
-- [ ] (commit: xxx) As an application administrator, I want the ability to manage user credentials (e.g., reset passwords) so that I can provide support when users are locked out or need assistance.
+- [x] [ebe768b](https://github.com/mdubiel/beryl3/commit/ebe768b815b0c929a8bfc0bf515953bdca841053) As an application administrator, I want the ability to manage user credentials (e.g., reset passwords) so that I can provide support when users are locked out or need assistance.
 - [ ] (commit: ________) As an application administrator, I want a dashboard displaying key system health metrics (e.g., server load, database response time, error rates) so that I can proactively monitor application stability and performance.
 - [ ] (commit: ________) As an application administrator, I want tools to manage application backups and initiate restores so that I can ensure data integrity and recovery in case of failures.
-- [ ] (commit: ) As an application administrator, I want to have possibility to define ItemTypes and it's attributes.
+- [x] [ebe768b](https://github.com/mdubiel/beryl3/commit/ebe768b815b0c929a8bfc0bf515953bdca841053) As an application administrator, I want to have possibility to define ItemTypes and it's attributes.
 - [ ] (commit: ) As an application administrator, I want to have an option to define shortnames to links used in the system (to make them look nicelly when user adds link). I should be able to define its name ane url pattern (regexp with verification), It also should provide a list of applied shortcuts from already defined links by users.
 
 # Marketing

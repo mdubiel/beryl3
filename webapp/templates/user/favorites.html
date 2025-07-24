@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}My Favorites{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'heart' size=16 %}
+            My Favorites
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+
+{# Top navigation actions #}
+<div class="mb-8 flex items-center justify-between">
+    <h1 class="text-3xl font-bold flex items-center gap-3">
+        {% lucide 'heart' size=32 class='text-accent' %}
+        My Favorites
+        <span class="badge badge-accent badge-lg">{{ total_favorites }}</span>
+    </h1>
+    <div class="flex gap-2">
+        <a href="{% url "dashboard" %}" class="btn btn-ghost">
+            {% lucide 'arrow-left' size=16 class='mr-2' %}
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+
+{% if favorite_items %}
+{# Favorites List - same as collection detail #}
+<div class="bg-base-200 rounded-box shadow-xl p-6">
+    <ul class="divide-y divide-base-300">
+        {% for item in favorite_items %}
+            {% include "partials/_item_list_item.html" with item=item %}
+        {% endfor %}
+    </ul>
+</div>
+
+{% else %}
+{# Empty State #}
+<div class="text-center py-16">
+    <div class="mb-8">
+        {% lucide 'heart' size=96 class='mx-auto text-base-content/20' %}
+    </div>
+    <h2 class="text-2xl font-bold mb-4">No Favorites Yet</h2>
+    <p class="text-lg opacity-70 mb-8">
+        Start adding items to your favorites by clicking the star icon on any item!
+    </p>
+    <div class="flex gap-4 justify-center">
+        <a href="{% url 'collection_list' %}" class="btn btn-primary">
+            {% lucide 'layout-list' size=16 class='mr-2' %}
+            Browse Collections
+        </a>
+        <a href="{% url 'collection_create' %}" class="btn btn-outline">
+            {% lucide 'plus' size=16 class='mr-2' %}
+            Create Collection
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{# Modal for attribute editing #}
+<dialog id="attribute-edit-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Attribute</h3>
+        <div id="attribute-edit-modal-content">
+            <!-- Content will be loaded here via HTMX -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+{# Link edit modal #}
+<dialog id="link-edit-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Link</h3>
+        <div id="link-edit-modal-content">
+            <!-- Content will be loaded here via HTMX -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+<script>
+// Handle attribute and link form submission via HTMX events
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle attribute form errors
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        // Check if this is for an attribute form
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-attributes-')) {
+            const errorDiv = document.getElementById('attribute-form-errors');
+            const errorMessage = document.getElementById('attribute-form-error-message');
+            
+            if (errorDiv && errorMessage) {
+                if (evt.detail.xhr.status === 400 || evt.detail.xhr.status === 500) {
+                    try {
+                        const response = JSON.parse(evt.detail.xhr.responseText);
+                        if (response.error) {
+                            errorMessage.textContent = response.error;
+                            errorDiv.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        errorMessage.textContent = 'An error occurred while saving the attribute.';
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle link form errors
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        // Check if this is for a link form
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-links-')) {
+            const errorDiv = document.getElementById('link-form-errors');
+            const errorMessage = document.getElementById('link-form-error-message');
+            
+            if (errorDiv && errorMessage) {
+                if (evt.detail.xhr.status === 400 || evt.detail.xhr.status === 500) {
+                    try {
+                        const response = JSON.parse(evt.detail.xhr.responseText);
+                        if (response.error) {
+                            errorMessage.textContent = response.error;
+                            errorDiv.classList.remove('hidden');
+                        }
+                    } catch (e) {
+                        errorMessage.textContent = 'An error occurred while saving the link.';
+                        errorDiv.classList.remove('hidden');
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle successful attribute and link form submissions
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Check if this is for an attribute form and successful
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-attributes-') && evt.detail.xhr.status === 200) {
+            const modal = document.getElementById('attribute-edit-modal');
+            if (modal) {
+                modal.close();
+            }
+        }
+        
+        // Check if this is for a link form and successful
+        if (evt.detail.target && evt.detail.target.id && evt.detail.target.id.includes('item-links-') && evt.detail.xhr.status === 200) {
+            const modal = document.getElementById('link-edit-modal');
+            if (modal) {
+                modal.close();
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}

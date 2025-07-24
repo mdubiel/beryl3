@@ -1,10 +1,16 @@
 {% load lucide %}
 
+<div id="attribute-form-errors" class="alert alert-error hidden mb-4">
+    <span id="attribute-form-error-message"></span>
+</div>
+
 <form hx-post="{% url 'item_save_attribute' item.hash %}"
       hx-target="#item-attributes-{{ item.hash }}"
       hx-swap="outerHTML"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-      class="space-y-4">
+      class="space-y-4"
+      onsubmit="handleAttributeFormSubmit(event)"
+      id="attribute-form">
     
     {% if mode == 'add' %}
         <div class="form-control">
@@ -74,3 +80,13 @@
         <button type="button" class="btn btn-ghost" onclick="document.getElementById('attribute-edit-modal').close()">Cancel</button>
     </div>
 </form>
+
+<script>
+function handleAttributeFormSubmit(event) {
+    // Hide any previous errors
+    const errorDiv = document.getElementById('attribute-form-errors');
+    if (errorDiv) {
+        errorDiv.classList.add('hidden');
+    }
+}
+</script>

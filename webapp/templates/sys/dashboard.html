@@ -168,6 +168,10 @@
                     {% lucide 'package' size=16 class='mr-2' %}
                     Item Types
                 </a>
+                <a href="{% url 'sys_link_patterns' %}" class="btn btn-primary">
+                    {% lucide 'link' size=16 class='mr-2' %}
+                    Link Patterns
+                </a>
                 <a href="{% url 'sys_metrics' %}" class="btn btn-primary">
                     {% lucide 'trending-up' size=16 class='mr-2' %}
                     View Metrics
@@ -175,6 +179,14 @@
                 <a href="{% url 'sys_backup' %}" class="btn btn-primary">
                     {% lucide 'database' size=16 class='mr-2' %}
                     Backup System
+                </a>
+                <a href="{% url 'sys_settings' %}" class="btn btn-primary">
+                    {% lucide 'settings' size=16 class='mr-2' %}
+                    System Settings
+                </a>
+                <a href="{% url 'sys_media_browser' %}" class="btn btn-primary">
+                    {% lucide 'image' size=16 class='mr-2' %}
+                    Media Browser
                 </a>
                 {% if EXTERNAL_DB_URL %}
                 <a href="{{ EXTERNAL_DB_URL }}" target="_blank" class="btn btn-outline">

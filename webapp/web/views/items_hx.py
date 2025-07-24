@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST, require_http_methods
 
 from web.decorators import log_execution_time
-from web.models import CollectionItem, RecentActivity, ItemType, ItemAttribute
+from web.models import CollectionItem, RecentActivity, ItemType, ItemAttribute, CollectionItemLink, LinkPattern
 
 logger = logging.getLogger('webapp')
 
@@ -40,7 +40,18 @@ def update_item_status(request, hash):
         item.save(update_fields=['status'])
         logger.info("User '%s' [%s] updated CollectionItem '%s' [%s] to status '%s'", request.user.username, request.user.id, item.name, item.hash, new_status)
 
-    # Return the updated list item HTML fragment to HTMX
+    # Check if this is coming from item detail page
+    referer = request.META.get('HTTP_REFERER', '')
+    is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+    
+    if is_item_detail_page:
+        # Use HTMX redirect for item detail page
+        from django.http import HttpResponse
+        response = HttpResponse()
+        response['HX-Redirect'] = item.get_absolute_url()
+        return response
+    
+    # Return the updated list item HTML fragment to HTMX (for collection detail)
     logger.info("Returning updated item list item for item: '%s' [%s]", item.name, item.hash)
     return render(request, 'partials/_item_list_item.html', {
         'item': item,
@@ -82,7 +93,23 @@ def toggle_item_favorite(request, hash):
     )
     logger.info("Created activity log entry for %s CollectionItem '%s' [%s] by user '%s' [%s]", action, item.name, item.hash, request.user.username, request.user.id)
 
-    # Return the updated list item HTML fragment to HTMX
+    # Check if this is coming from item detail page or favorites page
+    referer = request.META.get('HTTP_REFERER', '')
+    is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+    is_favorites_page = '/favorites/' in referer
+    
+    if is_item_detail_page or is_favorites_page:
+        # Use HTMX redirect for page refresh
+        from django.http import HttpResponse
+        from django.urls import reverse
+        response = HttpResponse()
+        if is_favorites_page:
+            response['HX-Redirect'] = reverse('favorites_list')
+        else:
+            response['HX-Redirect'] = item.get_absolute_url()
+        return response
+    
+    # Return the updated list item HTML fragment to HTMX (for collection detail)
     logger.info("Returning updated item list item for item: '%s' [%s]", item.name, item.hash)
     return render(request, 'partials/_item_list_item.html', {
         'item': item,
@@ -130,7 +157,18 @@ def change_item_type(request, hash):
     logger.info("User '%s' [%s] changed CollectionItem '%s' [%s] type from '%s' to '%s'", 
                 request.user.username, request.user.id, item.name, item.hash, old_type_name, new_item_type.display_name)
 
-    # Return the updated list item HTML fragment to HTMX
+    # Check if this is coming from item detail page
+    referer = request.META.get('HTTP_REFERER', '')
+    is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+    
+    if is_item_detail_page:
+        # Use HTMX redirect for item detail page
+        from django.http import HttpResponse
+        response = HttpResponse()
+        response['HX-Redirect'] = item.get_absolute_url()
+        return response
+
+    # Return the updated list item HTML fragment to HTMX (for collection detail)
     logger.info("Returning updated item list item for item: '%s' [%s]", item.name, item.hash)
     return render(request, 'partials/_item_list_item.html', {
         'item': item,
@@ -239,7 +277,18 @@ def item_save_attribute(request, hash):
         logger.info("User '%s' [%s] saved attribute '%s' = '%s' for CollectionItem '%s' [%s]", 
                     request.user.username, request.user.id, attribute_name, attribute_value, item.name, item.hash)
 
-        # Return the updated attributes section
+        # Check if this is coming from item detail page
+        referer = request.META.get('HTTP_REFERER', '')
+        is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+        
+        if is_item_detail_page:
+            # Use HTMX redirect for item detail page
+            from django.http import HttpResponse
+            response = HttpResponse()
+            response['HX-Redirect'] = item.get_absolute_url()
+            return response
+
+        # Return the updated attributes section for collection detail
         return render(request, 'partials/_item_attributes.html', {
             'item': item,
             'item_types': ItemType.objects.all()
@@ -276,4 +325,152 @@ def item_remove_attribute(request, hash, attribute_name):
     return render(request, 'partials/_item_attributes.html', {
         'item': item,
         'item_types': ItemType.objects.all()
+    })
+
+
+@login_required
+@log_execution_time
+def item_add_link(request, hash):
+    """
+    Handles GET request to show add link form for an item.
+    """
+    logger.info("Add link form requested for item hash '%s' by user '%s' [%s]", hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to add link to item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    context = {
+        'item': item,
+        'mode': 'add'
+    }
+    
+    return render(request, 'partials/_link_form.html', context)
+
+
+@login_required
+@log_execution_time
+def item_edit_link(request, hash, link_id):
+    """
+    Handles GET request to show edit link form for an item.
+    """
+    logger.info("Edit link form requested for item hash '%s' link '%s' by user '%s' [%s]", hash, link_id, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+    link = get_object_or_404(CollectionItemLink, id=link_id, item=item)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to edit link on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    context = {
+        'item': item,
+        'link': link,
+        'mode': 'edit'
+    }
+    
+    return render(request, 'partials/_link_form.html', context)
+
+
+@login_required
+@require_POST
+@log_execution_time
+def item_save_link(request, hash):
+    """
+    Handles POST request to save a link for an item.
+    """
+    logger.info("Save link requested for item hash '%s' by user '%s' [%s]", hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to save link on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    link_id = request.POST.get('link_id')
+    url = request.POST.get('url')
+    display_name = request.POST.get('display_name', '').strip()
+
+    if not url:
+        logger.error("No URL provided")
+        return JsonResponse({'error': 'URL is required.'}, status=400)
+
+    # Validate URL
+    try:
+        from django.core.validators import URLValidator
+        validator = URLValidator()
+        validator(url)
+    except ValidationError:
+        logger.error("Invalid URL provided: %s", url)
+        return JsonResponse({'error': 'Please enter a valid URL.'}, status=400)
+
+    try:
+        if link_id:
+            # Edit existing link
+            link = get_object_or_404(CollectionItemLink, id=link_id, item=item)
+            link.url = url
+            link.display_name = display_name if display_name else None
+            # Let the model's save method handle pattern matching
+            link.link_pattern = None  # Reset to trigger pattern matching
+            link.save()
+            logger.info("User '%s' [%s] updated link '%s' for CollectionItem '%s' [%s]", 
+                        request.user.username, request.user.id, url, item.name, item.hash)
+        else:
+            # Create new link
+            link = CollectionItemLink.objects.create(
+                item=item,
+                url=url,
+                display_name=display_name if display_name else None,
+                created_by=request.user
+            )
+            logger.info("User '%s' [%s] added link '%s' to CollectionItem '%s' [%s]", 
+                        request.user.username, request.user.id, url, item.name, item.hash)
+
+        # Check if this is coming from item detail page
+        referer = request.META.get('HTTP_REFERER', '')
+        is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+        
+        if is_item_detail_page:
+            # Use HTMX redirect for item detail page
+            from django.http import HttpResponse
+            response = HttpResponse()
+            response['HX-Redirect'] = item.get_absolute_url()
+            return response
+
+        # Return the updated links section for collection detail
+        return render(request, 'partials/_item_links.html', {
+            'item': item
+        })
+
+    except Exception as e:
+        logger.error("Error saving link for CollectionItem '%s' [%s]: %s", item.name, item.hash, str(e))
+        return JsonResponse({'error': 'An error occurred while saving the link.'}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+@log_execution_time
+def item_remove_link(request, hash, link_id):
+    """
+    Handles DELETE request to remove a link from an item.
+    """
+    logger.info("Remove link requested for item hash '%s' link '%s' by user '%s' [%s]", hash, link_id, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+    link = get_object_or_404(CollectionItemLink, id=link_id, item=item)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to remove link from item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    link_display_name = link.get_display_name()
+    link.delete()
+    logger.info("User '%s' [%s] removed link '%s' from CollectionItem '%s' [%s]", 
+                request.user.username, request.user.id, link_display_name, item.name, item.hash)
+
+    # Return the updated links section
+    return render(request, 'partials/_item_links.html', {
+        'item': item
     })

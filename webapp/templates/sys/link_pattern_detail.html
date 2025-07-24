@@ -1,0 +1,255 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}{{ link_pattern.display_name }} - Link Pattern - Beryl Admin{% endblock %}
+
+{% block page_title %}Link Pattern: {{ link_pattern.display_name }}{% endblock %}
+{% block page_description %}Details and usage for URL pattern "{{ link_pattern.url_pattern }}"{% endblock %}
+
+{% block header_actions %}
+<div class="flex gap-2">
+    <a href="{% url 'sys_link_patterns' %}" class="btn btn-ghost btn-sm">
+        {% lucide 'arrow-left' size=16 class='mr-2' %}
+        Back to List
+    </a>
+    <a href="{% url 'sys_link_pattern_update' link_pattern.id %}" class="btn btn-primary btn-sm">
+        {% lucide 'pencil' size=16 class='mr-2' %}
+        Edit Pattern
+    </a>
+    <a href="{% url 'sys_link_pattern_delete' link_pattern.id %}" class="btn btn-error btn-sm">
+        {% lucide 'trash-2' size=16 class='mr-2' %}
+        Delete
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Pattern Information -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> PATTERN DETAILS
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-bold terminal-accent">DISPLAY NAME:</label>
+                        <div class="flex items-center gap-2 mt-1">
+                            {% if link_pattern.icon %}
+                                {% lucide link_pattern.icon size=20 class='text-primary' %}
+                            {% endif %}
+                            <span class="terminal-text text-lg">{{ link_pattern.display_name }}</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-bold terminal-accent">URL PATTERN:</label>
+                        <div class="mt-1">
+                            <code class="bg-base-200 px-3 py-2 rounded block text-sm">{{ link_pattern.url_pattern }}</code>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-bold terminal-accent">ICON:</label>
+                        <div class="mt-1">
+                            {% if link_pattern.icon %}
+                                <span class="badge badge-outline">{{ link_pattern.icon }}</span>
+                            {% else %}
+                                <span class="text-gray-400">No icon specified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-bold terminal-accent">STATUS:</label>
+                        <div class="mt-1">
+                            {% if link_pattern.is_active %}
+                                <span class="badge badge-success">ACTIVE</span>
+                            {% else %}
+                                <span class="badge badge-error">INACTIVE</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-bold terminal-accent">USAGE COUNT:</label>
+                        <div class="mt-1">
+                            <span class="terminal-text text-lg">{{ usage_count }}</span> link{{ usage_count|pluralize }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-bold terminal-accent">CREATED:</label>
+                        <div class="mt-1 terminal-text">
+                            {{ link_pattern.created|date:"M d, Y H:i" }}
+                            {% if link_pattern.created_by %}
+                                by {{ link_pattern.created_by.email }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if link_pattern.description %}
+            <div class="mt-6">
+                <label class="text-sm font-bold terminal-accent">DESCRIPTION:</label>
+                <div class="mt-1 terminal-text">
+                    {{ link_pattern.description }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Links Using This Pattern -->
+    {% if recent_links %}
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> RECENT USAGE
+            </h3>
+            
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ITEM</th>
+                            <th>COLLECTION</th>
+                            <th>URL</th>
+                            <th>CREATED</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for link in recent_links %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'item_detail' link.item.hash %}" class="link terminal-text">
+                                    {{ link.item.name|truncatechars:30 }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'collection_detail' link.item.collection.hash %}" class="link terminal-text">
+                                    {{ link.item.collection.name|truncatechars:25 }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ link.url }}" target="_blank" class="link text-xs">
+                                    {{ link.url|truncatechars:50 }}
+                                    {% lucide 'external-link' size=10 class='inline ml-1' %}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="text-sm terminal-text">{{ link.created|date:"M d, H:i" }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if usage_count > recent_links|length %}
+            <div class="mt-4 text-sm terminal-text opacity-70">
+                Showing {{ recent_links|length }} of {{ usage_count }} total link{{ usage_count|pluralize }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% elif usage_count == 0 %}
+    <div class="terminal-bg">
+        <div class="p-6 text-center">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> NO USAGE YET
+            </h3>
+            <div class="terminal-text opacity-60">
+                This pattern hasn't been used by any links yet.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pattern Testing -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> PATTERN TESTING
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-bold terminal-accent">TEST URL:</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="url" id="test-url" class="input input-bordered flex-1" 
+                               placeholder="Enter a URL to test against this pattern...">
+                        <button onclick="testPattern()" class="btn btn-primary">
+                            {% lucide 'play' size=16 class='mr-2' %}
+                            Test
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="test-result" class="hidden">
+                    <label class="text-sm font-bold terminal-accent">RESULT:</label>
+                    <div id="test-output" class="mt-1 p-3 rounded border"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function testPattern() {
+    const testUrl = document.getElementById('test-url').value.trim();
+    const pattern = '{{ link_pattern.url_pattern|escapejs }}';
+    const resultDiv = document.getElementById('test-result');
+    const outputDiv = document.getElementById('test-output');
+    
+    if (!testUrl) {
+        alert('Please enter a URL to test');
+        return;
+    }
+    
+    // Simple pattern matching (fnmatch-like)
+    const regexPattern = pattern
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.');
+    
+    const regex = new RegExp('^' + regexPattern + '$', 'i');
+    const matches = regex.test(testUrl);
+    
+    resultDiv.classList.remove('hidden');
+    
+    if (matches) {
+        outputDiv.className = 'mt-1 p-3 rounded border border-success bg-success bg-opacity-10';
+        outputDiv.innerHTML = `
+            <div class="flex items-center gap-2 text-success">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <strong>MATCH:</strong> URL matches this pattern
+            </div>`;
+    } else {
+        outputDiv.className = 'mt-1 p-3 rounded border border-error bg-error bg-opacity-10';
+        outputDiv.innerHTML = `
+            <div class="flex items-center gap-2 text-error">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+                <strong>NO MATCH:</strong> URL does not match this pattern
+            </div>`;
+    }
+}
+
+// Allow Enter key to trigger test
+document.getElementById('test-url').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        testPattern();
+    }
+});
+</script>
+{% endblock %}

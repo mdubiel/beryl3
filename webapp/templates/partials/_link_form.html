@@ -1,0 +1,70 @@
+{% load lucide %}
+
+<div id="link-form-errors" class="alert alert-error hidden mb-4">
+    <span id="link-form-error-message"></span>
+</div>
+
+<form hx-post="{% url 'item_save_link' item.hash %}"
+      hx-target="#item-links-{{ item.hash }}"
+      hx-swap="outerHTML"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      class="space-y-4"
+      onsubmit="handleLinkFormSubmit(event)"
+      id="link-form">
+    
+    {% if mode == 'edit' %}
+        <input type="hidden" name="link_id" value="{{ link.id }}">
+    {% endif %}
+    
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text">URL</span>
+            <span class="label-text-alt">Full web address (https://...)</span>
+        </label>
+        <input type="url" name="url" class="input input-bordered w-full" 
+               value="{% if mode == 'edit' %}{{ link.url }}{% endif %}" 
+               placeholder="https://www.amazon.de/..." required>
+    </div>
+    
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text">Custom Display Name (Optional)</span>
+            <span class="label-text-alt">Leave empty to auto-detect from URL</span>
+        </label>
+        <input type="text" name="display_name" class="input input-bordered w-full" 
+               value="{% if mode == 'edit' %}{{ link.display_name|default:'' }}{% endif %}" 
+               placeholder="e.g., Product Page, Manual, Review">
+    </div>
+    
+    {% if mode == 'edit' and link.link_pattern %}
+    <div class="alert alert-info">
+        <div class="flex items-center gap-2">
+            {% lucide link.link_pattern.icon size=16 %}
+            <span class="text-sm">
+                Recognized as: <strong>{{ link.link_pattern.display_name }}</strong>
+                {% if link.link_pattern.description %}
+                    <br><span class="opacity-70">{{ link.link_pattern.description }}</span>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">
+            {% lucide 'save' size=16 class='mr-2' %}
+            Save Link
+        </button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('link-edit-modal').close()">Cancel</button>
+    </div>
+</form>
+
+<script>
+function handleLinkFormSubmit(event) {
+    // Hide any previous errors
+    const errorDiv = document.getElementById('link-form-errors');
+    if (errorDiv) {
+        errorDiv.classList.add('hidden');
+    }
+}
+</script>

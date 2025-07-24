@@ -1,0 +1,64 @@
+{% load lucide %}
+
+<div class="mt-4" id="item-links-{{ item.hash }}">
+    {% if item.links.all or request.user == item.collection.created_by %}
+        {# Links header with Add button #}
+        <div class="flex items-center justify-between mb-2">
+            <h4 class="text-sm font-semibold text-base-content">Links</h4>
+            {% if request.user == item.collection.created_by %}
+            <button class="badge badge-primary badge-sm hover:badge-primary-focus cursor-pointer"
+                    title="Add new link"
+                    hx-get="{% url 'item_add_link' item.hash %}"
+                    hx-target="#link-edit-modal-content"
+                    hx-trigger="click"
+                    onclick="document.getElementById('link-edit-modal').showModal()">
+                {% lucide 'plus' size=12 class='mr-1' %}
+                Add Link
+            </button>
+            {% endif %}
+        </div>
+        
+        {% if item.links.all %}
+        <div class="flex flex-wrap gap-1 max-w-2xl">
+            {% for link in item.links.all %}
+            <div class="inline-flex items-center gap-1 mr-2 mb-1">
+                <a href="{{ link.url }}" target="_blank" class="text-xs flex items-center gap-1 hover:text-primary hover:underline" title="{{ link.get_display_name }}: {{ link.url }}">
+                    {% lucide link.get_icon size=10 %}
+                    {{ link.get_display_name }}
+                </a>
+                {% if request.user == item.collection.created_by %}
+                <div class="dropdown dropdown-end flex-shrink-0 ml-1">
+                    <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Link Actions">
+                        {% lucide 'ellipsis' size=12 %}
+                    </button>
+                    <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-10">
+                        <li>
+                            <a class="text-xs py-1 px-2"
+                               hx-get="{% url 'item_edit_link' item.hash link.id %}"
+                               hx-target="#link-edit-modal-content"
+                               hx-trigger="click"
+                               onclick="document.getElementById('link-edit-modal').showModal()">
+                                {% lucide 'pencil' size=12 %}
+                                Edit
+                            </a>
+                        </li>
+                        <li>
+                            <a class="text-xs py-1 px-2 text-error"
+                               hx-delete="{% url 'item_remove_link' item.hash link.id %}"
+                               hx-target="#item-links-{{ item.hash }}"
+                               hx-swap="outerHTML"
+                               hx-confirm="Remove {{ link.get_display_name }}?"
+                               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                {% lucide 'trash-2' size=12 %}
+                                Delete
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endif %}
+</div>

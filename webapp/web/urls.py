@@ -43,6 +43,9 @@ urlpatterns = [
 
     # Recent activity
     path('activity/', user.recent_activity_view, name='recent_activity_list'),
+    
+    # User favorites
+    path('favorites/', user.favorites_view, name='favorites_list'),
 
     # HX actions
     path('collections/<str:hash>/update-visibility/', collection_hx.update_collection_visibility, name='collection_update_visibility'),
@@ -53,6 +56,12 @@ urlpatterns = [
     path('items/<str:hash>/edit-attribute/<str:attribute_name>/', items_hx.item_edit_attribute, name='item_edit_attribute'),
     path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
     path('items/<str:hash>/remove-attribute/<str:attribute_name>/', items_hx.item_remove_attribute, name='item_remove_attribute'),
+    
+    # Item link management
+    path('items/<str:hash>/add-link/', items_hx.item_add_link, name='item_add_link'),
+    path('items/<str:hash>/edit-link/<int:link_id>/', items_hx.item_edit_link, name='item_edit_link'),
+    path('items/<str:hash>/save-link/', items_hx.item_save_link, name='item_save_link'),
+    path('items/<str:hash>/remove-link/<int:link_id>/', items_hx.item_remove_link, name='item_remove_link'),
 
     # Item move/copy operations
     path('items/<str:item_hash>/move/', items.move_item_to_collection, name='move_item'),
@@ -71,6 +80,12 @@ urlpatterns = [
     path('sys/metrics/', sys.sys_metrics, name='sys_metrics'),
     path('sys/metrics/prometheus/', sys.sys_prometheus_metrics, name='sys_prometheus_metrics'),
     path('sys/backup/', sys.sys_backup, name='sys_backup'),
+    path('sys/settings/', sys.sys_settings, name='sys_settings'),
+    path('sys/media/', sys.sys_media_browser, name='sys_media_browser'),
+    path('sys/media/upload/', sys.sys_media_upload, name='sys_media_upload'),
+    path('sys/media/delete/<str:media_file_hash>/', sys.sys_media_delete, name='sys_media_delete'),
+    path('sys/media/cleanup-abandoned/', sys.sys_media_cleanup_abandoned, name='sys_media_cleanup_abandoned'),
+    path('sys/media/verify-all/', sys.sys_media_verify_all, name='sys_media_verify_all'),
     
     # System HTMX endpoints
     path('sys/users/<int:user_id>/toggle-active/', sys.sys_user_toggle_active, name='sys_user_toggle_active'),
@@ -90,6 +105,13 @@ urlpatterns = [
     path('sys/item-types/<int:item_type_id>/attributes/create/', sys.sys_item_attribute_create, name='sys_item_attribute_create'),
     path('sys/attributes/<int:attribute_id>/update/', sys.sys_item_attribute_update, name='sys_item_attribute_update'),
     path('sys/attributes/<int:attribute_id>/delete/', sys.sys_item_attribute_delete, name='sys_item_attribute_delete'),
+    
+    # Link pattern management
+    path('sys/link-patterns/', sys.sys_link_patterns, name='sys_link_patterns'),
+    path('sys/link-patterns/<int:link_pattern_id>/', sys.sys_link_pattern_detail, name='sys_link_pattern_detail'),
+    path('sys/link-patterns/create/', sys.sys_link_pattern_create, name='sys_link_pattern_create'),
+    path('sys/link-patterns/<int:link_pattern_id>/update/', sys.sys_link_pattern_update, name='sys_link_pattern_update'),
+    path('sys/link-patterns/<int:link_pattern_id>/delete/', sys.sys_link_pattern_delete, name='sys_link_pattern_delete'),
     
     # HTMX endpoints
     path('sys/validate-lucide-icon/', sys.sys_validate_lucide_icon, name='sys_validate_lucide_icon'),

@@ -220,6 +220,145 @@
         </div>
     </div>
 
+    <!-- Media Storage Metrics -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="text-lg font-bold terminal-accent mb-4">
+                <span class="terminal-text">></span> MEDIA STORAGE METRICS
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'database' size=18 class='text-primary' %}
+                        <div class="stat-title">Total Files</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ media_metrics.total_files }}</div>
+                    <div class="stat-desc">{{ media_metrics.active_files }} active</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'hard-drive' size=18 class='text-primary' %}
+                        <div class="stat-title">Storage Used</div>
+                    </div>
+                    <div class="stat-value text-primary text-sm">
+                        {% if media_metrics.total_size %}
+                            {{ media_metrics.total_size|filesizeformat }}
+                        {% else %}
+                            0 B
+                        {% endif %}
+                    </div>
+                    <div class="stat-desc">
+                        Avg: {% if media_metrics.average_size %}{{ media_metrics.average_size|filesizeformat }}{% else %}N/A{% endif %}
+                    </div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'upload' size=18 class='text-primary' %}
+                        <div class="stat-title">Recent Uploads</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ media_metrics.recent_uploads }}</div>
+                    <div class="stat-desc">Last 7 days</div>
+                </div>
+                
+                {% if media_metrics.missing_files > 0 %}
+                <div class="stat border border-error shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'alert-triangle' size=18 class='text-error' %}
+                        <div class="stat-title">Missing Files</div>
+                    </div>
+                    <div class="stat-value text-error">{{ media_metrics.missing_files }}</div>
+                    <div class="stat-desc">Requires attention</div>
+                </div>
+                {% else %}
+                <div class="stat border border-success shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'check' size=18 class='text-success' %}
+                        <div class="stat-title">File Integrity</div>
+                    </div>
+                    <div class="stat-value text-success">100%</div>
+                    <div class="stat-desc">All files present</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Storage Distribution -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Storage Backends -->
+                <div>
+                    <h5 class="terminal-accent text-sm mb-3">Storage Backends:</h5>
+                    <div class="space-y-2">
+                        {% for storage in media_metrics.storage_distribution %}
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                {% if storage.storage_backend == "GCS" %}
+                                    {% lucide 'cloud' size=14 class='text-primary' %}
+                                {% elif storage.storage_backend == "S3" %}
+                                    {% lucide 'cloud' size=14 class='text-accent' %}
+                                {% else %}
+                                    {% lucide 'hard-drive' size=14 class='text-secondary' %}
+                                {% endif %}
+                                <span class="terminal-text text-sm">{{ storage.storage_backend }}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 bg-primary bg-opacity-20 h-2">
+                                    <div class="bg-primary h-2" 
+                                         style="width: {% if media_metrics.total_files > 0 %}{% widthratio storage.count media_metrics.total_files 100 %}{% else %}0{% endif %}%"></div>
+                                </div>
+                                <span class="terminal-accent text-xs font-mono">{{ storage.count }}</span>
+                                {% if storage.total_size %}
+                                <span class="terminal-text text-xs">({{ storage.total_size|filesizeformat }})</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="terminal-text opacity-60 text-center">// No storage data available</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Media Types -->
+                <div>
+                    <h5 class="terminal-accent text-sm mb-3">Media Types:</h5>
+                    <div class="space-y-2">
+                        {% for type_data in media_metrics.type_distribution %}
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                {% if type_data.media_type == "COLLECTION_HEADER" %}
+                                    {% lucide 'image' size=14 class='text-primary' %}
+                                    <span class="terminal-text text-sm">Headers</span>
+                                {% elif type_data.media_type == "COLLECTION_ITEM" %}
+                                    {% lucide 'archive' size=14 class='text-secondary' %}
+                                    <span class="terminal-text text-sm">Items</span>
+                                {% elif type_data.media_type == "AVATAR" %}
+                                    {% lucide 'user' size=14 class='text-accent' %}
+                                    <span class="terminal-text text-sm">Avatars</span>
+                                {% else %}
+                                    {% lucide 'file' size=14 class='text-base-content/50' %}
+                                    <span class="terminal-text text-sm">Other</span>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 bg-primary bg-opacity-20 h-2">
+                                    <div class="bg-primary h-2" 
+                                         style="width: {% if media_metrics.total_files > 0 %}{% widthratio type_data.count media_metrics.total_files 100 %}{% else %}0{% endif %}%"></div>
+                                </div>
+                                <span class="terminal-accent text-xs font-mono">{{ type_data.count }}</span>
+                                {% if type_data.total_size %}
+                                <span class="terminal-text text-xs">({{ type_data.total_size|filesizeformat }})</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="terminal-text opacity-60 text-center">// No media type data available</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Performance Indicators -->
     <div class="terminal-bg">
         <div class="p-6">
