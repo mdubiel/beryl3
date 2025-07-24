@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'web.apps.WebConfig',
     'api.apps.ApiConfig',
-    
 
 ]
 
@@ -286,7 +285,7 @@ LOGGING = {
     },
 }
 
-# MEDIA FILE CONFIGURATION 
+# MEDIA FILE CONFIGURATION
 # Configurable storage backend (local filesystem or Google Cloud Storage)
 
 # Google Cloud Storage Configuration
@@ -339,8 +338,13 @@ else:
             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
         }
     }
-    
+
 # Create local media directory if it doesn't exist
 if DEBUG and not USE_GCS_STORAGE:
     os.makedirs(os.path.join(BASE_DIR, 'local_cdn', 'media', 'collections'), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, 'local_cdn', 'media', 'items'), exist_ok=True)
+
+# External service URLs for sys panel
+EXTERNAL_DB_URL = env('EXTERNAL_DB_URL', default=None)
+EXTERNAL_INBUCKET_URL = env('EXTERNAL_INBUCKET_URL', default='http://192.168.1.102:9000/monitor' if DEBUG else None)
+EXTERNAL_MONITORING_URL = env('EXTERNAL_MONITORING_URL', default=None)

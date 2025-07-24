@@ -97,17 +97,11 @@
                     
                     {% if EXTERNAL_INBUCKET_URL %}
                     <a href="{{ EXTERNAL_INBUCKET_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
-                        {% lucide 'mail' size=14 class='inline mr-2' %} Email Debug
-                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
-                    </a>
-                    {% endif %}
-                    
-                    {% if debug %}
-                    <a href="http://192.168.1.102:9000/monitor" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
                         {% lucide 'inbox' size=14 class='inline mr-2' %} Inbucket
                         {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
                     </a>
                     {% endif %}
+                    
                     
                     {% if EXTERNAL_MONITORING_URL %}
                     <a href="{{ EXTERNAL_MONITORING_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
