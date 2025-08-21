@@ -685,137 +685,179 @@ class CollectionItem(BerylModel):
             return str(value)
 
 
-ACTION_ATTRIBUTES = {
-    "USER_JOINED": {
-        "label": _("User Joined"),
-        "icon": "party-popper",
-        "style": "bg-accent",
-        "description": "Your journey of collecting began!",
-    },
-    "COLLECTION_CREATED": {
-        "label": _("Collection Created"),
-        "icon": "plus",
-        "style": "bg-success",
-        "description": 'You created the collection "{target}".',
-    },
-    "COLLECTION_DELETED": {
-        "label": _("Collection Deleted"),
-        "icon": "trash-2",
-        "style": "bg-error",
-        "description": 'You deleted the collection "{target}".',
-    },
-    "ITEM_ADDED": {
-        "label": _("Item Added"),
-        "icon": "archive",
-        "style": "bg-success",
-        "description": 'You added the item <strong>"{target}"</strong> to your collection.',
-    },
-    "ITEM_WANTED": {
-        "label": _("Item Wanted"),
-        "icon": "star",
-        "style": "bg-info",
-        "description": 'You added <strong>"{target}"</strong> to your wishlist.',
-    },
-    "ITEM_ORDERED": {
-        "label": _("Item Ordered"),
-        "icon": "truck",
-        "style": "bg-blue-500",
-        "description": 'You marked <strong>"{target}"</strong> as ordered. It\'s on its way!',
-    },
-    "ITEM_RESERVED": {
-        "label": _("Item Reserved"),
-        "icon": "gift",
-        "style": "bg-warning",
-        "description": 'An item, <strong>"{target}"</strong>, was reserved from your wishlist.',
-    },
-    "ITEM_LENT": {
-        "label": _("Item Lent"),
-        "icon": "share-2",
-        "style": "bg-neutral",
-        "description": 'You lent out your item: <strong>"{target}"</strong>.',
-    },
-    "ITEM_PREVIOUSLY_OWNED": {
-        "label": _("Item Previously Owned"),
-        "icon": "history",
-        "style": "bg-base-300",
-        "description": 'You marked <strong>"{target}"</strong> as previously owned.',
-    },
-    "ITEM_REMOVED": {
-        "label": _("Item Removed"),
-        "icon": "archive-x",
-        "style": "bg-error",
-        "description": 'You removed the item <strong>"{target}"</strong> from your collection.',
-    },
-    "ITEM_FAVORITED": {
-        "label": _("Item Favorited"),
-        "icon": "star",
-        "style": "bg-warning",
-        "description": 'You marked <strong>"{target}"</strong> as a favorite.',
-    },
-    "ITEM_UNFAVORITED": {
-        "label": _("Item Unfavorited"),
-        "icon": "star-off",
-        "style": "bg-neutral",
-        "description": 'You removed <strong>"{target}"</strong> from your favorites.',
-    },
-}
 
 
 class RecentActivity(BerylModel):
     """
-    Inherits from BerylModel to store a log of significant events.
-    All attributes for an action (verb, icon, style, description) are
-    defined in the central ACTION_ATTRIBUTES dictionary.
+    Stores user activity timeline events with simplified static method interface.
     """
-
-    class ActionVerb(models.TextChoices):
-        USER_JOINED = "USER_JOINED", ACTION_ATTRIBUTES["USER_JOINED"]["label"]
-        COLLECTION_CREATED = "COLLECTION_CREATED", ACTION_ATTRIBUTES["COLLECTION_CREATED"]["label"]
-        COLLECTION_DELETED = "COLLECTION_DELETED", ACTION_ATTRIBUTES["COLLECTION_DELETED"]["label"]
-        ITEM_ADDED = "ITEM_ADDED", ACTION_ATTRIBUTES["ITEM_ADDED"]["label"]
-        ITEM_WANTED = "ITEM_WANTED", ACTION_ATTRIBUTES["ITEM_WANTED"]["label"]
-        ITEM_ORDERED = "ITEM_ORDERED", ACTION_ATTRIBUTES["ITEM_ORDERED"]["label"]
-        ITEM_RESERVED = "ITEM_RESERVED", ACTION_ATTRIBUTES["ITEM_RESERVED"]["label"]
-        ITEM_LENT = "ITEM_LENT", ACTION_ATTRIBUTES["ITEM_LENT"]["label"]
-        ITEM_PREVIOUSLY_OWNED = "ITEM_PREVIOUSLY_OWNED", ACTION_ATTRIBUTES["ITEM_PREVIOUSLY_OWNED"]["label"]
-        ITEM_REMOVED = "ITEM_REMOVED", ACTION_ATTRIBUTES["ITEM_REMOVED"]["label"]
-        ITEM_FAVORITED = "ITEM_FAVORITED", ACTION_ATTRIBUTES["ITEM_FAVORITED"]["label"]
-        ITEM_UNFAVORITED = "ITEM_UNFAVORITED", ACTION_ATTRIBUTES["ITEM_UNFAVORITED"]["label"]
-
     subject = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="timeline_events",
         help_text="The user whose timeline this event belongs to.",
     )
-    name = models.CharField(max_length=50, choices=ActionVerb.choices, verbose_name=_("Action Verb"))
-    target_repr = models.CharField(max_length=255, blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-
-    details = models.JSONField(null=True, blank=True)
+    message = models.TextField(verbose_name=_("Activity Message"), default="Activity message")
+    icon = models.CharField(max_length=50, default="activity", verbose_name=_("Lucide Icon Name"))
+    details = models.JSONField(null=True, blank=True, verbose_name=_("Additional Details"))
 
     class Meta:
         ordering = ["-created"]
         verbose_name = "Recent Activity"
         verbose_name_plural = "Recent Activities"
-
-    @property
-    def _attributes(self):
-        """A helper to safely get the attribute dictionary for the current verb."""
-        return ACTION_ATTRIBUTES.get(self.name, {})
-
-    @property
-    def icon(self):
-        return self._attributes.get("icon", "activity")
-
-    @property
-    def icon_style(self):
-        return self._attributes.get("style", "bg-neutral")
-
+    
     def __str__(self):
-        actor_name = getattr(self.created_by, 'username', 'System') if self.created_by else "System"
-        subject_name = getattr(self.subject, 'username', 'Unknown') if self.subject else "Unknown"
-        return f"'{self.name}' by {actor_name} for {subject_name}"
+        return f"{self.message} ({self.subject.email if self.subject else 'Unknown'})"
+    
+    # Collection Activities
+    @staticmethod
+    def log_collection_created(user, collection_name):
+        """Log when user creates a new collection"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You created a new collection '{collection_name}'",
+            icon="plus"
+        )
+    
+    @staticmethod
+    def log_collection_deleted(user, collection_name):
+        """Log when user deletes a collection"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You deleted collection '{collection_name}'",
+            icon="trash-2"
+        )
+    
+    @staticmethod
+    def log_collection_visibility_changed(user, collection_name, visibility):
+        """Log when user changes collection visibility"""
+        visibility_display = {'PRIVATE': 'Private', 'PUBLIC': 'Public', 'UNLISTED': 'Unlisted'}.get(visibility, visibility)
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You changed '{collection_name}' visibility to {visibility_display}",
+            icon="eye"
+        )
+    
+    # Item Activities
+    @staticmethod
+    def log_item_added(user, item_name, collection_name):
+        """Log when user adds an item to collection"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You added '{item_name}' to collection '{collection_name}'",
+            icon="archive"
+        )
+    
+    @staticmethod
+    def log_item_removed(user, item_name, collection_name):
+        """Log when user removes an item from collection"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You removed '{item_name}' from collection '{collection_name}'",
+            icon="archive-x"
+        )
+    
+    @staticmethod
+    def log_item_status_changed(user, item_name, new_status):
+        """Log when user changes item status"""
+        status_messages = {
+            'IN_COLLECTION': f"You marked '{item_name}' as In Collection",
+            'WANTED': f"You added '{item_name}' to your wishlist",
+            'RESERVED': f"You marked '{item_name}' as Reserved",
+            'ORDERED': f"You marked '{item_name}' as Ordered",
+            'LENT': f"You marked '{item_name}' as Lent",
+            'PREVIOUSLY_OWNED': f"You marked '{item_name}' as Previously Owned"
+        }
+        status_icons = {
+            'IN_COLLECTION': 'package',
+            'WANTED': 'star',
+            'RESERVED': 'gift',
+            'ORDERED': 'truck',
+            'LENT': 'share-2',
+            'PREVIOUSLY_OWNED': 'history'
+        }
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=status_messages.get(new_status, f"You changed '{item_name}' status to {new_status}"),
+            icon=status_icons.get(new_status, 'edit')
+        )
+    
+    @staticmethod
+    def log_item_favorited(user, item_name):
+        """Log when user favorites an item"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You favorited '{item_name}'",
+            icon="star"
+        )
+    
+    @staticmethod
+    def log_item_unfavorited(user, item_name):
+        """Log when user unfavorites an item"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You removed '{item_name}' from favorites",
+            icon="star-off"
+        )
+    
+    @staticmethod
+    def log_item_moved(user, item_name, from_collection, to_collection):
+        """Log when user moves an item between collections"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You moved '{item_name}' from '{from_collection}' to '{to_collection}'",
+            icon="move"
+        )
+    
+    @staticmethod
+    def log_item_copied(user, item_name, from_collection, to_collection):
+        """Log when user copies an item between collections"""
+        RecentActivity.objects.create(
+            subject=user,
+            created_by=user,
+            message=f"You copied '{item_name}' from '{from_collection}' to '{to_collection}'",
+            icon="copy"
+        )
+    
+    # Reservation Activities
+    @staticmethod
+    def log_item_reserved_by_user(collection_owner, item_name):
+        """Log when someone reserves an item from user's collection"""
+        RecentActivity.objects.create(
+            subject=collection_owner,
+            created_by=collection_owner,
+            message=f"Someone reserved '{item_name}' from your collection",
+            icon="gift"
+        )
+    
+    @staticmethod
+    def log_item_reserved_by_guest(collection_owner, item_name):
+        """Log when guest reserves an item from user's collection"""
+        RecentActivity.objects.create(
+            subject=collection_owner,
+            created_by=collection_owner,
+            message=f"Someone reserved '{item_name}' from your collection",
+            icon="gift"
+        )
+    
+    @staticmethod
+    def log_item_unreserved(collection_owner, item_name):
+        """Log when someone cancels their reservation"""
+        RecentActivity.objects.create(
+            subject=collection_owner,
+            created_by=collection_owner,
+            message=f"Someone cancelled their reservation for '{item_name}'",
+            icon="gift-off"
+        )
 
 
 class LinkPattern(BerylModel):
@@ -912,3 +954,113 @@ class CollectionItemLink(BerylModel):
             self.link_pattern = LinkPattern.find_matching_pattern(self.url)
         
         super().save(*args, **kwargs)
+
+
+class ApplicationActivity(models.Model):
+    """
+    Tracks all user actions and system events across the application.
+    Provides comprehensive audit trail for administrators and system monitoring.
+    """
+    
+    class Level(models.TextChoices):
+        INFO = "INFO", _("Info")
+        WARNING = "WARNING", _("Warning")
+        ERROR = "ERROR", _("Error")
+    
+    created = models.DateTimeField(auto_now_add=True, verbose_name=_("Date Time"), db_index=True)
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name=_("User"),
+        help_text=_("User who performed the action. NULL for anonymous users.")
+    )
+    function_name = models.CharField(max_length=100, verbose_name=_("Function"), db_index=True)
+    level = models.CharField(
+        max_length=10,
+        choices=Level.choices,
+        default=Level.INFO,
+        verbose_name=_("Level"),
+        db_index=True
+    )
+    message = models.TextField(verbose_name=_("Message"))
+    meta = models.JSONField(default=dict, blank=True, verbose_name=_("Metadata"))
+    
+    class Meta:
+        verbose_name = _("Application Activity")
+        verbose_name_plural = _("Application Activities")
+        ordering = ["-created"]
+        indexes = [
+            models.Index(fields=["-created", "level"]),
+            models.Index(fields=["user", "-created"]),
+            models.Index(fields=["function_name", "-created"]),
+        ]
+    
+    def __str__(self):
+        user_str = self.user.email if self.user else "Anonymous"
+        return f"[{self.level}] {user_str} - {self.function_name}: {self.message[:100]}"
+    
+    @property
+    def user_display(self):
+        """Get user display name or 'Anonymous' for null users"""
+        return self.user.email if self.user else "Anonymous"
+    
+    @classmethod
+    def log(cls, function_name, message, user=None, level=None, meta=None):
+        """
+        Static method to create application activity entries.
+        
+        Args:
+            function_name (str): Name of the function/view that triggered the activity
+            message (str): Descriptive message of what happened
+            user (User, optional): User who performed the action. None for anonymous
+            level (str, optional): Activity level. Defaults to INFO
+            meta (dict, optional): Additional metadata as JSON
+        
+        Returns:
+            ApplicationActivity: Created activity instance
+        """
+        if level is None:
+            level = cls.Level.INFO
+            
+        if meta is None:
+            meta = {}
+        
+        # Handle user validation safely
+        safe_user = None
+        if user is not None:
+            # Check if user is authenticated and valid
+            if hasattr(user, 'is_authenticated') and user.is_authenticated:
+                safe_user = user
+            elif hasattr(user, 'id') and user.id:
+                safe_user = user
+            # If user is invalid, it will be stored as None (anonymous)
+            
+        try:
+            return cls.objects.create(
+                function_name=function_name,
+                message=message,
+                user=safe_user,
+                level=level,
+                meta=meta
+            )
+        except Exception as e:
+            # Fallback logging if activity creation fails
+            logger.error(f"Failed to create ApplicationActivity: {str(e)}")
+            return None
+    
+    @classmethod
+    def log_info(cls, function_name, message, user=None, meta=None):
+        """Convenience method for INFO level logging"""
+        return cls.log(function_name, message, user, cls.Level.INFO, meta)
+    
+    @classmethod
+    def log_warning(cls, function_name, message, user=None, meta=None):
+        """Convenience method for WARNING level logging"""
+        return cls.log(function_name, message, user, cls.Level.WARNING, meta)
+    
+    @classmethod
+    def log_error(cls, function_name, message, user=None, meta=None):
+        """Convenience method for ERROR level logging"""
+        return cls.log(function_name, message, user, cls.Level.ERROR, meta)

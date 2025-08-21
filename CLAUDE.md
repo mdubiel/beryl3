@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Development Rules & Guidelines
+
+**IMPORTANT**: Always consult `docs/rules.md` for comprehensive development guidelines, Django best practices, and coding standards. This file contains essential rules for:
+- Project architecture and patterns
+- Django best practices and anti-patterns
+- Security guidelines and what to avoid
+- Code quality standards
+- Future development guidelines
+
+The rules in `docs/rules.md` take precedence and should be followed for all development work.
+
 ## Project Overview
 
 Beryl is a Django-based collection management system with user authentication, item tracking, and sharing capabilities. The project uses a monorepo structure managed with uv workspace, combining Python Django backend with Tailwind CSS frontend.

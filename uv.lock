@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -47,12 +47,12 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "beryl3-webapp", virtual = "webapp" }]
+requires-dist = [{ name = "beryl3-webapp", editable = "webapp" }]
 
 [[package]]
 name = "beryl3-webapp"
 version = "0.1.0"
-source = { virtual = "webapp" }
+source = { editable = "webapp" }
 dependencies = [
     { name = "django" },
     { name = "django-allauth" },

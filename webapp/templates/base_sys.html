@@ -65,8 +65,12 @@
                     {% lucide 'link' size=14 class='inline mr-2' %} Link Patterns
                 </a>
                 
-                <a href="{% url 'sys_activity' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'sys_activity' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if request.resolver_match.url_name == 'sys_activity' %}active{% endif %}">
                     {% lucide 'activity' size=14 class='inline mr-2' %} Activity Logs
+                </a>
+                
+                <a href="{% url 'sys_application_activity' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'application_activity' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'database' size=14 class='inline mr-2' %} App Activity
                 </a>
                 
                 <a href="{% url 'sys_metrics' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'metrics' in request.resolver_match.url_name %}active{% endif %}">
