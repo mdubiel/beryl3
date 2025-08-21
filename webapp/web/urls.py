@@ -113,6 +113,10 @@ urlpatterns = [
     path('sys/link-patterns/<int:link_pattern_id>/update/', sys.sys_link_pattern_update, name='sys_link_pattern_update'),
     path('sys/link-patterns/<int:link_pattern_id>/delete/', sys.sys_link_pattern_delete, name='sys_link_pattern_delete'),
     
+    # Application activity monitoring
+    path('sys/application-activity/', sys.sys_application_activity, name='sys_application_activity'),
+    path('sys/application-activity/<int:activity_id>/', sys.sys_application_activity_detail, name='sys_application_activity_detail'),
+
     # HTMX endpoints
     path('sys/validate-lucide-icon/', sys.sys_validate_lucide_icon, name='sys_validate_lucide_icon'),
     path('sys/lucide-icon-search/', sys.sys_lucide_icon_search, name='sys_lucide_icon_search'),

@@ -16,7 +16,7 @@ from django.db import transaction
 
 from web.decorators import log_execution_time
 from web.forms import CollectionItemForm
-from web.models import Collection, CollectionItem, RecentActivity, ItemType
+from web.models import Collection, CollectionItem, RecentActivity, ItemType, ApplicationActivity
 
 logger = logging.getLogger('webapp')
 
@@ -29,26 +29,69 @@ def collection_item_create_view(request, collection_hash):
     logger.info("Collection item creation view accessed by user: '%s' [%s]", request.user.username, request.user.id)
     collection = get_object_or_404(Collection, hash=collection_hash, created_by=request.user)
 
+    # Log form access
+    ApplicationActivity.log_info('collection_item_create_view', 
+        f"Item creation form accessed for collection '{collection.name}'", 
+        user=request.user, meta={
+            'action': 'form_access', 'object_type': 'CollectionItem',
+            'collection_hash': collection.hash, 'collection_name': collection.name, 'method': request.method,
+            'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
+
     if request.method == 'POST':
         logger.info("User '%s [%s]' is submitting a new item for collection '%s' [%s]", request.user.username, request.user.id, collection.name, collection.hash) 
         form = CollectionItemForm(request.POST)
+        
         if form.is_valid():
-            # Get the new item object but don't save it to the DB yet
-            new_item = form.save(commit=False)
-            
-            # Set the fields that were not on the form
-            new_item.collection = collection
-            new_item.created_by = request.user
-            
-            new_item.save()
-            logger.info(
-                "User '%s [%s]' created new item '%s' in collection '%s' [%s]",
-                request.user.username, request.user.id, new_item.name, collection.name, collection.hash
-            )
-            messages.success(request, f"Item '{new_item.name}' was added to your collection.")
-            
-            # Redirect back to the collection's detail page
-            return redirect(collection.get_absolute_url())
+            try:
+                # Get the new item object but don't save it to the DB yet
+                new_item = form.save(commit=False)
+                
+                # Set the fields that were not on the form
+                new_item.collection = collection
+                new_item.created_by = request.user
+                
+                new_item.save()
+                logger.info(
+                    "User '%s [%s]' created new item '%s' in collection '%s' [%s]",
+                    request.user.username, request.user.id, new_item.name, collection.name, collection.hash
+                )
+                
+                # Log successful creation
+                ApplicationActivity.log_info('collection_item_create_view', 
+                    f"Item '{new_item.name}' created in collection '{collection.name}'", 
+                    user=request.user, meta={
+                        'action': 'created', 'object_type': 'CollectionItem',
+                        'object_hash': new_item.hash, 'object_name': new_item.name,
+                        'collection_hash': collection.hash, 'collection_name': collection.name,
+                        'status': new_item.status, 'result': 'success',
+                        'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
+                
+                # Log user activity
+                RecentActivity.log_item_added(
+                    user=request.user,
+                    item_name=new_item.name,
+                    collection_name=collection.name
+                )
+                
+                messages.success(request, f"Item '{new_item.name}' was added to your collection.")
+                return redirect(collection.get_absolute_url())
+                
+            except Exception as e:
+                ApplicationActivity.log_error('collection_item_create_view', 
+                    f"Item creation failed in collection '{collection.name}': {str(e)}", 
+                    user=request.user, meta={
+                        'action': 'creation_error', 'object_type': 'CollectionItem',
+                        'collection_hash': collection.hash, 'collection_name': collection.name,
+                        'error': str(e), 'result': 'system_error'})
+                raise
+        else:
+            # Log form validation errors
+            ApplicationActivity.log_warning('collection_item_create_view', 
+                f"Item creation failed in collection '{collection.name}' due to validation errors", 
+                user=request.user, meta={
+                    'action': 'creation_failed', 'object_type': 'CollectionItem',
+                    'collection_hash': collection.hash, 'collection_name': collection.name,
+                    'errors': form.errors.as_json(), 'result': 'validation_error'})
     else:
         form = CollectionItemForm()
 
@@ -65,22 +108,41 @@ def collection_item_detail_view(request, hash):
     Displays the detail page for a single CollectionItem, checking for ownership.
     """
     logger.info("Collection item detail view accessed by user: '%s' [%s]", request.user.username, request.user.id)
-    item = get_object_or_404(
-        CollectionItem.objects.select_related('collection', 'created_by'),
-        hash=hash,
-        collection__created_by=request.user
-    )
+    
+    try:
+        item = get_object_or_404(
+            CollectionItem.objects.select_related('collection', 'created_by'),
+            hash=hash,
+            collection__created_by=request.user
+        )
 
-    # Get all item types for the dropdown
-    item_types = ItemType.objects.filter(is_deleted=False).order_by('display_name')
+        # Get all item types for the dropdown
+        item_types = ItemType.objects.filter(is_deleted=False).order_by('display_name')
 
-    context = {
-        'item': item,
-        'collection': item.collection, # Pass collection for convenience
-        'item_types': item_types,
-    }
-    logger.info("Rendering detail view for item '%s' in collection '%s'", item.name, item.collection.name)
-    return render(request, 'items/item_detail.html', context)
+        # Log successful detail view
+        ApplicationActivity.log_info('collection_item_detail_view', 
+            f"Item '{item.name}' detail viewed successfully", 
+            user=request.user, meta={
+                'action': 'detail_view', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'collection_hash': item.collection.hash, 'collection_name': item.collection.name,
+                'status': item.status})
+
+        context = {
+            'item': item,
+            'collection': item.collection, # Pass collection for convenience
+            'item_types': item_types,
+        }
+        logger.info("Rendering detail view for item '%s' in collection '%s'", item.name, item.collection.name)
+        return render(request, 'items/item_detail.html', context)
+        
+    except Exception as e:
+        ApplicationActivity.log_warning('collection_item_detail_view', 
+            f"Item detail access failed for hash '{hash}': {str(e)}", 
+            user=request.user, meta={
+                'action': 'detail_view_failed', 'object_hash': hash,
+                'error': str(e), 'result': 'access_denied_or_error'})
+        raise
 
 @login_required
 @log_execution_time
@@ -97,8 +159,25 @@ def collection_item_update_view(request, hash):
         if form.is_valid():
             form.save()
             logger.info("User '%s [%s]' updated item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
+            
+            # Log successful update
+            ApplicationActivity.log_info('collection_item_update_view', 
+                f"Item '{item.name}' updated successfully", 
+                user=request.user, meta={
+                    'action': 'updated', 'object_type': 'CollectionItem',
+                    'object_hash': item.hash, 'object_name': item.name,
+                    'collection_hash': item.collection.hash, 'result': 'success'})
+            
             messages.success(request, f"Item '{item.name}' was updated successfully!")
             return redirect(item.collection.get_absolute_url())
+        else:
+            # Log form validation errors
+            ApplicationActivity.log_warning('collection_item_update_view', 
+                f"Item '{item.name}' update failed due to validation errors", 
+                user=request.user, meta={
+                    'action': 'update_failed', 'object_type': 'CollectionItem',
+                    'object_hash': item.hash, 'object_name': item.name,
+                    'errors': form.errors.as_json(), 'result': 'validation_error'})
     else:
         logger.info("User '%s [%s]' is viewing the update form for item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
         form = CollectionItemForm(instance=item)
@@ -127,9 +206,18 @@ def collection_item_delete_view(request, hash):
         return redirect(collection.get_absolute_url())
     
     item_name = item.name
+    collection_name = collection.name
     item.delete()
     
     logger.info("User '%s [%s]' deleted item '%s' from collection '%s' [%s]", request.user.username, request.user.id, item_name, collection.name, collection.hash)
+    
+    # Log user activity
+    RecentActivity.log_item_removed(
+        user=request.user,
+        item_name=item_name,
+        collection_name=collection_name
+    )
+    
     messages.success(request, f"Item '{item_name}' was successfully deleted.")
     return redirect(collection.get_absolute_url())
 
@@ -159,19 +247,11 @@ def move_item_to_collection(request, item_hash):
             item.save()
             
             # Log the activity
-            RecentActivity.objects.create(
-                name='ITEM_ADDED',
-                subject=request.user,
-                created_by=request.user,
-                target_repr=f"{item.name} moved to {target_collection.name}",
-                details={
-                    'item_name': item.name,
-                    'item_hash': item.hash,
-                    'from_collection': original_collection.name,
-                    'from_collection_hash': original_collection.hash,
-                    'to_collection': target_collection.name,
-                    'to_collection_hash': target_collection.hash,
-                }
+            RecentActivity.log_item_moved(
+                user=request.user,
+                item_name=item.name,
+                from_collection=original_collection.name,
+                to_collection=target_collection.name
             )
             
             logger.info(
@@ -229,20 +309,11 @@ def copy_item_to_collection(request, item_hash):
             )
             
             # Log the activity
-            RecentActivity.objects.create(
-                name='ITEM_ADDED',
-                subject=request.user,
-                created_by=request.user,
-                target_repr=f"{copied_item.name} copied to {target_collection.name}",
-                details={
-                    'item_name': copied_item.name,
-                    'item_hash': copied_item.hash,
-                    'original_item_hash': original_item.hash,
-                    'from_collection': original_item.collection.name,
-                    'from_collection_hash': original_item.collection.hash,
-                    'to_collection': target_collection.name,
-                    'to_collection_hash': target_collection.hash,
-                }
+            RecentActivity.log_item_copied(
+                user=request.user,
+                item_name=copied_item.name,
+                from_collection=original_item.collection.name,
+                to_collection=target_collection.name
             )
             
             logger.info(

@@ -7,7 +7,7 @@
 
 from django.contrib import admin
 
-from .models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, CollectionItemLink, MediaFile
+from .models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, CollectionItemLink, MediaFile, ApplicationActivity
 
 # Let's create a base class for our models to inherit from.
 # This avoids repeating common settings for all our models.
@@ -171,21 +171,21 @@ class RecentActivityAdmin(admin.ModelAdmin):
     list_display = (
         'created',
         'created_by',
-        'name',
-        'target_repr'
+        'message',
+        'icon'
     )
 
     list_filter = (
         ('created_by', admin.RelatedOnlyFieldListFilter),
         ('subject', admin.RelatedOnlyFieldListFilter),
-        'name',
+        'icon',
         'created'
     )
     search_fields = (
-        'name',
-        'target_repr',
-        'created_by__username',
-        'subject__username'
+        'message',
+        'icon',
+        'created_by__email',
+        'subject__email'
     )
 
     def get_readonly_fields(self, request, obj=None):
@@ -195,10 +195,10 @@ class RecentActivityAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Event Details', {
-            'fields': ('name', 'created_by', 'subject', 'created')
+            'fields': ('message', 'icon', 'created_by', 'subject', 'created')
         }),
-        ('Target Information', {
-            'fields': ('target_repr', 'details')
+        ('Additional Information', {
+            'fields': ('details',)
         }),
     )
 
@@ -338,3 +338,54 @@ class MediaFileAdmin(BerylModelAdmin):
                 'placeholder': 'JSON format: {"key": "value", ...}'
             })
         return form
+
+
+@admin.register(ApplicationActivity)
+class ApplicationActivityAdmin(admin.ModelAdmin):
+    """
+    Admin interface for ApplicationActivity model.
+    Read-only interface optimized for viewing activity logs.
+    """
+    list_display = ('created', 'user_display', 'level', 'function_name', 'message_truncated')
+    list_filter = ('level', 'function_name', 'created', ('user', admin.RelatedOnlyFieldListFilter))
+    search_fields = ('function_name', 'message', 'user__email')
+    date_hierarchy = 'created'
+    ordering = ('-created',)
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Make all fields read-only since this is a log table"""
+        if obj:
+            return [field.name for field in obj._meta.fields]
+        return []
+    
+    def user_display(self, obj):
+        """Display user email or Anonymous for readability"""
+        return obj.user_display
+    user_display.short_description = 'User'
+    user_display.admin_order_field = 'user__email'
+    
+    def message_truncated(self, obj):
+        """Truncated message for list view"""
+        return obj.message[:100] + "..." if len(obj.message) > 100 else obj.message
+    message_truncated.short_description = 'Message'
+    
+    def has_add_permission(self, request):
+        """Disable adding activities through admin - they should be created programmatically"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Disable editing activities - they are immutable logs"""
+        return False
+    
+    fieldsets = (
+        ('Activity Details', {
+            'fields': ('created', 'user', 'function_name', 'level')
+        }),
+        ('Content', {
+            'fields': ('message',)
+        }),
+        ('Metadata', {
+            'fields': ('meta',),
+            'classes': ('collapse',)
+        }),
+    )

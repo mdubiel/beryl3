@@ -22,7 +22,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from faker import Faker
 
-from web.models import Collection, CollectionItem, RecentActivity, ACTION_ATTRIBUTES, ItemType
+from web.models import Collection, CollectionItem, RecentActivity, ItemType, ApplicationActivity
 
 logger = logging.getLogger("webapp") # Ensure logger is initialized
 
@@ -35,8 +35,27 @@ def public_collection_view(request, hash):
 
     # Only allow access if the collection is not private.
     if collection.visibility == Collection.Visibility.PRIVATE:
+        # Log access denied to private collection
+        ApplicationActivity.log_warning('public_collection_view', 
+            f"Access denied to private collection '{collection.name}'", 
+            user=None, meta={
+                'action': 'access_denied', 'object_type': 'Collection',
+                'object_hash': collection.hash, 'object_name': collection.name,
+                'visibility': collection.visibility, 'result': 'access_denied',
+                'function_args': {'hash': hash, 'request_method': request.method}})
+        
         # We raise Http404 to avoid leaking the existence of private collections.
         raise Http404("Collection not found or is private.")
+    
+    # Log successful public collection access
+    ApplicationActivity.log_info('public_collection_view', 
+        f"Public collection '{collection.name}' viewed by anonymous user", 
+        user=None, meta={
+            'action': 'public_view', 'object_type': 'Collection',
+            'object_hash': collection.hash, 'object_name': collection.name,
+            'visibility': collection.visibility, 'viewer_type': 'anonymous',
+            'function_args': {'hash': hash, 'request_method': request.method}})
+    
     fake = Faker()
     dummy_name = fake.name()
 
@@ -75,18 +94,9 @@ def book_item_authenticated(request, hash):
     item.save()
 
     # Log activity
-    RecentActivity.objects.create(
-        subject=item.collection.created_by, 
-        created_by=item.collection.created_by,
-        name=RecentActivity.ActionVerb.ITEM_RESERVED,
-        target_repr=item.name,
-        description=ACTION_ATTRIBUTES["ITEM_RESERVED"]["description"].format(target=item.name),
-        details={
-            "item_hash": item.hash,
-            "collection_hash": item.collection.hash,
-            "reserver_name": item.reserved_by_name,
-            "reserver_email": item.reserved_by_email,
-        }
+    RecentActivity.log_item_reserved_by_user(
+        collection_owner=item.collection.created_by,
+        item_name=item.name
     )
 
     logger.info("User '%s' [%s] successfully reserved CollectionItem '%s' [%s]", request.user.username, request.user.id, item.name, item.hash)
@@ -133,18 +143,9 @@ def book_item_guest(request, hash):
     item.save()
 
     # Log activity for guest user
-    RecentActivity.objects.create(
-        subject=item.collection.created_by,
-        created_by=item.collection.created_by,
-        name=RecentActivity.ActionVerb.ITEM_RESERVED,
-        target_repr=item.name,
-        description=ACTION_ATTRIBUTES["ITEM_RESERVED"]["description"].format(target=item.name),
-        details={
-            "item_hash": item.hash,
-            "collection_hash": item.collection.hash,
-            "reserver_email": item.reserved_by_email,
-            "guest": True,
-        }
+    RecentActivity.log_item_reserved_by_guest(
+        collection_owner=item.collection.created_by,
+        item_name=item.name
     )
     
     # Send confirmation email
@@ -228,18 +229,9 @@ def unreserve_guest_item(request, hash, token):
     guest_email = item.reserved_by_email
     if item.unreserve_guest():
         # Log the unreservation
-        RecentActivity.objects.create(
-            subject=item.collection.created_by,
-            created_by=item.collection.created_by,
-            name=RecentActivity.ActionVerb.ITEM_WANTED,  # Back to wanted status
-            target_repr=item.name,
-            description=f'Guest {guest_email} cancelled their reservation for "{item.name}".',
-            details={
-                "item_hash": item.hash,
-                "collection_hash": item.collection.hash,
-                "guest_email": guest_email,
-                "action": "unreserved",
-            }
+        RecentActivity.log_item_unreserved(
+            collection_owner=item.collection.created_by,
+            item_name=item.name
         )
         
         logger.info("Guest '%s' successfully unreserved item '%s' [%s]", guest_email, item.name, item.hash)

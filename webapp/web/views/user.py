@@ -13,7 +13,7 @@ from django.db.models import Count, Q
 from django.shortcuts import render
 
 from web.decorators import log_execution_time
-from web.models import Collection, CollectionItem, RecentActivity
+from web.models import Collection, CollectionItem, RecentActivity, ApplicationActivity
 
 logger = logging.getLogger('webapp')
 
@@ -47,6 +47,15 @@ def dashboard_view(request):
     # Get favorite items for the favorites card
     favorite_items = user_items.filter(is_favorite=True).select_related('collection').order_by('-updated')[:6]
 
+    # Log successful dashboard access
+    ApplicationActivity.log_info('dashboard_view', 
+        f"Dashboard accessed - {stats_data['total_items']} items across {stats_data['total_lists']} collections", 
+        user=request.user, meta={
+            'action': 'dashboard_view', 'total_items': stats_data['total_items'],
+            'total_collections': stats_data['total_lists'], 'favorite_items': stats_data['favourite_count'],
+            'in_collection': stats_data['in_collection_count'], 'wanted': stats_data['wanted_count'],
+            'function_args': {}})
+
     context = {
         "stats": stats_data,
         "collection_lists": collections_with_counts, # Pass the queryset directly to the template
@@ -75,9 +84,18 @@ def favorites_view(request):
     from web.models import ItemType
     item_types = ItemType.objects.all()
     
+    total_favorites = favorite_items.count()
+    
+    # Log favorites view access
+    ApplicationActivity.log_info('favorites_view', 
+        f"Favorites list accessed - {total_favorites} favorite items", 
+        user=request.user, meta={
+            'action': 'favorites_view', 'favorite_count': total_favorites,
+            'function_args': {}})
+
     context = {
         "favorite_items": favorite_items,
-        "total_favorites": favorite_items.count(),
+        "total_favorites": total_favorites,
         "item_types": item_types,
     }
 
@@ -94,8 +112,15 @@ def recent_activity_view(request):
 
     activity_list = RecentActivity.objects.filter(subject=request.user).select_related('created_by')
     paginator = Paginator(activity_list, 20)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
+
+    # Log activity view access
+    ApplicationActivity.log_info('recent_activity_view', 
+        f"Recent activity list accessed - page {page_number}", 
+        user=request.user, meta={
+            'action': 'activity_view', 'page': page_number, 'total_activities': activity_list.count(),
+            'function_args': {'page': page_number}})
 
     context = {
         'page_obj': page_obj,

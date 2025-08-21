@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST, require_http_methods
 
 from web.decorators import log_execution_time
-from web.models import CollectionItem, RecentActivity, ItemType, ItemAttribute, CollectionItemLink, LinkPattern
+from web.models import CollectionItem, RecentActivity, ItemType, ItemAttribute, CollectionItemLink, LinkPattern, ApplicationActivity
 
 logger = logging.getLogger('webapp')
 
@@ -30,15 +30,47 @@ def update_item_status(request, hash):
 
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to update item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('update_item_status', 
+            f"Unauthorized attempt to update item '{item.name}' status", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     new_status = request.POST.get('new_status')
 
     # Update the status if the new value is valid
     if new_status in CollectionItem.Status.values:
+        old_status = item.status
         item.status = new_status
         item.save(update_fields=['status'])
         logger.info("User '%s' [%s] updated CollectionItem '%s' [%s] to status '%s'", request.user.username, request.user.id, item.name, item.hash, new_status)
+        
+        # Log successful status update
+        ApplicationActivity.log_info('update_item_status', 
+            f"Item '{item.name}' status updated from '{old_status}' to '{new_status}'", 
+            user=request.user, meta={
+                'action': 'status_updated', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'collection_hash': item.collection.hash, 'collection_name': item.collection.name,
+                'old_status': old_status, 'new_status': new_status, 'result': 'success',
+                'function_args': {'hash': hash, 'new_status': new_status}
+            })
+    else:
+        # Log invalid status value
+        ApplicationActivity.log_warning('update_item_status', 
+            f"Invalid status '{new_status}' attempted for item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'status_update_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'invalid_status': new_status, 'result': 'validation_error',
+                'function_args': {'hash': hash, 'new_status': new_status}
+            })
 
     # Check if this is coming from item detail page
     referer = request.META.get('HTTP_REFERER', '')
@@ -72,6 +104,16 @@ def toggle_item_favorite(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to toggle favorite on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('toggle_item_favorite', 
+            f"Unauthorized attempt to toggle favorite on item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     # Toggle the favorite status
@@ -83,14 +125,23 @@ def toggle_item_favorite(request, hash):
     action = "unfavorited" if was_favorite else "favorited"
     logger.info("User '%s' [%s] %s CollectionItem '%s' [%s]", request.user.username, request.user.id, action, item.name, item.hash)
     
+    # Log favorite toggle
+    ApplicationActivity.log_info('toggle_item_favorite', 
+        f"Item '{item.name}' {action} successfully", 
+        user=request.user, meta={
+            'action': 'favorite_toggled', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'collection_hash': item.collection.hash, 'collection_name': item.collection.name,
+            'was_favorite': was_favorite, 'is_favorite': item.is_favorite,
+            'toggle_action': action, 'result': 'success',
+            'function_args': {'hash': hash}
+        })
+    
     # Create activity log entry
-    activity_action = RecentActivity.ActionVerb.ITEM_UNFAVORITED if was_favorite else RecentActivity.ActionVerb.ITEM_FAVORITED
-    RecentActivity.objects.create(
-        subject=request.user,
-        name=activity_action,
-        target_repr=item.name,
-        created_by=request.user
-    )
+    if was_favorite:
+        RecentActivity.log_item_unfavorited(user=request.user, item_name=item.name)
+    else:
+        RecentActivity.log_item_favorited(user=request.user, item_name=item.name)
     logger.info("Created activity log entry for %s CollectionItem '%s' [%s] by user '%s' [%s]", action, item.name, item.hash, request.user.username, request.user.id)
 
     # Check if this is coming from item detail page or favorites page
@@ -129,17 +180,49 @@ def change_item_type(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to change item type on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('change_item_type', 
+            f"Unauthorized attempt to change item type on item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     item_type_id = request.POST.get('item_type_id')
     if not item_type_id:
         logger.error("No item_type_id provided in request")
+        
+        # Log missing item type ID
+        ApplicationActivity.log_error('change_item_type', 
+            f"Item type change failed for item '{item.name}' - missing item_type_id", 
+            user=request.user, meta={
+                'action': 'type_change_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'error': 'missing_item_type_id', 'result': 'validation_error',
+                'function_args': {'hash': hash}
+            })
+        
         raise Http404("Item type ID is required.")
 
     try:
         new_item_type = ItemType.objects.get(id=item_type_id)
     except ItemType.DoesNotExist:
         logger.error("Item type with ID '%s' does not exist", item_type_id)
+        
+        # Log invalid item type ID
+        ApplicationActivity.log_error('change_item_type', 
+            f"Item type change failed for item '{item.name}' - invalid item_type_id '{item_type_id}'", 
+            user=request.user, meta={
+                'action': 'type_change_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'invalid_item_type_id': item_type_id, 'error': 'invalid_item_type',
+                'result': 'validation_error', 'function_args': {'hash': hash, 'item_type_id': item_type_id}
+            })
+        
         raise Http404("Invalid item type.")
 
     # Store the old item type for logging
@@ -156,6 +239,18 @@ def change_item_type(request, hash):
     old_type_name = old_item_type.display_name if old_item_type else "Generic"
     logger.info("User '%s' [%s] changed CollectionItem '%s' [%s] type from '%s' to '%s'", 
                 request.user.username, request.user.id, item.name, item.hash, old_type_name, new_item_type.display_name)
+    
+    # Log item type change
+    ApplicationActivity.log_info('change_item_type', 
+        f"Item '{item.name}' type changed from '{old_type_name}' to '{new_item_type.display_name}'", 
+        user=request.user, meta={
+            'action': 'type_changed', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'collection_hash': item.collection.hash, 'collection_name': item.collection.name,
+            'old_type': old_type_name, 'new_type': new_item_type.display_name,
+            'new_type_id': new_item_type.id, 'result': 'success',
+            'function_args': {'hash': hash, 'item_type_id': item_type_id}
+        })
 
     # Check if this is coming from item detail page
     referer = request.META.get('HTTP_REFERER', '')
@@ -186,6 +281,16 @@ def item_add_attribute(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to add attribute to item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_add_attribute', 
+            f"Unauthorized attempt to add attribute to item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     # Get available attributes for this item type
@@ -193,6 +298,16 @@ def item_add_attribute(request, hash):
     if item.item_type:
         available_attributes = item.item_type.attributes.all()
 
+    # Log add attribute form access
+    ApplicationActivity.log_info('item_add_attribute', 
+        f"Add attribute form accessed for item '{item.name}'", 
+        user=request.user, meta={
+            'action': 'form_access', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'available_attributes_count': len(available_attributes),
+            'function_args': {'hash': hash}
+        })
+    
     context = {
         'item': item,
         'available_attributes': available_attributes,
@@ -214,6 +329,16 @@ def item_edit_attribute(request, hash, attribute_name):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to edit attribute on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_edit_attribute', 
+            f"Unauthorized attempt to edit attribute on item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     # Get the attribute definition
@@ -223,10 +348,31 @@ def item_edit_attribute(request, hash, attribute_name):
             attribute = item.item_type.attributes.get(name=attribute_name)
         except ItemAttribute.DoesNotExist:
             logger.error("Attribute '%s' not found for item type '%s'", attribute_name, item.item_type.name)
+            
+            # Log attribute not found error
+            ApplicationActivity.log_error('item_edit_attribute', 
+                f"Attribute '{attribute_name}' not found for item '{item.name}' with type '{item.item_type.name}'", 
+                user=request.user, meta={
+                    'action': 'edit_form_failed', 'object_type': 'CollectionItem',
+                    'object_hash': item.hash, 'object_name': item.name,
+                    'attribute_name': attribute_name, 'error': 'attribute_not_found',
+                    'result': 'not_found', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+                })
+            
             raise Http404("Attribute not found.")
 
     current_value = item.attributes.get(attribute_name, "")
 
+    # Log edit attribute form access
+    ApplicationActivity.log_info('item_edit_attribute', 
+        f"Edit attribute form accessed for item '{item.name}' attribute '{attribute_name}'", 
+        user=request.user, meta={
+            'action': 'edit_form_access', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'attribute_name': attribute_name, 'current_value': str(current_value),
+            'function_args': {'hash': hash, 'attribute_name': attribute_name}
+        })
+    
     context = {
         'item': item,
         'attribute': attribute,
@@ -250,6 +396,16 @@ def item_save_attribute(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to save attribute on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_save_attribute', 
+            f"Unauthorized attempt to save attribute on item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     attribute_name = request.POST.get('attribute_name')
@@ -257,6 +413,17 @@ def item_save_attribute(request, hash):
 
     if not attribute_name:
         logger.error("No attribute name provided")
+        
+        # Log missing attribute name
+        ApplicationActivity.log_error('item_save_attribute', 
+            f"Attribute save failed for item '{item.name}' - missing attribute name", 
+            user=request.user, meta={
+                'action': 'attribute_save_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'error': 'missing_attribute_name', 'result': 'validation_error',
+                'function_args': {'hash': hash}
+            })
+        
         raise Http404("Attribute name is required.")
 
     # Validate and save the attribute
@@ -276,6 +443,16 @@ def item_save_attribute(request, hash):
         item.save(update_fields=['attributes'])
         logger.info("User '%s' [%s] saved attribute '%s' = '%s' for CollectionItem '%s' [%s]", 
                     request.user.username, request.user.id, attribute_name, attribute_value, item.name, item.hash)
+        
+        # Log successful attribute save
+        ApplicationActivity.log_info('item_save_attribute', 
+            f"Attribute '{attribute_name}' saved for item '{item.name}' with value '{attribute_value}'", 
+            user=request.user, meta={
+                'action': 'attribute_saved', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'attribute_name': attribute_name, 'attribute_value': str(attribute_value),
+                'result': 'success', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+            })
 
         # Check if this is coming from item detail page
         referer = request.META.get('HTTP_REFERER', '')
@@ -296,6 +473,17 @@ def item_save_attribute(request, hash):
 
     except ValidationError as e:
         logger.error("Validation error saving attribute '%s' for CollectionItem '%s' [%s]: %s", attribute_name, item.name, item.hash, str(e))
+        
+        # Log validation error
+        ApplicationActivity.log_error('item_save_attribute', 
+            f"Validation error saving attribute '{attribute_name}' for item '{item.name}': {str(e)}", 
+            user=request.user, meta={
+                'action': 'attribute_save_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'attribute_name': attribute_name, 'error': str(e),
+                'result': 'validation_error', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+            })
+        
         return JsonResponse({'error': str(e)}, status=400)
 
 
@@ -312,14 +500,45 @@ def item_remove_attribute(request, hash, attribute_name):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to remove attribute from item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_remove_attribute', 
+            f"Unauthorized attempt to remove attribute from item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     # Remove the attribute
     if attribute_name in item.attributes:
+        old_value = item.attributes[attribute_name]
         del item.attributes[attribute_name]
         item.save(update_fields=['attributes'])
         logger.info("User '%s' [%s] removed attribute '%s' from CollectionItem '%s' [%s]", 
                     request.user.username, request.user.id, attribute_name, item.name, item.hash)
+        
+        # Log successful attribute removal
+        ApplicationActivity.log_info('item_remove_attribute', 
+            f"Attribute '{attribute_name}' removed from item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'attribute_removed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'attribute_name': attribute_name, 'old_value': str(old_value),
+                'result': 'success', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+            })
+    else:
+        # Log attempt to remove non-existent attribute
+        ApplicationActivity.log_warning('item_remove_attribute', 
+            f"Attempted to remove non-existent attribute '{attribute_name}' from item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'attribute_remove_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'attribute_name': attribute_name, 'error': 'attribute_not_found',
+                'result': 'not_found', 'function_args': {'hash': hash, 'attribute_name': attribute_name}
+            })
 
     # Return the updated attributes section
     return render(request, 'partials/_item_attributes.html', {
@@ -340,8 +559,27 @@ def item_add_link(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to add link to item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_add_link', 
+            f"Unauthorized attempt to add link to item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
+    # Log add link form access
+    ApplicationActivity.log_info('item_add_link', 
+        f"Add link form accessed for item '{item.name}'", 
+        user=request.user, meta={
+            'action': 'form_access', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'function_args': {'hash': hash}
+        })
+    
     context = {
         'item': item,
         'mode': 'add'
@@ -363,8 +601,28 @@ def item_edit_link(request, hash, link_id):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to edit link on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_edit_link', 
+            f"Unauthorized attempt to edit link on item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash, 'link_id': link_id}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
+    # Log edit link form access
+    ApplicationActivity.log_info('item_edit_link', 
+        f"Edit link form accessed for item '{item.name}' link '{link.get_display_name()}'", 
+        user=request.user, meta={
+            'action': 'edit_form_access', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'link_id': link_id, 'link_url': link.url,
+            'function_args': {'hash': hash, 'link_id': link_id}
+        })
+    
     context = {
         'item': item,
         'link': link,
@@ -387,6 +645,16 @@ def item_save_link(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to save link on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_save_link', 
+            f"Unauthorized attempt to save link on item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     link_id = request.POST.get('link_id')
@@ -395,6 +663,17 @@ def item_save_link(request, hash):
 
     if not url:
         logger.error("No URL provided")
+        
+        # Log missing URL error
+        ApplicationActivity.log_error('item_save_link', 
+            f"Link save failed for item '{item.name}' - missing URL", 
+            user=request.user, meta={
+                'action': 'link_save_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'error': 'missing_url', 'result': 'validation_error',
+                'function_args': {'hash': hash}
+            })
+        
         return JsonResponse({'error': 'URL is required.'}, status=400)
 
     # Validate URL
@@ -404,6 +683,17 @@ def item_save_link(request, hash):
         validator(url)
     except ValidationError:
         logger.error("Invalid URL provided: %s", url)
+        
+        # Log invalid URL error
+        ApplicationActivity.log_error('item_save_link', 
+            f"Link save failed for item '{item.name}' - invalid URL: '{url}'", 
+            user=request.user, meta={
+                'action': 'link_save_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'invalid_url': url, 'error': 'invalid_url',
+                'result': 'validation_error', 'function_args': {'hash': hash, 'url': url}
+            })
+        
         return JsonResponse({'error': 'Please enter a valid URL.'}, status=400)
 
     try:
@@ -417,6 +707,16 @@ def item_save_link(request, hash):
             link.save()
             logger.info("User '%s' [%s] updated link '%s' for CollectionItem '%s' [%s]", 
                         request.user.username, request.user.id, url, item.name, item.hash)
+            
+            # Log successful link update
+            ApplicationActivity.log_info('item_save_link', 
+                f"Link updated for item '{item.name}': '{url}'", 
+                user=request.user, meta={
+                    'action': 'link_updated', 'object_type': 'CollectionItem',
+                    'object_hash': item.hash, 'object_name': item.name,
+                    'link_id': link_id, 'url': url, 'display_name': display_name,
+                    'result': 'success', 'function_args': {'hash': hash, 'link_id': link_id}
+                })
         else:
             # Create new link
             link = CollectionItemLink.objects.create(
@@ -427,6 +727,16 @@ def item_save_link(request, hash):
             )
             logger.info("User '%s' [%s] added link '%s' to CollectionItem '%s' [%s]", 
                         request.user.username, request.user.id, url, item.name, item.hash)
+            
+            # Log successful link creation
+            ApplicationActivity.log_info('item_save_link', 
+                f"New link added to item '{item.name}': '{url}'", 
+                user=request.user, meta={
+                    'action': 'link_created', 'object_type': 'CollectionItem',
+                    'object_hash': item.hash, 'object_name': item.name,
+                    'link_id': link.id, 'url': url, 'display_name': display_name,
+                    'result': 'success', 'function_args': {'hash': hash}
+                })
 
         # Check if this is coming from item detail page
         referer = request.META.get('HTTP_REFERER', '')
@@ -446,6 +756,17 @@ def item_save_link(request, hash):
 
     except Exception as e:
         logger.error("Error saving link for CollectionItem '%s' [%s]: %s", item.name, item.hash, str(e))
+        
+        # Log link save error
+        ApplicationActivity.log_error('item_save_link', 
+            f"Error saving link for item '{item.name}': {str(e)}", 
+            user=request.user, meta={
+                'action': 'link_save_failed', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'error': str(e), 'result': 'system_error',
+                'function_args': {'hash': hash, 'url': url}
+            })
+        
         return JsonResponse({'error': 'An error occurred while saving the link.'}, status=500)
 
 
@@ -463,12 +784,34 @@ def item_remove_link(request, hash, link_id):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to remove link from item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
+        
+        # Log unauthorized access attempt
+        ApplicationActivity.log_warning('item_remove_link', 
+            f"Unauthorized attempt to remove link from item '{item.name}'", 
+            user=request.user, meta={
+                'action': 'unauthorized_access', 'object_type': 'CollectionItem',
+                'object_hash': item.hash, 'object_name': item.name,
+                'result': 'access_denied', 'function_args': {'hash': hash, 'link_id': link_id}
+            })
+        
         raise Http404("You do not have permission to edit this item.")
 
     link_display_name = link.get_display_name()
+    link_url = link.url
     link.delete()
     logger.info("User '%s' [%s] removed link '%s' from CollectionItem '%s' [%s]", 
                 request.user.username, request.user.id, link_display_name, item.name, item.hash)
+    
+    # Log successful link removal
+    ApplicationActivity.log_info('item_remove_link', 
+        f"Link '{link_display_name}' removed from item '{item.name}'", 
+        user=request.user, meta={
+            'action': 'link_removed', 'object_type': 'CollectionItem',
+            'object_hash': item.hash, 'object_name': item.name,
+            'link_id': link_id, 'link_url': link_url,
+            'link_display_name': link_display_name, 'result': 'success',
+            'function_args': {'hash': hash, 'link_id': link_id}
+        })
 
     # Return the updated links section
     return render(request, 'partials/_item_links.html', {
