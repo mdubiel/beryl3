@@ -532,6 +532,11 @@ class Collection(BerylModel):
 
         # It's crucial to call the original save() method at the end.
         super().save(*args, **kwargs)
+    
+    @property
+    def default_image(self):
+        """Get the default image for this collection"""
+        return self.images.filter(is_default=True).first()
 
 
 class CollectionItem(BerylModel):
@@ -683,23 +688,43 @@ class CollectionItem(BerylModel):
                 return str(value)
         else:
             return str(value)
+    
+    @property
+    def default_image(self):
+        """Get the default image for this collection item"""
+        return self.images.filter(is_default=True).first()
 
 
 
 
 class RecentActivity(BerylModel):
     """
-    Stores user activity timeline events with simplified static method interface.
+    Stores user activity timeline events with simplified interface.
+    Uses BerylModel's created_by and created fields.
     """
-    subject = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="timeline_events",
-        help_text="The user whose timeline this event belongs to.",
+    icon = models.CharField(
+        max_length=50, 
+        default="activity", 
+        verbose_name=_("Lucide Icon Name"),
+        help_text="Must be a valid Lucide icon name"
     )
-    message = models.TextField(verbose_name=_("Activity Message"), default="Activity message")
-    icon = models.CharField(max_length=50, default="activity", verbose_name=_("Lucide Icon Name"))
-    details = models.JSONField(null=True, blank=True, verbose_name=_("Additional Details"))
+    message = models.TextField(
+        verbose_name=_("Activity Message"), 
+        help_text="Markdown supported for highlights"
+    )
+    
+    def clean(self):
+        """Validate that icon is a valid Lucide icon"""
+        from core.lucide import LucideIcons
+        if not LucideIcons.is_valid(self.icon):
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'icon': f'"{self.icon}" is not a valid Lucide icon name. Use one of: {", ".join(sorted(list(LucideIcons.get_all_icons()))[:10])}...'
+            })
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-created"]
@@ -707,16 +732,15 @@ class RecentActivity(BerylModel):
         verbose_name_plural = "Recent Activities"
     
     def __str__(self):
-        return f"{self.message} ({self.subject.email if self.subject else 'Unknown'})"
+        return f"{self.message} ({self.created_by.email if self.created_by else 'System'})"
     
     # Collection Activities
     @staticmethod
     def log_collection_created(user, collection_name):
         """Log when user creates a new collection"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You created a new collection '{collection_name}'",
+            message=f"Created collection **{collection_name}**",
             icon="plus"
         )
     
@@ -724,9 +748,8 @@ class RecentActivity(BerylModel):
     def log_collection_deleted(user, collection_name):
         """Log when user deletes a collection"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You deleted collection '{collection_name}'",
+            message=f"Deleted collection **{collection_name}**",
             icon="trash-2"
         )
     
@@ -735,10 +758,9 @@ class RecentActivity(BerylModel):
         """Log when user changes collection visibility"""
         visibility_display = {'PRIVATE': 'Private', 'PUBLIC': 'Public', 'UNLISTED': 'Unlisted'}.get(visibility, visibility)
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You changed '{collection_name}' visibility to {visibility_display}",
-            icon="eye"
+            message=f"Changed **{collection_name}** visibility to **{visibility_display}**",
+            icon="settings"
         )
     
     # Item Activities
@@ -746,32 +768,30 @@ class RecentActivity(BerylModel):
     def log_item_added(user, item_name, collection_name):
         """Log when user adds an item to collection"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You added '{item_name}' to collection '{collection_name}'",
-            icon="archive"
+            message=f"Added **{item_name}** to collection **{collection_name}**",
+            icon="plus-circle"
         )
     
     @staticmethod
     def log_item_removed(user, item_name, collection_name):
         """Log when user removes an item from collection"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You removed '{item_name}' from collection '{collection_name}'",
-            icon="archive-x"
+            message=f"Removed **{item_name}** from collection **{collection_name}**",
+            icon="minus-circle"
         )
     
     @staticmethod
     def log_item_status_changed(user, item_name, new_status):
         """Log when user changes item status"""
         status_messages = {
-            'IN_COLLECTION': f"You marked '{item_name}' as In Collection",
-            'WANTED': f"You added '{item_name}' to your wishlist",
-            'RESERVED': f"You marked '{item_name}' as Reserved",
-            'ORDERED': f"You marked '{item_name}' as Ordered",
-            'LENT': f"You marked '{item_name}' as Lent",
-            'PREVIOUSLY_OWNED': f"You marked '{item_name}' as Previously Owned"
+            'IN_COLLECTION': f"Marked **{item_name}** as **In Collection**",
+            'WANTED': f"Added **{item_name}** to **wishlist**",
+            'RESERVED': f"Marked **{item_name}** as **Reserved**",
+            'ORDERED': f"Marked **{item_name}** as **Ordered**",
+            'LENT': f"Marked **{item_name}** as **Lent**",
+            'PREVIOUSLY_OWNED': f"Marked **{item_name}** as **Previously Owned**"
         }
         status_icons = {
             'IN_COLLECTION': 'package',
@@ -782,9 +802,8 @@ class RecentActivity(BerylModel):
             'PREVIOUSLY_OWNED': 'history'
         }
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=status_messages.get(new_status, f"You changed '{item_name}' status to {new_status}"),
+            message=status_messages.get(new_status, f"Changed **{item_name}** status to **{new_status}**"),
             icon=status_icons.get(new_status, 'edit')
         )
     
@@ -792,9 +811,8 @@ class RecentActivity(BerylModel):
     def log_item_favorited(user, item_name):
         """Log when user favorites an item"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You favorited '{item_name}'",
+            message=f"Favorited **{item_name}**",
             icon="star"
         )
     
@@ -802,29 +820,26 @@ class RecentActivity(BerylModel):
     def log_item_unfavorited(user, item_name):
         """Log when user unfavorites an item"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You removed '{item_name}' from favorites",
-            icon="star-off"
+            message=f"Unfavorited **{item_name}**",
+            icon="heart"
         )
     
     @staticmethod
     def log_item_moved(user, item_name, from_collection, to_collection):
         """Log when user moves an item between collections"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You moved '{item_name}' from '{from_collection}' to '{to_collection}'",
-            icon="move"
+            message=f"Moved **{item_name}** from **{from_collection}** to **{to_collection}**",
+            icon="arrow-right-left"
         )
     
     @staticmethod
     def log_item_copied(user, item_name, from_collection, to_collection):
         """Log when user copies an item between collections"""
         RecentActivity.objects.create(
-            subject=user,
             created_by=user,
-            message=f"You copied '{item_name}' from '{from_collection}' to '{to_collection}'",
+            message=f"Copied **{item_name}** from **{from_collection}** to **{to_collection}**",
             icon="copy"
         )
     
@@ -833,9 +848,8 @@ class RecentActivity(BerylModel):
     def log_item_reserved_by_user(collection_owner, item_name):
         """Log when someone reserves an item from user's collection"""
         RecentActivity.objects.create(
-            subject=collection_owner,
             created_by=collection_owner,
-            message=f"Someone reserved '{item_name}' from your collection",
+            message=f"Someone reserved **{item_name}** from your collection",
             icon="gift"
         )
     
@@ -843,9 +857,8 @@ class RecentActivity(BerylModel):
     def log_item_reserved_by_guest(collection_owner, item_name):
         """Log when guest reserves an item from user's collection"""
         RecentActivity.objects.create(
-            subject=collection_owner,
             created_by=collection_owner,
-            message=f"Someone reserved '{item_name}' from your collection",
+            message=f"Someone reserved **{item_name}** from your collection",
             icon="gift"
         )
     
@@ -853,10 +866,9 @@ class RecentActivity(BerylModel):
     def log_item_unreserved(collection_owner, item_name):
         """Log when someone cancels their reservation"""
         RecentActivity.objects.create(
-            subject=collection_owner,
             created_by=collection_owner,
-            message=f"Someone cancelled their reservation for '{item_name}'",
-            icon="gift-off"
+            message=f"Someone cancelled their reservation for **{item_name}**",
+            icon="x-circle"
         )
 
 
@@ -1019,8 +1031,13 @@ class ApplicationActivity(models.Model):
             meta (dict, optional): Additional metadata as JSON
         
         Returns:
-            ApplicationActivity: Created activity instance
+            ApplicationActivity: Created activity instance or None if disabled
         """
+        # Check if ApplicationActivity logging is enabled
+        from django.conf import settings
+        if not getattr(settings, 'APPLICATION_ACTIVITY_LOGGING', True):
+            return None
+            
         if level is None:
             level = cls.Level.INFO
             
@@ -1064,3 +1081,143 @@ class ApplicationActivity(models.Model):
     def log_error(cls, function_name, message, user=None, meta=None):
         """Convenience method for ERROR level logging"""
         return cls.log(function_name, message, user, cls.Level.ERROR, meta)
+
+
+class CollectionImage(BerylModel):
+    """
+    Links MediaFile records to Collections for image management.
+    Supports up to 3 images per collection with ordering and default selection.
+    """
+    collection = models.ForeignKey(
+        Collection, 
+        on_delete=models.CASCADE, 
+        related_name="images",
+        verbose_name=_("Collection")
+    )
+    media_file = models.ForeignKey(
+        MediaFile, 
+        on_delete=models.CASCADE, 
+        related_name="collection_images",
+        verbose_name=_("Media File")
+    )
+    is_default = models.BooleanField(
+        default=False, 
+        verbose_name=_("Default Image"),
+        help_text=_("The primary image shown in collection displays")
+    )
+    order = models.IntegerField(
+        default=0, 
+        verbose_name=_("Display Order"),
+        help_text=_("Order for thumbnail display (0-2)")
+    )
+    
+    class Meta:
+        verbose_name = _("Collection Image")
+        verbose_name_plural = _("Collection Images")
+        ordering = ["collection", "order"]
+        unique_together = ["collection", "media_file"]
+        indexes = [
+            models.Index(fields=["collection", "is_default"]),
+            models.Index(fields=["collection", "order"]),
+        ]
+    
+    def __str__(self):
+        return f"{self.collection.name} - {self.media_file.original_filename}"
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure media_file has correct media_type and handle default logic
+        """
+        # Ensure MediaFile has correct type
+        if self.media_file.media_type != MediaFile.MediaType.COLLECTION_HEADER:
+            self.media_file.media_type = MediaFile.MediaType.COLLECTION_HEADER
+            self.media_file.save(update_fields=['media_type'])
+        
+        # Handle default image logic
+        if self.is_default:
+            # Unset other default images for this collection
+            CollectionImage.objects.filter(
+                collection=self.collection, 
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        
+        # If this is the first image for the collection, make it default
+        if not self.pk and not CollectionImage.objects.filter(collection=self.collection).exists():
+            self.is_default = True
+        
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def can_add_image(cls, collection):
+        """Check if collection can accept another image (max 3)"""
+        return cls.objects.filter(collection=collection).count() < 3
+
+
+class CollectionItemImage(BerylModel):
+    """
+    Links MediaFile records to CollectionItems for image management.
+    Supports up to 3 images per item with ordering and default selection.
+    """
+    item = models.ForeignKey(
+        CollectionItem, 
+        on_delete=models.CASCADE, 
+        related_name="images",
+        verbose_name=_("Collection Item")
+    )
+    media_file = models.ForeignKey(
+        MediaFile, 
+        on_delete=models.CASCADE, 
+        related_name="item_images",
+        verbose_name=_("Media File")
+    )
+    is_default = models.BooleanField(
+        default=False, 
+        verbose_name=_("Default Image"),
+        help_text=_("The primary image shown in item displays")
+    )
+    order = models.IntegerField(
+        default=0, 
+        verbose_name=_("Display Order"),
+        help_text=_("Order for thumbnail display (0-2)")
+    )
+    
+    class Meta:
+        verbose_name = _("Collection Item Image")
+        verbose_name_plural = _("Collection Item Images")
+        ordering = ["item", "order"]
+        unique_together = ["item", "media_file"]
+        indexes = [
+            models.Index(fields=["item", "is_default"]),
+            models.Index(fields=["item", "order"]),
+        ]
+    
+    def __str__(self):
+        return f"{self.item.name} - {self.media_file.original_filename}"
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save to ensure media_file has correct media_type and handle default logic
+        """
+        # Ensure MediaFile has correct type
+        if self.media_file.media_type != MediaFile.MediaType.COLLECTION_ITEM:
+            self.media_file.media_type = MediaFile.MediaType.COLLECTION_ITEM
+            self.media_file.save(update_fields=['media_type'])
+        
+        # Handle default image logic
+        if self.is_default:
+            # Unset other default images for this item
+            CollectionItemImage.objects.filter(
+                item=self.item, 
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        
+        # If this is the first image for the item, make it default
+        if not self.pk and not CollectionItemImage.objects.filter(item=self.item).exists():
+            self.is_default = True
+        
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def can_add_image(cls, item):
+        """Check if item can accept another image (max 3)"""
+        return cls.objects.filter(item=item).count() < 3

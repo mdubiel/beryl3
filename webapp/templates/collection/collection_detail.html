@@ -26,20 +26,84 @@
 {# Top action buttons (owner) #}
 {% if request.user == collection.created_by %}
 <div class="mb-8 flex items-center justify-end gap-2">
-    <a href="{% url "item_create" collection.hash %}" class="btn btn-secondary">{% lucide 'plus' size=16 class='mr-2' %} Add New Item</a>
-    <a href="{% url "collection_update" collection.hash %}" class="btn btn-outline">{% lucide 'pencil' size=16 class='mr-2' %} Edit Collection</a>
-    {% include "partials/_collection_delete_dropdown.html" with collection=collection %}
-    {% include "partials/_collection_share_hx_dropdown.html" with collection=collection %}
+    {# Main Actions Group #}
+    <div class="btn-group">
+        <a href="{% url "item_create" collection.hash %}" class="btn btn-secondary btn-sm">
+            {% lucide 'plus' size=16 class='mr-2' %} Add New Item
+        </a>
+        
+        <div id="visibility-dropdown-{{ collection.hash }}" class="dropdown dropdown-end dropdown-bottom">
+            <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Visibility">
+                {% lucide 'share-2' size=18 %}
+            </button>
+            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                <li class="menu-title"><span>Change Visibility</span></li>
+                {% for visibility_value, visibility_label in collection.Visibility.choices %}
+                <li>
+                    {% if collection.visibility == visibility_value %}
+                        <a class="disabled font-bold">{{ visibility_label }}</a>
+                    {% else %}
+                        <a  hx-post="{% url 'collection_update_visibility' collection.hash %}"
+                            hx-vals='{"new_visibility": "{{ visibility_value }}"}'
+                            hx-target="#visibility-dropdown-{{ collection.hash }}"
+                            hx-swap="outerHTML"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                            {{ visibility_label }}
+                        </a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <a href="{% url "collection_manage_images" collection.hash %}" class="btn btn-ghost btn-square btn-sm" title="Manage Images">
+            {% lucide 'images' size=18 %}
+        </a>
+        
+        <a href="{% url "collection_update" collection.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Collection">
+            {% lucide 'pencil' size=18 %}
+        </a>
+    </div>
+
+    {# Danger Actions Group - Delete #}
+    <div class="btn-group">
+        {% include "partials/_collection_delete_dropdown.html" with collection=collection %}
+    </div>
 </div>
 {% endif %}
 
 
-{# Hero, stats & image #}
-<div class="hero min-h-[400px] rounded-box overflow-hidden bg-base-100">
-    <div class="hero-content flex-col lg:flex-row-reverse w-full p-0">
-        <img src="{{ collection.image_url }}" class="w-full lg:max-w-sm rounded-lg shadow-2xl" />
-        <div class="p-8 text-center lg:text-left">
-            <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
+{# Collection Hero Card - Image Always On Top #}
+<div class="bg-base-100 rounded-lg min-w-80 max-w-none mx-auto lg:mx-0 mb-8">
+    
+    {# Image section using DaisyUI figure - Always on top #}
+    <figure class="w-full h-64 rounded-t-lg overflow-hidden">
+        {% if collection.default_image %}
+            <img src="{{ collection.default_image.media_file.file_url }}" 
+                 alt="{{ collection.name }}" 
+                 class="w-full h-full object-cover cursor-pointer"
+                 onclick="showImageModal('{{ collection.default_image.media_file.file_url }}', '{{ collection.name|escapejs }}')" />
+        {% elif collection.images.all.0 %}
+            <img src="{{ collection.images.all.0.media_file.file_url }}" 
+                 alt="{{ collection.name }}" 
+                 class="w-full h-full object-cover cursor-pointer"
+                 onclick="showImageModal('{{ collection.images.all.0.media_file.file_url }}', '{{ collection.name|escapejs }}')" />
+        {% else %}
+            <div class="w-full h-full bg-base-300 flex items-center justify-center rounded-t-lg">
+                {% lucide 'image' size=64 class='text-gray-400' %}
+            </div>
+        {% endif %}
+    </figure>
+    
+    {# Content section using DaisyUI card-body #}
+    <div class="card-body flex flex-col justify-between py-8 px-4">
+        
+        {# Top section #}
+        <div class="space-y-6">
+            
+            <h1 class="text-5xl font-bold leading-tight">{{ collection.name }}</h1>
+            
+            <div id="share-section-{{ collection.hash }}" class="share-section">
             {% if collection.visibility != 'PRIVATE' %}
             <div class="mt-3 flex flex-col sm:flex-row items-center lg:items-start gap-2">
                 <div class="join">
@@ -57,8 +121,31 @@
                 </div>
             </div>
             {% endif %}
-            <p class="py-6">{{ collection.description|default:"No description provided." }}</p>
+            </div>
             
+            <p class="text-base-content text-opacity-70">{{ collection.description|default:"No description provided." }}</p>
+            
+            {# Collection Images Gallery - Smaller Size #}
+            {% if collection.images.all %}
+            <div class="mt-6">
+                <h3 class="text-sm font-semibold mb-3 text-base-content text-opacity-60">Collection Images</h3>
+                <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {% for image in collection.images.all %}
+                    <div class="aspect-square bg-base-200 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
+                         onclick="showImageModal('{{ image.media_file.file_url }}', '{{ collection.name|escapejs }} - Image {{ forloop.counter }}')">
+                        <img src="{{ image.media_file.file_url }}" 
+                             alt="{{ collection.name }} - Image {{ forloop.counter }}" 
+                             class="w-full h-full object-cover" />
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+        </div>
+        
+        {# Bottom section - Stats #}
+        <div class="mt-6">
             <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-100/60 backdrop-blur-sm">
                 <div class="stat">
                     <div class="stat-title">Total Items</div>
@@ -78,23 +165,26 @@
                 </div>
             </div>
         </div>
+        
     </div>
+    
 </div>
-{# End Hero #}
 
 
 {# Items listing #}
 <div class="mt-12">
     <h2 class="text-2xl font-bold mb-4">Items in this Collection</h2>
 
-    <ul class="list bg-base-100 border-base-300 rounded-box shadow-xl">
+    <div class="flex flex-col gap-6">
         {# Loop through items and include the partial for each one #}
         {% for item in items %}
             {% include "partials/_item_list_item.html" with item=item %}
         {% empty %}
-            <li class="p-4 text-center">This collection has no items yet.</li>
+            <div class="card bg-base-100 shadow-sm p-8 text-center">
+                <p class="text-base-content text-opacity-60">This collection has no items yet.</p>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 </div>
 {# End items list #}
 
@@ -163,6 +253,56 @@
             </form>
         </div>
     </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+{# Image lightbox modal #}
+<dialog id="image-modal" class="modal backdrop-blur-sm">
+    <div class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4">
+        {# Close button - top right #}
+        <button class="absolute top-4 right-4 z-10 btn btn-circle btn-ghost text-white hover:bg-white hover:bg-opacity-20" 
+                onclick="document.getElementById('image-modal').close()" 
+                title="Close (ESC)">
+            {% lucide 'x' size=24 %}
+        </button>
+        
+        {# Image title and counter - top center #}
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 text-white text-lg font-medium text-center px-4 py-2 bg-black bg-opacity-50 rounded-lg" id="image-modal-title">
+            Image Preview
+        </div>
+        <div class="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 text-white text-sm text-center px-3 py-1 bg-black bg-opacity-50 rounded" id="image-modal-counter" style="display: none;">
+            1 / 1
+        </div>
+        
+        {# Previous arrow - left side #}
+        <button id="lightbox-prev" 
+                class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 btn btn-circle btn-ghost text-white hover:bg-white hover:bg-opacity-20" 
+                onclick="navigateLightbox(-1)"
+                title="Previous image (←)"
+                style="display: none;">
+            {% lucide 'chevron-left' size=32 %}
+        </button>
+        
+        {# Next arrow - right side #}
+        <button id="lightbox-next" 
+                class="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 btn btn-circle btn-ghost text-white hover:bg-white hover:bg-opacity-20" 
+                onclick="navigateLightbox(1)"
+                title="Next image (→)"
+                style="display: none;">
+            {% lucide 'chevron-right' size=32 %}
+        </button>
+        
+        {# Main image - centered #}
+        <img id="image-modal-img" 
+             src="" 
+             alt="" 
+             class="max-w-full max-h-full object-contain shadow-2xl" 
+             title="Use arrow keys to navigate" />
+    </div>
+    
+    {# Backdrop click to close #}
     <form method="dialog" class="modal-backdrop">
         <button>close</button>
     </form>
@@ -402,6 +542,98 @@ function showNotification(type, message) {
     setTimeout(() => {
         resultDiv.style.display = 'none';
     }, 5000);
+}
+
+// Image gallery lightbox functionality
+let currentGallery = {
+    images: [],
+    currentIndex: 0,
+    itemName: ''
+};
+
+function showImageModal(imageUrl, imageTitle) {
+    // For backward compatibility - single image
+    showImageGallery(0, imageTitle, [imageUrl]);
+}
+
+function showImageGallery(startIndex, itemName, imageUrls) {
+    currentGallery = {
+        images: imageUrls,
+        currentIndex: startIndex,
+        itemName: itemName
+    };
+    
+    const modal = document.getElementById('image-modal');
+    updateLightboxImage();
+    modal.showModal();
+    
+    // Focus the modal for keyboard navigation
+    modal.focus();
+    
+    // Add keyboard event listeners
+    const handleKeydown = (e) => {
+        switch(e.key) {
+            case 'Escape':
+                modal.close();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                navigateLightbox(-1);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                navigateLightbox(1);
+                break;
+        }
+    };
+    document.addEventListener('keydown', handleKeydown);
+    
+    // Remove event listener when modal closes
+    modal.addEventListener('close', () => {
+        document.removeEventListener('keydown', handleKeydown);
+    }, { once: true });
+}
+
+function navigateLightbox(direction) {
+    const newIndex = currentGallery.currentIndex + direction;
+    
+    // Handle wrapping
+    if (newIndex < 0) {
+        currentGallery.currentIndex = currentGallery.images.length - 1;
+    } else if (newIndex >= currentGallery.images.length) {
+        currentGallery.currentIndex = 0;
+    } else {
+        currentGallery.currentIndex = newIndex;
+    }
+    
+    updateLightboxImage();
+}
+
+function updateLightboxImage() {
+    const img = document.getElementById('image-modal-img');
+    const title = document.getElementById('image-modal-title');
+    const counter = document.getElementById('image-modal-counter');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+    
+    // Update image
+    img.src = currentGallery.images[currentGallery.currentIndex];
+    img.alt = `${currentGallery.itemName} - Image ${currentGallery.currentIndex + 1}`;
+    
+    // Update title
+    title.textContent = currentGallery.itemName;
+    
+    // Update counter and show navigation if multiple images
+    if (currentGallery.images.length > 1) {
+        counter.textContent = `${currentGallery.currentIndex + 1} / ${currentGallery.images.length}`;
+        counter.style.display = 'block';
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+    } else {
+        counter.style.display = 'none';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+    }
 }
 </script>
 

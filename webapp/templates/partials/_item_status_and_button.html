@@ -1,7 +1,16 @@
+{% load lucide %}
 {% comment %} The root is now the styled card, which is swapped by HTMX {% endcomment %}
 <div class="card card-side bg-base-100 shadow-md">
     <figure class="w-24 h-24 flex-shrink-0">
-        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+        {% if item.default_image %}
+            <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+        {% elif item.images.all.0 %}
+            <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+        {% else %}
+            <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                {% lucide 'image' size=24 class='text-gray-400' %}
+            </div>
+        {% endif %}
     </figure>
     <div class="card-body flex-row items-center justify-between p-4">
         <div>

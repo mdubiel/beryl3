@@ -46,8 +46,14 @@
                     </div>
                     
                     <div class="text-right">
-                        {% if item.image_url %}
-                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-24 h-24 object-cover rounded-lg ml-auto">
+                        {% if item.default_image %}
+                            <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-24 h-24 object-cover rounded-lg ml-auto">
+                        {% elif item.images.all.0 %}
+                            <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-24 h-24 object-cover rounded-lg ml-auto">
+                        {% else %}
+                            <div class="w-24 h-24 bg-base-300 rounded-lg ml-auto flex items-center justify-center">
+                                {% lucide 'image' size=24 class='text-gray-400' %}
+                            </div>
                         {% endif %}
                     </div>
                 </div>

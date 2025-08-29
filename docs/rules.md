@@ -245,6 +245,131 @@ ApplicationActivity.log_warning('function_name',
 - **Error Tracking**: Centralized error monitoring and alerting setup
 - **Performance Monitoring**: Key metrics tracking and optimization targets
 
+## Action Button Layout Standards
+
+All action buttons across the application MUST follow the unified layout pattern established for optimal user experience and visual consistency.
+
+### Layout Structure
+Action buttons MUST be organized into logical groups using DaisyUI's `btn-group` class:
+
+```html
+<div class="flex items-center justify-end gap-2">
+    {# Main Actions Group #}
+    <div class="btn-group">
+        <!-- Primary action with text label (always first) -->
+        <a href="#" class="btn btn-secondary btn-sm">
+            {% lucide 'icon-name' size=16 class='mr-2' %} Action Label
+        </a>
+        
+        <!-- Secondary actions (icon-only buttons) -->
+        <button class="btn btn-ghost btn-square btn-sm" title="Tooltip Text">
+            {% lucide 'icon-name' size=18 %}
+        </button>
+        
+        <!-- Dropdown actions -->
+        <div class="dropdown dropdown-end dropdown-bottom">
+            <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Action Name">
+                {% lucide 'icon-name' size=18 %}
+            </button>
+            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                <!-- Dropdown items -->
+            </ul>
+        </div>
+    </div>
+
+    {# Danger Actions Group - Always Separated #}
+    <div class="btn-group">
+        <!-- Delete/destructive actions -->
+        <div class="dropdown dropdown-end dropdown-bottom">
+            <button tabindex="0" class="btn btn-ghost btn-square btn-sm text-error" title="Delete">
+                {% lucide 'trash-2' size=18 %}
+            </button>
+            <!-- Delete confirmation dropdown -->
+        </div>
+    </div>
+</div>
+```
+
+### Styling Requirements
+
+#### Button Classes
+- **Primary action**: `btn btn-secondary btn-sm` (with text and icon)
+- **Secondary actions**: `btn btn-ghost btn-square btn-sm` (icon-only)
+- **Danger actions**: `btn btn-ghost btn-square btn-sm text-error` (icon-only, red text)
+
+#### Icon Standards
+- **Primary action icons**: `size=16` with `class='mr-2'` spacing
+- **Secondary/dropdown icons**: `size=18` (larger for better touch targets)
+- **Always include tooltips** via `title` attribute for icon-only buttons
+
+#### Standardized Icon Usage
+- **Sharing/Visibility**: Use `share-2` for sharing controls, visibility settings, and collection sharing dropdowns
+- **External Links**: Use `external-link` for opening links in new tabs/windows
+- **Copy Actions**: Use `copy` for clipboard copy functionality
+
+#### Datetime Formatting Standards
+- **Relative Time Display**: Use Django's `timesince` filter for showing elapsed time
+- **Format**: `{{ object.updated|timesince }} ago` (e.g., "2 hours, 15 minutes ago", "3 days, 4 hours ago")
+- **Benefits**: Natural breakdown into appropriate units (minutes → hours → days → weeks → months)
+- **Consistency**: Provides automatic rounding and handles all time calculations
+- **Avoid**: Custom time formatting logic or truncation that loses precision
+- **Examples**: 
+  - Recent: "3 minutes ago", "2 hours, 30 minutes ago"
+  - Medium: "1 day, 4 hours ago", "5 days, 2 hours ago" 
+  - Older: "2 weeks, 3 days ago", "3 months, 1 week ago"
+
+#### Grouping Rules
+1. **Main Actions Group**: Contains the primary action (first, with text) followed by secondary actions
+2. **Danger Actions Group**: Always separated on the right, contains delete/destructive actions only
+3. **Utility Groups**: Additional groups (e.g., share) can be added between main and danger groups
+
+### Implementation Examples
+
+#### Collection Detail Page
+```html
+{# Main Actions Group #}
+<div class="btn-group">
+    <a href="{% url 'item_create' collection.hash %}" class="btn btn-secondary btn-sm">
+        {% lucide 'plus' size=16 class='mr-2' %} Add New Item
+    </a>
+    <div class="dropdown"><!-- Visibility dropdown --></div>
+    <a href="{% url 'collection_manage_images' collection.hash %}" class="btn btn-ghost btn-square btn-sm" title="Manage Images">
+        {% lucide 'images' size=18 %}
+    </a>
+    <a href="{% url 'collection_update' collection.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Collection">
+        {% lucide 'pencil' size=18 %}
+    </a>
+</div>
+{# Danger Actions Group #}
+<div class="btn-group">
+    <!-- Delete dropdown -->
+</div>
+```
+
+#### Collection List Page
+```html
+<a href="{% url 'collection_create' %}" class="btn btn-secondary btn-sm">
+    {% lucide 'plus' size=16 class='mr-2' %} Create New Collection
+</a>
+```
+
+### Consistency Requirements
+- **ALL action button sections** must use this pattern
+- **Primary buttons** must have consistent size (`btn-sm`) across all pages
+- **Icon sizes** must be consistent (16px with text, 18px icon-only)
+- **Delete actions** must always be separated in their own group
+- **Tooltips** are mandatory for all icon-only buttons
+- **Dropdown positioning** should be `dropdown-end dropdown-bottom` unless space constraints require otherwise
+
+### HTMX Integration
+When using HTMX with action buttons:
+- Use appropriate `hx-target` and `hx-swap` attributes
+- Include CSRF tokens: `hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'`
+- Consider `hx-swap-oob` for updating multiple page elements
+- Add proper error handling and loading states
+
+This pattern ensures consistent user experience, proper visual hierarchy, and maintainable code across all pages.
+
 ---
 
 *This document should be updated as the project evolves and new patterns emerge. Always prioritize simplicity, security, and user experience in development decisions.*

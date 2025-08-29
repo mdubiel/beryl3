@@ -94,7 +94,7 @@ class Command(BaseCommand):
 
         # Final Verification
         self.stdout.write(self.style.NOTICE("\n--- Verifying Created Activity Logs ---"))
-        activities = RecentActivity.objects.filter(subject=user).order_by('created')
+        activities = RecentActivity.objects.filter(created_by=user).order_by('created')
         
         expected_log_count = 4 
         if activities.count() == expected_log_count:

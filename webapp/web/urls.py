@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images
 
 
 urlpatterns = [
@@ -30,6 +30,7 @@ urlpatterns = [
     path('collections/<str:hash>/', collection.collection_detail_view, name='collection_detail'),
     path('collections/<str:hash>/edit/', collection.collection_update_view, name='collection_update'),
     path('collections/<str:hash>/delete/', collection.collection_delete_view, name='collection_delete'),
+    path('collections/<str:hash>/manage-images/', images.collection_manage_images, name='collection_manage_images'),
     
 
     # Public view for sharable collections
@@ -40,6 +41,7 @@ urlpatterns = [
     path('items/<str:hash>/', items.collection_item_detail_view, name='item_detail'),
     path('items/<str:hash>/edit/', items.collection_item_update_view, name='item_update'),
     path('items/<str:hash>/delete/', items.collection_item_delete_view, name='item_delete'),
+    path('items/<str:hash>/manage-images/', images.item_manage_images, name='item_manage_images'),
 
     # Recent activity
     path('activity/', user.recent_activity_view, name='recent_activity_list'),
@@ -62,6 +64,12 @@ urlpatterns = [
     path('items/<str:hash>/edit-link/<int:link_id>/', items_hx.item_edit_link, name='item_edit_link'),
     path('items/<str:hash>/save-link/', items_hx.item_save_link, name='item_save_link'),
     path('items/<str:hash>/remove-link/<int:link_id>/', items_hx.item_remove_link, name='item_remove_link'),
+    
+    # Image management HTMX endpoints
+    path('images/<str:hash>/set-default/', images.set_default_image, name='set_default_image'),
+    path('images/<str:hash>/delete/', images.delete_image, name='delete_image'),
+    path('images/<str:hash>/switch/', images.switch_image, name='switch_image'),
+    path('<str:hash>/reorder-images/', images.reorder_images, name='reorder_images'),
 
     # Item move/copy operations
     path('items/<str:item_hash>/move/', items.move_item_to_collection, name='move_item'),

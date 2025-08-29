@@ -1,0 +1,56 @@
+{% load lucide %}
+
+<div id="image-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for image in images %}
+    <div class="card bg-base-200 shadow-sm" data-image-hash="{{ image.media_file.hash }}">
+        <figure class="px-4 pt-4">
+            <img src="{{ image.media_file.file_url }}" 
+                 alt="{{ image.media_file.original_filename }}" 
+                 class="rounded-lg w-full h-48 object-cover">
+        </figure>
+        <div class="card-body p-4">
+            <div class="flex items-center justify-between">
+                <h3 class="card-title text-sm">{{ image.media_file.original_filename|truncatechars:20 }}</h3>
+                {% if image.is_default %}
+                <div class="badge badge-primary">Default</div>
+                {% endif %}
+            </div>
+            <p class="text-xs text-base-content/70">
+                {{ image.media_file.formatted_file_size }}
+                {% if image.media_file.width %}
+                • {{ image.media_file.width }}×{{ image.media_file.height }}
+                {% endif %}
+            </p>
+            <div class="card-actions justify-end mt-2">
+                {% if not image.is_default %}
+                <button class="btn btn-xs btn-primary"
+                        hx-post="{% url 'set_default_image' image.media_file.hash %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-target="#image-gallery"
+                        hx-swap="outerHTML">
+                    {% lucide 'star' size=12 %}
+                    Set Default
+                </button>
+                {% endif %}
+                <button class="btn btn-xs btn-error"
+                        onclick="confirm('Delete this image?') && this.nextElementSibling.click()">
+                    {% lucide 'trash-2' size=12 %}
+                    Delete
+                </button>
+                <button class="hidden"
+                        hx-post="{% url 'delete_image' image.media_file.hash %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-12">
+        <div class="mb-4">
+            {% lucide 'image' size=48 class='mx-auto text-gray-400' %}
+        </div>
+        <p class="text-base-content/70">No images uploaded yet</p>
+        <p class="text-sm text-base-content/50">Upload your first image to get started</p>
+    </div>
+    {% endfor %}
+</div>

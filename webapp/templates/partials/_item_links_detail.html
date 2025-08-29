@@ -6,20 +6,7 @@
             <thead>
                 <tr>
                     <th colspan="{% if request.user == item.collection.created_by %}3{% else %}2{% endif %}" class="bg-base-200">
-                        <div class="flex items-center justify-between">
-                            <span>Links</span>
-                            {% if request.user == item.collection.created_by %}
-                            <button class="btn btn-primary btn-xs"
-                                    title="Add new link"
-                                    hx-get="{% url 'item_add_link' item.hash %}"
-                                    hx-target="#link-edit-modal-content"
-                                    hx-trigger="click"
-                                    onclick="document.getElementById('link-edit-modal').showModal()">
-                                {% lucide 'plus' size=12 class='mr-1' %}
-                                Add
-                            </button>
-                            {% endif %}
-                        </div>
+                        <span>Links</span>
                     </th>
                 </tr>
             </thead>

@@ -1,57 +1,177 @@
 {% load i18n %}
 {% load lucide %}
 
-<li id="item-row-{{ item.hash }}" class="flex items-start gap-4 p-4 border-b border-base-300">
-
-    {# Left column for the image #}
-    <div class="flex-shrink-0 w-20">
-        <div class="avatar">
-            <div class="w-20 h-20 rounded-box">
-                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="object-cover"/>
-            </div>
-        </div>
-    </div>
+<div id="item-row-{{ item.hash }}" class="card lg:card-side bg-base-100 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0">
     
-    {# Middle column for title & description #}
-    <div class="flex-grow">
-      <div class="flex items-center gap-2">
-        {# Favorite star - pure star without button styling #}
-        {% if request.user == item.collection.created_by %}
-        <button class="text-lg hover:scale-110 transition-transform" 
-                title="{% if item.is_favorite %}Remove from favorites{% else %}Add to favorites{% endif %}"
-                hx-post="{% url 'item_toggle_favorite' item.hash %}"
-                hx-target="#item-row-{{ item.hash }}"
-                hx-swap="outerHTML"
-                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-            {% if item.is_favorite %}
-                {% lucide 'star' size=20 class='text-warning fill-current' %}
-            {% else %}
-                {% lucide 'star' size=20 class='text-base-content/30 hover:text-warning' %}
-            {% endif %}
-        </button>
+    {# Image section using DaisyUI figure #}
+    <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch">
+        {% if item.default_image %}
+            <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover" />
+        {% elif item.images.all.0 %}
+            <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover" />
+        {% else %}
+            <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                {% lucide 'image' size=48 class='text-gray-400' %}
+            </div>
         {% endif %}
+    </figure>
+    
+    {# Content section using DaisyUI card-body #}
+    <div class="card-body lg:w-3/4 flex flex-col justify-between">
         
-        <a href="{{ item.get_absolute_url }}" class="link link-hover font-bold text-lg">{{ item.name }}</a>
-      </div>
-      
-      <p class="text-sm opacity-70 mt-1">
-          {{ item.description|default:"No description." }}
-      </p>
-      
-      {# Attributes display #}
-      {% if item.item_type %}
-          {% include "partials/_item_attributes.html" with item=item %}
-      {% endif %}
-      
-      {# Links display #}
-      {% include "partials/_item_links.html" with item=item %}
-    </div>
+        {# Top section #}
+        <div class="space-y-3">
+            
+            {# Row 1: Item name (left) + Actions (right) #}
+            <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
+                {# Item name with favorite star - wrapped if too long #}
+                <div class="flex items-center gap-2 flex-grow">
+                    {# Favorite star - pure star without button styling #}
+                    {% if request.user == item.collection.created_by %}
+                    <button class="text-lg hover:scale-110 transition-transform" 
+                            title="{% if item.is_favorite %}Remove from favorites{% else %}Add to favorites{% endif %}"
+                            hx-post="{% url 'item_toggle_favorite' item.hash %}"
+                            hx-target="#item-row-{{ item.hash }}"
+                            hx-swap="outerHTML"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                        {% if item.is_favorite %}
+                            {% lucide 'star' size=20 class='text-warning fill-current' %}
+                        {% else %}
+                            {% lucide 'star' size=20 class='text-gray-400 hover:text-warning' %}
+                        {% endif %}
+                    </button>
+                    {% endif %}
+                    
+                    <h2 class="font-bold text-lg leading-tight">
+                        <a href="{{ item.get_absolute_url }}" class="link link-hover break-words">{{ item.name }}</a>
+                    </h2>
+                </div>
+                
+                {# Action buttons for Owner #}
+                {% if request.user == item.collection.created_by %}
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    {# Main Actions Group #}
+                    <div class="btn-group">
+                        {# Item Type Selector #}
+                        <div class="dropdown dropdown-end dropdown-top">
+                            <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Item Type">
+                                {% if item.item_type %}
+                                    {% lucide item.item_type.icon size=18 %}
+                                {% else %}
+                                    {% lucide 'package' size=18 %}
+                                {% endif %}
+                            </button>
+                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                                <li class="menu-title"><span>Item Type</span></li>
+                                {% for item_type in item_types %}
+                                <li>
+                                    {% if item.item_type == item_type %}
+                                        <a class="disabled font-bold">
+                                            {% lucide item_type.icon size=16 %}
+                                            {{ item_type.display_name }}
+                                        </a>
+                                    {% else %}
+                                        <a hx-post="{% url 'item_change_type' item.hash %}"
+                                           hx-vals='{"item_type_id": "{{ item_type.id }}"}'
+                                           hx-target="#item-row-{{ item.hash }}"
+                                           hx-swap="outerHTML"
+                                           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                            {% lucide item_type.icon size=16 %}
+                                            {{ item_type.display_name }}
+                                        </a>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        {# Add Attribute Button #}
+                        <button class="btn btn-ghost btn-square btn-sm"
+                                title="Add Attribute"
+                                hx-get="{% url 'item_add_attribute' item.hash %}"
+                                hx-target="#attribute-edit-modal-content"
+                                hx-trigger="click"
+                                onclick="document.getElementById('attribute-edit-modal').showModal()">
+                            {% lucide 'book-key' size=18 %}
+                        </button>
+                        
+                        {# Add Link Button #}
+                        <button class="btn btn-ghost btn-square btn-sm"
+                                title="Add Link"
+                                hx-get="{% url 'item_add_link' item.hash %}"
+                                hx-target="#link-edit-modal-content"
+                                hx-trigger="click"
+                                onclick="document.getElementById('link-edit-modal').showModal()">
+                            {% lucide 'link' size=18 %}
+                        </button>
+                        
+                        <div class="dropdown dropdown-end dropdown-top">
+                            <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">
+                                {% lucide 'list-checks' size=18 %}
+                            </button>
+                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
+                                <li class="menu-title"><span>Change Status</span></li>
+                                {% for status_value, status_label in item.Status.choices %}
+                                <li>
+                                  {% if item.status == status_value %}
+                                      {# This is the currently active status. We make it disabled and bold. #}
+                                      <a class="disabled font-bold">{{ status_label }}</a>
+                                  {% else %}
+                                      {# These are the other, clickable options with the HTMX attributes. #}
+                                      <a  hx-post="{% url 'item_update_status' item.hash %}"
+                                          hx-vals='{"new_status": "{{ status_value }}"}'
+                                          hx-target="#item-row-{{ item.hash }}"
+                                          hx-swap="outerHTML"
+                                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                          {{ status_label }}
+                                      </a>
+                                  {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
 
-    {#  Right column for actions #}
+                        {# Move/Copy dropdown #}
+                        <div class="dropdown dropdown-end dropdown-top">
+                            <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Move or Copy Item">
+                                {% lucide 'move' size=18 %}
+                            </button>
+                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-64 z-10">
+                                <li class="menu-title"><span>Move or Copy Item</span></li>
+                                <li>
+                                    <a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
+                                        {% lucide 'arrow-right-left' size=16 %}
+                                        Move to another collection
+                                    </a>
+                                </li>
+                                <li>
+                                    <a onclick="showCopyModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
+                                        {% lucide 'copy' size=16 %>
+                                        Copy to another collection
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        {# Manage Images Button #}
+                        <a href="{% url 'item_manage_images' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Manage Images">
+                            {% lucide 'images' size=18 %}
+                        </a>
+                        
+                        <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
+                            {% lucide 'pencil' size=18 %}
+                        </a>
+                    </div>
 
-    <div class="flex flex-col justify-between items-end flex-shrink-0 h-20">
-        {# Top section of the right column (Status Badge) #}
-        <div>
+                    {# Danger Actions Group - Delete #}
+                    <div class="btn-group">
+                        {% include "partials/_item_delete_dropdown.html" with item=item %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            {# Row 2: Status Badge #}
             <div class="badge
                 {% if item.status == 'IN_COLLECTION' %} badge-success
                 {% elif item.status == 'WANTED' %} badge-info
@@ -61,104 +181,35 @@
                 {% endif %}">
                 {{ item.get_status_display }}
             </div>
-        </div>
-
-        {# Bottom section of the right column (Action Buttons for Owner) #}
-        {% if request.user == item.collection.created_by %}
-        <div class="flex items-center gap-2">
-            {# Main Actions Group - Item Type, Status, Move, Edit #}
-            <div class="btn-group">
-                {# Item Type Selector #}
-                <div class="dropdown dropdown-end dropdown-top">
-                    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Item Type">
-                        {% if item.item_type %}
-                            {% lucide item.item_type.icon size=18 %}
-                        {% else %}
-                            {% lucide 'package' size=18 %}
-                        {% endif %}
-                    </button>
-                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
-                        <li class="menu-title"><span>Item Type</span></li>
-                        {% for item_type in item_types %}
-                        <li>
-                            {% if item.item_type == item_type %}
-                                <a class="disabled font-bold">
-                                    {% lucide item_type.icon size=16 %}
-                                    {{ item_type.display_name }}
-                                </a>
-                            {% else %}
-                                <a hx-post="{% url 'item_change_type' item.hash %}"
-                                   hx-vals='{"item_type_id": "{{ item_type.id }}"}'
-                                   hx-target="#item-row-{{ item.hash }}"
-                                   hx-swap="outerHTML"
-                                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                    {% lucide item_type.icon size=16 %}
-                                    {{ item_type.display_name }}
-                                </a>
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
+            
+            {# Row 3: Description #}
+            <p class="text-sm text-base-content text-opacity-60">{{ item.description|default:"*No description provided*" }}</p>
+            
+            {# Row 4: Attributes display #}
+            {% if item.item_type %}
+                {% include "partials/_item_attributes.html" with item=item %}
+            {% endif %}
+            
+            {# Row 5: Links display #}
+            {% include "partials/_item_links.html" with item=item %}
+            
+            {# Row 6: All images - thumbnails using avatar styling #}
+            {% if item.images.all|length > 0 %}
+            <div class="mt-4">
+                <div class="flex flex-wrap gap-1 justify-start">
+                    {% for image in item.images.all %}
+                    <div class="avatar cursor-pointer hover:opacity-80 transition-opacity" onclick="showImageGallery({{ forloop.counter0 }}, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{{ img.media_file.file_url }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
+                        <div class="w-12 h-12 rounded">
+                            <img src="{{ image.media_file.file_url }}" alt="{{ item.name }} - Image {{ forloop.counter }}" class="object-cover" />
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                
-                <div class="dropdown dropdown-end dropdown-top">
-                    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">
-                        {% lucide 'list-checks' size=18 %}
-                    </button>
-                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-10">
-                        <li class="menu-title"><span>Change Status</span></li>
-                        {% for status_value, status_label in item.Status.choices %}
-                        <li>
-                          {% if item.status == status_value %}
-                              {# This is the currently active status. We make it disabled and bold. #}
-                              <a class="disabled font-bold">{{ status_label }}</a>
-                          {% else %}
-                              {# These are the other, clickable options with the HTMX attributes. #}
-                              <a  hx-post="{% url 'item_update_status' item.hash %}"
-                                  hx-vals='{"new_status": "{{ status_value }}"}'
-                                  hx-target="#item-row-{{ item.hash }}"
-                                  hx-swap="outerHTML"
-                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                  {{ status_label }}
-                              </a>
-                          {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-
-                {# Move/Copy dropdown #}
-                <div class="dropdown dropdown-end dropdown-top">
-                    <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Move or Copy Item">
-                        {% lucide 'move' size=18 %}
-                    </button>
-                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-64 z-10">
-                        <li class="menu-title"><span>Move or Copy Item</span></li>
-                        <li>
-                            <a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
-                                {% lucide 'arrow-right-left' size=16 %}
-                                Move to another collection
-                            </a>
-                        </li>
-                        <li>
-                            <a onclick="showCopyModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
-                                {% lucide 'copy' size=16 %}
-                                Copy to another collection
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
-                    {% lucide 'pencil' size=18 %}
-                </a>
             </div>
-
-            {# Danger Actions Group - Delete #}
-            <div class="btn-group">
-                {% include "partials/_item_delete_dropdown.html" with item=item %}
-            </div>
+            {% endif %}
+            
         </div>
-        {% endif %}
+        
     </div>
-</li>
+
+</div>

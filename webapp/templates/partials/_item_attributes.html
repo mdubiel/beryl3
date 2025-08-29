@@ -2,123 +2,47 @@
 
 <div class="mt-4" id="item-attributes-{{ item.hash }}">
     {% with attributes=item.get_display_attributes %}
-        {% if attributes|length > 0 or request.user == item.collection.created_by %}
-            {# Attributes header with Add button #}
-            <div class="flex items-center justify-between mb-2">
-                <h4 class="text-sm font-semibold text-base-content">Attributes</h4>
-                {% if request.user == item.collection.created_by %}
-                <button class="badge badge-primary badge-sm hover:badge-primary-focus cursor-pointer"
-                        title="Add new attribute"
-                        hx-get="{% url 'item_add_attribute' item.hash %}"
-                        hx-target="#attribute-edit-modal-content"
-                        hx-trigger="click"
-                        onclick="document.getElementById('attribute-edit-modal').showModal()">
-                    {% lucide 'plus' size=12 class='mr-1' %}
-                    Add Attribute
-                </button>
-                {% endif %}
+        {% if attributes|length > 0 %}
+            {# All attributes - always show expanded #}
+            <div class="space-y-1">
+                {% for attr_data in attributes %}
+                <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
+                    <span class="text-xs" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
+                        {{ attr_data.attribute.display_name }}: {{ attr_data.value }}
+                    </span>
+                    {% if request.user == item.collection.created_by %}
+                    <div class="dropdown dropdown-end dropdown-top flex-shrink-0">
+                        <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Attribute Actions">
+                            {% lucide 'ellipsis' size=12 %}
+                        </button>
+                        <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-50">
+                            <li>
+                                <a class="text-xs py-1 px-2"
+                                   hx-get="{% url 'item_edit_attribute' item.hash attr_data.attribute.name %}"
+                                   hx-target="#attribute-edit-modal-content"
+                                   hx-trigger="click"
+                                   onclick="document.getElementById('attribute-edit-modal').showModal()">
+                                    {% lucide 'pencil' size=12 %}
+                                    Edit
+                                </a>
+                            </li>
+                            <li>
+                                <a class="text-xs py-1 px-2 text-error"
+                                   hx-delete="{% url 'item_remove_attribute' item.hash attr_data.attribute.name %}"
+                                   hx-target="#item-attributes-{{ item.hash }}"
+                                   hx-swap="outerHTML"
+                                   hx-confirm="Remove {{ attr_data.attribute.display_name }}?"
+                                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                    {% lucide 'trash-2' size=12 %}
+                                    Delete
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
-            
-            {% if attributes|length == 0 %}
-                {# No attributes - header and button already shown above #}
-                
-            {% elif attributes|length == 1 %}
-                {# Exactly 1 attribute - show it inline #}
-                <div class="flex flex-wrap gap-1 max-w-2xl">
-                    {% for attr_data in attributes %}
-                    <div class="inline-flex items-center gap-1 mr-2 mb-1">
-                        <span class="text-xs" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
-                            {{ attr_data.attribute.display_name }}: {{ attr_data.value }}
-                        </span>
-                        {% if request.user == item.collection.created_by %}
-                        <div class="dropdown dropdown-end flex-shrink-0 ml-1">
-                            <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Attribute Actions">
-                                {% lucide 'ellipsis' size=12 %}
-                            </button>
-                            <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-10">
-                                <li>
-                                    <a class="text-xs py-1 px-2"
-                                       hx-get="{% url 'item_edit_attribute' item.hash attr_data.attribute.name %}"
-                                       hx-target="#attribute-edit-modal-content"
-                                       hx-trigger="click"
-                                       onclick="document.getElementById('attribute-edit-modal').showModal()">
-                                        {% lucide 'pencil' size=12 %}
-                                        Edit
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="text-xs py-1 px-2 text-error"
-                                       hx-delete="{% url 'item_remove_attribute' item.hash attr_data.attribute.name %}"
-                                       hx-target="#item-attributes-{{ item.hash }}"
-                                       hx-swap="outerHTML"
-                                       hx-confirm="Remove {{ attr_data.attribute.display_name }}?"
-                                       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                        {% lucide 'trash-2' size=12 %}
-                                        Delete
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-                
-            {% else %}
-                {# Multiple attributes - use expandable container without background #}
-                <div class="collapse collapse-arrow">
-                    <input type="checkbox" class="peer" />
-                    <div class="collapse-title text-xs font-medium flex items-center justify-between pl-0">
-                        <div class="flex items-center gap-2">
-                            {# Show comma-separated attribute values #}
-                            <span title="{% for attr_data in attributes %}{{ attr_data.attribute.display_name }}: {{ attr_data.value }}{% if not forloop.last %}, {% endif %}{% endfor %}">
-                                {% for attr_data in attributes %}{{ attr_data.value }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                            </span>
-                        </div>
-                        <span class="text-xs opacity-70">{{ attributes|length }} attributes</span>
-                    </div>
-                    <div class="collapse-content pl-0">
-                        {# Show all attributes in expanded state #}
-                        {% for attr_data in attributes %}
-                        <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
-                            <span class="text-xs" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
-                                {{ attr_data.attribute.display_name }}: {{ attr_data.value }}
-                            </span>
-                            {% if request.user == item.collection.created_by %}
-                            <div class="dropdown dropdown-end dropdown-top flex-shrink-0">
-                                <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Attribute Actions">
-                                    {% lucide 'ellipsis' size=12 %}
-                                </button>
-                                <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-50">
-                                    <li>
-                                        <a class="text-xs py-1 px-2"
-                                           hx-get="{% url 'item_edit_attribute' item.hash attr_data.attribute.name %}"
-                                           hx-target="#attribute-edit-modal-content"
-                                           hx-trigger="click"
-                                           onclick="document.getElementById('attribute-edit-modal').showModal()">
-                                            {% lucide 'pencil' size=12 %}
-                                            Edit
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="text-xs py-1 px-2 text-error"
-                                           hx-delete="{% url 'item_remove_attribute' item.hash attr_data.attribute.name %}"
-                                           hx-target="#item-attributes-{{ item.hash }}"
-                                           hx-swap="outerHTML"
-                                           hx-confirm="Remove {{ attr_data.attribute.display_name }}?"
-                                           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                            {% lucide 'trash-2' size=12 %}
-                                            Delete
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
         {% endif %}
     {% endwith %}
 </div>

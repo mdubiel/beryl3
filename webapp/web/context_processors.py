@@ -8,15 +8,17 @@ from django.conf import settings
 
 def external_services(request):
     """
-    Add external services URLs to the template context.
+    Add external services URLs and system settings to the template context.
     
-    This makes external service URLs available globally across all templates
-    that need them, rather than manually adding them to individual view contexts.
+    This makes external service URLs and system configuration available globally 
+    across all templates that need them, rather than manually adding them to 
+    individual view contexts.
     """
     return {
         'EXTERNAL_DB_URL': getattr(settings, 'EXTERNAL_DB_URL', None),
         'EXTERNAL_INBUCKET_URL': getattr(settings, 'EXTERNAL_INBUCKET_URL', None),
         'EXTERNAL_MONITORING_URL': getattr(settings, 'EXTERNAL_MONITORING_URL', None),
+        'APPLICATION_ACTIVITY_LOGGING': getattr(settings, 'APPLICATION_ACTIVITY_LOGGING', True),
     }
 
 

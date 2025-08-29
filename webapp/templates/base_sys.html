@@ -34,6 +34,14 @@
                     <div><span class="terminal-accent">USER:</span> {{ user.email }}</div>
                     <div><span class="terminal-accent">PERMS:</span> {% if user.groups.all %}{% for group in user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}NONE{% endif %}</div>
                     <div><span class="terminal-accent">TIME:</span> <span id="current-time"></span></div>
+                    <div>
+                        <span class="terminal-accent">ACTIVITY_LOG:</span> 
+                        {% if APPLICATION_ACTIVITY_LOGGING %}
+                            <span class="text-green-400">ENABLED</span>
+                        {% else %}
+                            <span class="text-red-400">DISABLED</span>
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="mt-3 flex gap-2">
                     <a href="{% url 'account_logout' %}" class="btn btn-xs btn-primary">

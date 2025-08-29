@@ -111,7 +111,7 @@ def collection_item_detail_view(request, hash):
     
     try:
         item = get_object_or_404(
-            CollectionItem.objects.select_related('collection', 'created_by'),
+            CollectionItem.objects.select_related('collection', 'created_by').prefetch_related('images__media_file'),
             hash=hash,
             collection__created_by=request.user
         )

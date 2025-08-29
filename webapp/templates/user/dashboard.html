@@ -9,9 +9,17 @@
 {# Top navigation actions #}
 <div class="mb-8 flex items-center justify-between">
     <h1 class="text-3xl font-bold">Your Dashboard</h1>
-    <div class="flex gap-2">
-        <a href="{% url "collection_create" %}" class="btn btn-primary">{% lucide 'plus' size=16 class='mr-2' %} Create New List</a>
-        <a href="{% url "collection_list" %}" class="btn btn-ghost">View All Lists {% lucide 'arrow-right' size=16 class='ml-2' %}</a>
+    <div class="flex items-center justify-end gap-2">
+        {# Main Actions Group #}
+        <div class="btn-group">
+            <a href="{% url "collection_create" %}" class="btn btn-secondary btn-sm">
+                {% lucide 'plus' size=16 class='mr-2' %} Create New List
+            </a>
+            
+            <a href="{% url "collection_list" %}" class="btn btn-ghost btn-square btn-sm" title="View All Lists">
+                {% lucide 'list' size=18 %}
+            </a>
+        </div>
     </div>
 </div>
 
@@ -78,7 +86,17 @@
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {% for item in favorite_items %}
         <div class="card bg-base-200 shadow-lg hover:shadow-xl transition-shadow image-full">
-            <figure><img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-32 object-cover" /></figure>
+            <figure>
+                {% if item.default_image %}
+                    <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-32 object-cover" />
+                {% elif item.images.all.0 %}
+                    <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-32 object-cover" />
+                {% else %}
+                    <div class="w-full h-32 bg-base-300 flex items-center justify-center">
+                        {% lucide 'image' size=48 class='text-gray-400' %}
+                    </div>
+                {% endif %}
+            </figure>
             <div class="card-body p-3 justify-end">
                 <div class="card-actions">
                     <a href="{% url 'item_detail' item.hash %}" class="btn btn-primary btn-xs w-full">
@@ -102,37 +120,119 @@
 
     {# left #}
     <div class="lg:col-span-2">
-        <h2 class="text-2xl font-bold mb-4">Your Collections</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold">
+                <a href="{% url 'collection_list' %}" class="link link-hover">Your Collections</a>
+            </h2>
+            <a href="{% url 'collection_list' %}" class="link text-sm">
+                View All Collections
+            </a>
+        </div>
+        <div class="flex flex-col gap-4">
 
             {# Loop through collection lists passed from the view #}
             {% for list in collection_lists %}
-            <div class="card bg-base-200 shadow-xl image-full">
-                <figure><img src="{{ list.image_url }}" alt="{{ list.name }}" /></figure>
-                <div class="card-body justify-between">
-                    <div>
-                        <h2 class="card-title">{{ list.name }}</h2>
-                        <p>{{ list.item_count }} items</p>
-                    </div>
-                    <div class="card-actions justify-end">
-                        <a href="{% url 'collection_detail' list.hash %}" class="btn btn-primary btn-sm">View List</a>
-                    </div>
+            <div class="card lg:card-side bg-base-100 shadow-sm">
+                <figure class="lg:w-1/4 w-full h-48 lg:h-auto">
+                    {% if list.default_image %}
+                        <img src="{{ list.default_image.media_file.file_url }}" alt="{{ list.name }}" class="w-full h-full object-cover" />
+                    {% elif list.images.all.0 %}
+                        <img src="{{ list.images.all.0.media_file.file_url }}" alt="{{ list.name }}" class="w-full h-full object-cover" />
+                    {% else %}
+                        <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                            {% lucide 'image' size=48 class='text-gray-400' %}
+                        </div>
+                    {% endif %}
+                </figure>
+                <div class="card-body lg:w-3/4">
+                    <h2 class="card-title">
+                        <a href="{% url 'collection_detail' list.hash %}" class="link link-hover">{{ list.name }}</a>
+                    </h2>
+                    <p class="text-sm text-base-content text-opacity-60">
+                        {{ list.item_count }} item{{ list.item_count|pluralize }} 
+                        • 
+                        {% if list.visibility != 'PRIVATE' %}
+                            <a href="{% url 'public_collection_view' list.hash %}" target="_blank" class="link link-hover">{{ list.get_visibility_display }}</a>
+                        {% else %}
+                            {{ list.get_visibility_display }}
+                        {% endif %}
+                    </p>
+                    <p>{{ list.description|default:"No description available."|truncatechars:200 }}</p>
                 </div>
             </div>
             {% endfor %}
             
             {# A placeholder card to encourage creating more #}
-            <div class="card bg-base-200 shadow-xl">
-                <div class="card-body items-center text-center justify-center">
+            {% if collection_lists|length < 3 %}
+            <div class="card lg:card-side bg-base-100 shadow-sm">
+                <figure class="lg:w-1/4 w-full h-48 lg:h-auto">
+                    <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                        {% lucide 'plus-circle' size=48 class='text-gray-400' %}
+                    </div>
+                </figure>
+                <div class="card-body lg:w-3/4">
                     <h2 class="card-title">Ready for a new collection?</h2>
-                    <p class="text-sm">Start tracking your next passion project.</p>
-                    <div class="card-actions mt-2">
-                        <a href="#" class="btn btn-outline btn-primary">Create List</a>
+                    <p>Start tracking your next passion project.</p>
+                    <div class="card-actions justify-end">
+                        <a href="{% url 'collection_create' %}" class="btn btn-secondary">
+                            {% lucide 'plus' size=16 class='mr-2' %} Create List
+                        </a>
                     </div>
                 </div>
             </div>
+            {% endif %}
 
         </div>
+        
+        {# Thumbnail row for additional collections #}
+        {% if thumbnail_collections or collection_lists|length < 7 %}
+        <div class="mt-6">
+            <div class="grid grid-cols-5 gap-4 w-full">
+                
+                {# Collection thumbnails #}
+                {% for collection in thumbnail_collections %}
+                <div class="tooltip" data-tip="{{ collection.description|default:'No description'|truncatechars:100 }} • {{ collection.item_count }} items">
+                    <a href="{% url 'collection_detail' collection.hash %}" class="block">
+                        <div class="avatar w-full">
+                            <div class="w-full aspect-square rounded-lg">
+                                {% if collection.default_image %}
+                                    <img src="{{ collection.default_image.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+                                {% elif collection.images.all.0 %}
+                                    <img src="{{ collection.images.all.0.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+                                {% else %}
+                                    <div class="w-full h-full bg-base-300 flex items-center justify-center">
+                                        {% lucide 'image' size=32 class='text-gray-400' %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+                
+                {# Add new collection button #}
+                {% if collection_lists|length|add:thumbnail_collections|length < 7 %}
+                <div class="tooltip" data-tip="Create a new collection to organize your items">
+                    <a href="{% url 'collection_create' %}" class="block">
+                        <div class="w-full aspect-square rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/40 border-2 border-dashed border-secondary/50 hover:border-secondary hover:from-secondary/30 hover:to-secondary/50 transition-all duration-200 flex flex-col items-center justify-center text-secondary hover:text-secondary-content group">
+                            {% lucide 'plus' size=32 class='mb-2 group-hover:scale-110 transition-transform' %}
+                            <span class="text-xs font-medium">Add New</span>
+                        </div>
+                    </a>
+                </div>
+                {% endif %}
+                
+                {# Fill remaining slots with empty divs for consistent grid #}
+                {% for i in "12345"|slice:":5" %}
+                    {% if forloop.counter0|add:thumbnail_collections|length < 4 %}
+                        <div></div>
+                    {% endif %}
+                {% endfor %}
+                
+            </div>
+        </div>
+        {% endif %}
+        
     </div>
     {# End left #}
 
@@ -152,11 +252,10 @@
             </div>
 
             <div class="timeline-end timeline-box">
-                <time class="font-mono italic text-xs">{{ event.created|date:"F j, Y" }}</time>
-                <div class="font-bold">{{ event.get_name_display }}</div>
-                   <div class="text-sm">
-                        {{ event.description|safe }}
-                    </div>
+                <time class="font-mono italic text-xs" title="{{ event.created|date:'F j, Y g:i A' }}">{{ event.created|timesince }} ago</time>
+                <div class="text-sm">
+                    {{ event.message|safe }}
+                </div>
             </div>
 
             {% if not forloop.last %}<hr class="bg-base-300"/>{% endif %}
@@ -186,7 +285,9 @@
       <div class="max-w-md">
         <h1 class="mb-5 text-5xl font-bold">Share Your Passion</h1>
         <p class="mb-5">Turn your collection into a shareable wishlist. Let friends and family know exactly what you're looking for and make gift-giving easy.</p>
-        <button class="btn btn-primary">Get Started</button>
+        <a href="{% url 'collection_create' %}" class="btn btn-secondary btn-sm">
+            {% lucide 'plus' size=16 class='mr-2' %} Get Started
+        </a>
       </div>
     </div>
 </div>
