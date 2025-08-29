@@ -27,7 +27,7 @@ def dashboard_view(request):
 
     collections_with_counts = Collection.objects.filter(created_by=request.user).annotate(
         item_count=Count('items')
-    ).order_by('-updated')[:5]
+    ).prefetch_related('images__media_file').order_by('-updated')[:7]
 
     user_items = CollectionItem.objects.filter(collection__created_by=request.user)
 
@@ -41,11 +41,11 @@ def dashboard_view(request):
 
     stats_data['total_lists'] = collections_with_counts.count()
 
-    timeline_events = RecentActivity.objects.filter(subject=request.user).select_related('created_by').order_by('-created')[:6]
-    total_event_count = RecentActivity.objects.filter(subject=request.user).count()
+    timeline_events = RecentActivity.objects.filter(created_by=request.user).select_related('created_by').order_by('-created')[:6]
+    total_event_count = RecentActivity.objects.filter(created_by=request.user).count()
     
     # Get favorite items for the favorites card
-    favorite_items = user_items.filter(is_favorite=True).select_related('collection').order_by('-updated')[:6]
+    favorite_items = user_items.filter(is_favorite=True).select_related('collection').prefetch_related('images__media_file').order_by('-updated')[:6]
 
     # Log successful dashboard access
     ApplicationActivity.log_info('dashboard_view', 
@@ -56,9 +56,14 @@ def dashboard_view(request):
             'in_collection': stats_data['in_collection_count'], 'wanted': stats_data['wanted_count'],
             'function_args': {}})
 
+    # Split collections: first 3 for cards, next 4 for thumbnails
+    card_collections = collections_with_counts[:3]
+    thumbnail_collections = collections_with_counts[3:7]
+    
     context = {
         "stats": stats_data,
-        "collection_lists": collections_with_counts, # Pass the queryset directly to the template
+        "collection_lists": card_collections, # First 3 collections for cards
+        "thumbnail_collections": thumbnail_collections, # Next 4 collections for thumbnails
         "timeline_events": timeline_events, # Pass the real data
         "total_event_count": total_event_count,
         "favorite_items": favorite_items,
@@ -110,7 +115,7 @@ def recent_activity_view(request):
     """
     logger.info("Recent activity view accessed by user: '%s' (ID: %s)", request.user.username, request.user.id)
 
-    activity_list = RecentActivity.objects.filter(subject=request.user).select_related('created_by')
+    activity_list = RecentActivity.objects.filter(created_by=request.user).select_related('created_by')
     paginator = Paginator(activity_list, 20)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)

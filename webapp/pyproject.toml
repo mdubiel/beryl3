@@ -21,5 +21,6 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pylint-django>=2.6.1",
     "python-json-logger>=3.3.0",
+    "requests>=2.32.0",
 ]
 

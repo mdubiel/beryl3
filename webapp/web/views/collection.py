@@ -149,7 +149,7 @@ def collection_detail_view(request, hash):
 
     try:
         collection = get_object_or_404(
-            Collection.objects.annotate(item_count=Count('items')),
+            Collection.objects.annotate(item_count=Count('items')).prefetch_related('images__media_file'),
             hash=hash,
             created_by=request.user
         )

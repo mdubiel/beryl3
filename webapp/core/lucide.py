@@ -45,7 +45,7 @@ class LucideIcons:
         'check-circle', 'external-link', 'link', 'link-2',
         
         # Content & Media
-        'book', 'bookmark', 'file', 'file-text', 'folder', 'folder-open', 'image', 'video', 
+        'book', 'book-key', 'bookmark', 'file', 'file-text', 'folder', 'folder-open', 'image', 'video', 
         'video-off', 'music', 'headphones', 'disc', 'film', 'camera', 'mic', 'mic-off',
         'volume', 'volume-1', 'volume-2', 'volume-x', 'play', 'play-circle', 'pause', 
         'pause-circle', 'stop-circle', 'skip-back', 'skip-forward', 'fast-forward', 'rewind',

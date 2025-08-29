@@ -63,7 +63,7 @@ def sys_dashboard(request):
     total_items = CollectionItem.objects.count()
     
     # Recent activity
-    recent_activities = RecentActivity.objects.select_related('created_by', 'subject').order_by('-created')[:10]
+    recent_activities = RecentActivity.objects.select_related('created_by').order_by('-created')[:10]
     
     # User activity in last 24 hours
     recent_user_activity = User.objects.filter(
@@ -164,18 +164,18 @@ def sys_user_profile(request, user_id):
     
     user_activity_stats = {
         'total_activities': RecentActivity.objects.filter(
-            Q(created_by=user) | Q(subject=user)
+            created_by=user
         ).count(),
         'activities_30d': RecentActivity.objects.filter(
-            Q(created_by=user) | Q(subject=user),
+            created_by=user,
             created__gte=last_30_days
         ).count(),
         'activities_7d': RecentActivity.objects.filter(
-            Q(created_by=user) | Q(subject=user),
+            created_by=user,
             created__gte=last_7_days
         ).count(),
         'last_activity': RecentActivity.objects.filter(
-            Q(created_by=user) | Q(subject=user)
+            created_by=user
         ).order_by('-created').first(),
     }
     
@@ -212,8 +212,8 @@ def sys_user_profile(request, user_id):
     
     # Recent activity for this user
     recent_activities = RecentActivity.objects.filter(
-        Q(created_by=user) | Q(subject=user)
-    ).select_related('created_by', 'subject').order_by('-created')[:10]
+        created_by=user
+    ).select_related('created_by').order_by('-created')[:10]
     
     # User permissions and flags
     user_permissions = {
@@ -253,7 +253,7 @@ def sys_activity(request):
     date_to = request.GET.get('date_to', '')
     
     # Build queryset
-    activities = RecentActivity.objects.select_related('created_by', 'subject')
+    activities = RecentActivity.objects.select_related('created_by')
     
     if action_filter:
         activities = activities.filter(name=action_filter)
@@ -261,7 +261,7 @@ def sys_activity(request):
     if user_filter:
         try:
             user_id = int(user_filter)
-            activities = activities.filter(Q(created_by_id=user_id) | Q(subject_id=user_id))
+            activities = activities.filter(created_by_id=user_id)
         except ValueError:
             pass
     
@@ -1569,7 +1569,8 @@ def sys_settings(request):
         'DEBUG', 'ALLOWED_HOSTS', 'USE_INBUCKET', 'USE_GCS_STORAGE', 
         'GCS_BUCKET_NAME', 'GCS_PROJECT_ID', 'GCS_LOCATION',
         'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USE_TLS', 'DEFAULT_FROM_EMAIL',
-        'INBUCKET_SMTP_PORT', 'DB_ENGINE', 'PG_HOST', 'PG_PORT', 'PG_DB'
+        'INBUCKET_SMTP_PORT', 'DB_ENGINE', 'PG_HOST', 'PG_PORT', 'PG_DB',
+        'APPLICATION_ACTIVITY_LOGGING'
     ]
     
     for var in safe_env_vars:

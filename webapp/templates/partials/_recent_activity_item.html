@@ -3,12 +3,12 @@
 
 <li class="flex items-center gap-4 px-2 py-4 ml-2 mr-4 border-b border-base-300 last:border-b-0">
 
-    <div class="flex-shrink-0 {{ event.icon_style }} rounded-full p-2">
-        {% lucide event.icon size=16 class="text-white" %}
+    <div class="flex-shrink-0 bg-accent rounded-full p-2">
+        {% lucide event.icon size=16 class="text-accent-content" %}
     </div>
     
     <div class="flex-grow text-sm">
-        {{ event.description|safe }}
+        {{ event.message|safe }}
     </div>
 
     <div class="tooltip tooltip-left" data-tip="{{ event.created|date:'Y-m-d H:i' }}">

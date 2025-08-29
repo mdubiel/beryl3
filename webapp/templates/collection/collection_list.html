@@ -18,19 +18,29 @@
 
 <div class="mb-8 flex items-center justify-between">
     <h1 class="text-3xl font-bold">All My Collections</h1>
-    <a href="{% url 'collection_create' %}" class="btn btn-primary">
+    <a href="{% url 'collection_create' %}" class="btn btn-secondary btn-sm">
         {% lucide 'plus' size=16 class='mr-2' %} Create New Collection
     </a>
 </div>
 
-<div class="bg-base-200 rounded-box shadow-xl">
-    <ul class="list">
+{% if collections %}
+    <div class="flex flex-col gap-4">
         {% for collection in collections %}
             {% include "partials/_collection_list_item.html" with collection=collection %}
-        {% empty %}
-            <li class="p-8 text-center">You haven't created any collections yet.</li>
         {% endfor %}
-    </ul>
-</div>
+    </div>
+{% else %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body items-center text-center">
+            <h2 class="card-title">No Collections Yet</h2>
+            <p>You haven't created any collections yet.</p>
+            <div class="card-actions">
+                <a href="{% url 'collection_create' %}" class="btn btn-secondary">
+                    {% lucide 'plus' size=16 class='mr-2' %} Create Your First Collection
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
 
 {% endblock %}

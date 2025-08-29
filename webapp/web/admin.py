@@ -7,7 +7,7 @@
 
 from django.contrib import admin
 
-from .models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, CollectionItemLink, MediaFile, ApplicationActivity
+from .models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, CollectionItemLink, MediaFile, ApplicationActivity, CollectionImage, CollectionItemImage
 
 # Let's create a base class for our models to inherit from.
 # This avoids repeating common settings for all our models.
@@ -59,12 +59,42 @@ class CollectionItemLinkInline(admin.TabularInline):
     extra = 1
     ordering = ('order', 'display_name')
 
+
+class CollectionImageInline(admin.TabularInline):
+    """
+    Inline editor for CollectionImages within the Collection admin page.
+    """
+    model = CollectionImage
+    fields = ('media_file', 'is_default', 'order')
+    extra = 0
+    ordering = ('order',)
+    readonly_fields = ('media_file',)
+    
+    def get_queryset(self, request):
+        """Only show existing images, don't allow adding through inline"""
+        return super().get_queryset(request)
+
+
+class CollectionItemImageInline(admin.TabularInline):
+    """
+    Inline editor for CollectionItemImages within the CollectionItem admin page.
+    """
+    model = CollectionItemImage
+    fields = ('media_file', 'is_default', 'order')
+    extra = 0
+    ordering = ('order',)
+    readonly_fields = ('media_file',)
+    
+    def get_queryset(self, request):
+        """Only show existing images, don't allow adding through inline"""
+        return super().get_queryset(request)
+
 @admin.register(Collection)
 class CollectionAdmin(BerylModelAdmin):
     """
     Custom Admin configuration for the Collection model.
     """
-    inlines = [CollectionItemInline]
+    inlines = [CollectionImageInline, CollectionItemInline]
     list_display = ('name', 'item_count', 'created', 'is_deleted')
     list_filter = ('created', 'is_deleted')
     search_fields = ('name', 'description', 'created_by__username')
@@ -129,7 +159,7 @@ class CollectionItemAdmin(BerylModelAdmin):
     """
     Custom Admin configuration for the CollectionItem model.
     """
-    inlines = [CollectionItemLinkInline]
+    inlines = [CollectionItemImageInline, CollectionItemLinkInline]
     list_display = ('name', 'collection', 'item_type', 'status', 'is_favorite', 'created', 'is_bookable', 'is_deleted')
     list_filter = ('status', 'item_type', 'is_favorite', 'collection', 'is_deleted')
     search_fields = ('name', 'description', 'collection__name', 'item_type__display_name')
@@ -177,15 +207,13 @@ class RecentActivityAdmin(admin.ModelAdmin):
 
     list_filter = (
         ('created_by', admin.RelatedOnlyFieldListFilter),
-        ('subject', admin.RelatedOnlyFieldListFilter),
         'icon',
         'created'
     )
     search_fields = (
         'message',
         'icon',
-        'created_by__email',
-        'subject__email'
+        'created_by__email'
     )
 
     def get_readonly_fields(self, request, obj=None):
@@ -195,7 +223,7 @@ class RecentActivityAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Event Details', {
-            'fields': ('message', 'icon', 'created_by', 'subject', 'created')
+            'fields': ('message', 'icon', 'created_by', 'created')
         }),
         ('Additional Information', {
             'fields': ('details',)
@@ -386,6 +414,44 @@ class ApplicationActivityAdmin(admin.ModelAdmin):
         }),
         ('Metadata', {
             'fields': ('meta',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(CollectionImage)
+class CollectionImageAdmin(BerylModelAdmin):
+    """
+    Custom Admin configuration for the CollectionImage model.
+    """
+    list_display = ('collection', 'media_file', 'is_default', 'order', 'created', 'is_deleted')
+    list_filter = ('is_default', 'collection', 'created', 'is_deleted')
+    search_fields = ('collection__name', 'media_file__original_filename')
+    fieldsets = (
+        (None, {
+            'fields': ('collection', 'media_file', 'is_default', 'order')
+        }),
+        ('Audit Information', {
+            'fields': BerylModelAdmin.readonly_fields,
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(CollectionItemImage)
+class CollectionItemImageAdmin(BerylModelAdmin):
+    """
+    Custom Admin configuration for the CollectionItemImage model.
+    """
+    list_display = ('item', 'media_file', 'is_default', 'order', 'created', 'is_deleted')
+    list_filter = ('is_default', 'item__collection', 'created', 'is_deleted')
+    search_fields = ('item__name', 'media_file__original_filename')
+    fieldsets = (
+        (None, {
+            'fields': ('item', 'media_file', 'is_default', 'order')
+        }),
+        ('Audit Information', {
+            'fields': BerylModelAdmin.readonly_fields,
             'classes': ('collapse',)
         }),
     )

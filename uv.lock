@@ -68,6 +68,7 @@ dependencies = [
     { name = "psycopg2-binary" },
     { name = "pylint-django" },
     { name = "python-json-logger" },
+    { name = "requests" },
 ]
 
 [package.metadata]
@@ -86,6 +87,7 @@ requires-dist = [
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pylint-django", specifier = ">=2.6.1" },
     { name = "python-json-logger", specifier = ">=3.3.0" },
+    { name = "requests", specifier = ">=2.32.0" },
 ]
 
 [[package]]

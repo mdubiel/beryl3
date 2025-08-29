@@ -130,8 +130,8 @@
                                 {% endif %}
                             </td>
                             <td class=" text-sm">
-                                {% if activity.subject %}
-                                    <span class="font-mono">{{ activity.subject.email|truncatechars:20 }}</span>
+                                {% if activity.created_by %}
+                                    <span class="font-mono">{{ activity.created_by.email|truncatechars:20 }}</span>
                                 {% else %}
                                     <span class="opacity-60">--</span>
                                 {% endif %}

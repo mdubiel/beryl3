@@ -107,17 +107,17 @@ def update_collection_visibility(request, hash):
         
         return render(request, 'partials/_collection_list_item.html', context)
 
-    # Default: request came from the collection detail page, return the dropdown.
-    logger.info("Returning updated share dropdown for collection: '%s' [%s]", collection.name, collection.hash)
+    # Default: request came from the collection detail page, return the visibility dropdown update.
+    logger.info("Returning updated visibility dropdown for collection: '%s' [%s]", collection.name, collection.hash)
     
     # Log successful response rendering
     ApplicationActivity.log_info('update_collection_visibility', 
-        f"Collection '{collection.name}' visibility update completed - dropdown rendered", 
+        f"Collection '{collection.name}' visibility update completed - visibility dropdown rendered", 
         user=request.user, meta={
             'action': 'response_rendered', 'object_type': 'Collection',
             'object_hash': collection.hash, 'object_name': collection.name,
-            'response_type': 'share_dropdown', 'result': 'success',
+            'response_type': 'visibility_dropdown', 'result': 'success',
             'function_args': {'hash': hash, 'new_visibility': new_visibility}
         })
     
-    return render(request, 'partials/_collection_share_hx_dropdown.html', context)
+    return render(request, 'partials/_collection_visibility_update.html', context)

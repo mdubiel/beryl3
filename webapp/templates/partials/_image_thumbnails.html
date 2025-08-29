@@ -1,0 +1,17 @@
+{% load lucide %}
+
+{% if images %}
+<div class="flex gap-2 mt-4 overflow-x-auto">
+    {% for image in images %}
+    <div class="flex-shrink-0">
+        <img src="{{ image.media_file.file_url }}" 
+             alt="{{ image.media_file.original_filename }}" 
+             class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 {% if image.is_default %}border-primary{% else %}border-transparent hover:border-base-300{% endif %} transition-colors"
+             hx-get="{% url 'switch_image' image.media_file.hash %}"
+             hx-target="#main-image-container"
+             hx-swap="innerHTML"
+             onclick="this.parentElement.parentElement.querySelectorAll('img').forEach(img => img.classList.remove('border-primary')); this.classList.add('border-primary');">
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

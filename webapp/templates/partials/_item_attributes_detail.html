@@ -7,20 +7,7 @@
                 <thead>
                     <tr>
                         <th colspan="{% if request.user == item.collection.created_by %}3{% else %}2{% endif %}" class="bg-base-200">
-                            <div class="flex items-center justify-between">
-                                <span>Attributes</span>
-                                {% if request.user == item.collection.created_by %}
-                                <button class="btn btn-primary btn-xs"
-                                        title="Add new attribute"
-                                        hx-get="{% url 'item_add_attribute' item.hash %}"
-                                        hx-target="#attribute-edit-modal-content"
-                                        hx-trigger="click"
-                                        onclick="document.getElementById('attribute-edit-modal').showModal()">
-                                    {% lucide 'plus' size=12 class='mr-1' %}
-                                    Add
-                                </button>
-                                {% endif %}
-                            </div>
+                            <span>Attributes</span>
                         </th>
                     </tr>
                 </thead>

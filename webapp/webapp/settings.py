@@ -22,7 +22,9 @@ env = environ.Env(
     USE_INBUCKET=(bool, False),
     EMAIL_HOST=(str, 'localhost'), # Default to localhost if not in docker
     INBUCKET_SMTP_PORT=(int, 2500),
-    DEFAULT_FROM_EMAIL=(str, 'webmaster@localhost')
+    DEFAULT_FROM_EMAIL=(str, 'webmaster@localhost'),
+    # Application Activity logging
+    APPLICATION_ACTIVITY_LOGGING=(bool, True)
 )
 
 # Read variables from .env file
@@ -348,3 +350,6 @@ if DEBUG and not USE_GCS_STORAGE:
 EXTERNAL_DB_URL = env('EXTERNAL_DB_URL', default=None)
 EXTERNAL_INBUCKET_URL = env('EXTERNAL_INBUCKET_URL', default='http://192.168.1.102:9000/monitor' if DEBUG else None)
 EXTERNAL_MONITORING_URL = env('EXTERNAL_MONITORING_URL', default=None)
+
+# Application Activity Logging Configuration
+APPLICATION_ACTIVITY_LOGGING = env('APPLICATION_ACTIVITY_LOGGING', default=True)
