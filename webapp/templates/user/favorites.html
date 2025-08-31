@@ -23,7 +23,7 @@
         <span class="badge badge-accent badge-lg">{{ total_favorites }}</span>
     </h1>
     <div class="flex gap-2">
-        <a href="{% url "dashboard" %}" class="btn btn-ghost">
+        <a href="{% url "dashboard" %}" class="btn btn-secondary btn-sm">
             {% lucide 'arrow-left' size=16 class='mr-2' %}
             Back to Dashboard
         </a>
@@ -31,13 +31,11 @@
 </div>
 
 {% if favorite_items %}
-{# Favorites List - same as collection detail #}
-<div class="bg-base-200 rounded-box shadow-xl p-6">
-    <ul class="divide-y divide-base-300">
-        {% for item in favorite_items %}
-            {% include "partials/_item_list_item.html" with item=item %}
-        {% endfor %}
-    </ul>
+{# Favorites List - matching collection detail layout #}
+<div class="flex flex-col gap-6">
+    {% for item in favorite_items %}
+        {% include "partials/_item_list_item.html" with item=item %}
+    {% endfor %}
 </div>
 
 {% else %}
@@ -163,6 +161,150 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+</script>
+
+{# Image lightbox modal #}
+<dialog id="image-modal" class="modal backdrop-blur-sm">
+    <div class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4">
+        {# Close button - top right #}
+        <button class="absolute top-4 right-4 z-10 btn btn-circle btn-ghost text-white hover:bg-white hover:bg-opacity-20" 
+                onclick="document.getElementById('image-modal').close()" 
+                title="Close (ESC)">
+            {% lucide 'x' size=24 %}
+        </button>
+        
+        {# Image title and counter - top center #}
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 text-white text-lg font-medium text-center px-4 py-2 bg-black bg-opacity-50 rounded-lg" id="image-modal-title">
+            Image Preview
+        </div>
+        <div class="absolute top-16 left-1/2 transform -translate-x-1/2 z-10 text-white text-sm text-center px-3 py-1 bg-black bg-opacity-50 rounded" id="image-modal-counter" style="display: none;">
+            1 / 1
+        </div>
+        
+        {# Previous arrow - left side #}
+        <button id="lightbox-prev" 
+                class="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 btn btn-circle btn-ghost text-white hover:bg-white hover:bg-opacity-20" 
+                onclick="navigateLightbox(-1)"
+                title="Previous image (←)"
+                style="display: none;">
+            {% lucide 'chevron-left' size=32 %}
+        </button>
+        
+        {# Next arrow - right side #}
+        <button id="lightbox-next" 
+                class="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 btn btn-circle btn-ghost text-white hover:bg-white hover:bg-opacity-20" 
+                onclick="navigateLightbox(1)"
+                title="Next image (→)"
+                style="display: none;">
+            {% lucide 'chevron-right' size=32 %}
+        </button>
+        
+        {# Main image - centered #}
+        <img id="image-modal-img" 
+             src="" 
+             alt="" 
+             class="max-w-full max-h-full object-contain shadow-2xl" 
+             title="Use arrow keys to navigate" />
+    </div>
+    
+    {# Backdrop click to close #}
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+// Image gallery lightbox functionality
+let currentGallery = {
+    images: [],
+    currentIndex: 0,
+    itemName: ''
+};
+
+function showImageModal(imageUrl, imageTitle) {
+    // For backward compatibility - single image
+    showImageGallery(0, imageTitle, [imageUrl]);
+}
+
+function showImageGallery(startIndex, itemName, imageUrls) {
+    currentGallery = {
+        images: imageUrls,
+        currentIndex: startIndex,
+        itemName: itemName
+    };
+    
+    const modal = document.getElementById('image-modal');
+    updateLightboxImage();
+    modal.showModal();
+    
+    // Focus the modal for keyboard navigation
+    modal.focus();
+    
+    // Add keyboard event listeners
+    const handleKeydown = (e) => {
+        switch(e.key) {
+            case 'Escape':
+                modal.close();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                navigateLightbox(-1);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                navigateLightbox(1);
+                break;
+        }
+    };
+    document.addEventListener('keydown', handleKeydown);
+    
+    // Remove event listener when modal closes
+    modal.addEventListener('close', () => {
+        document.removeEventListener('keydown', handleKeydown);
+    }, { once: true });
+}
+
+function navigateLightbox(direction) {
+    const newIndex = currentGallery.currentIndex + direction;
+    
+    // Handle wrapping
+    if (newIndex < 0) {
+        currentGallery.currentIndex = currentGallery.images.length - 1;
+    } else if (newIndex >= currentGallery.images.length) {
+        currentGallery.currentIndex = 0;
+    } else {
+        currentGallery.currentIndex = newIndex;
+    }
+    
+    updateLightboxImage();
+}
+
+function updateLightboxImage() {
+    const img = document.getElementById('image-modal-img');
+    const title = document.getElementById('image-modal-title');
+    const counter = document.getElementById('image-modal-counter');
+    const prevBtn = document.getElementById('lightbox-prev');
+    const nextBtn = document.getElementById('lightbox-next');
+    
+    // Update image
+    img.src = currentGallery.images[currentGallery.currentIndex];
+    img.alt = `${currentGallery.itemName} - Image ${currentGallery.currentIndex + 1}`;
+    
+    // Update title
+    title.textContent = currentGallery.itemName;
+    
+    // Update counter and show navigation if multiple images
+    if (currentGallery.images.length > 1) {
+        counter.textContent = `${currentGallery.currentIndex + 1} / ${currentGallery.images.length}`;
+        counter.style.display = 'block';
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+    } else {
+        counter.style.display = 'none';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+    }
+}
 </script>
 
 {% endblock %}
