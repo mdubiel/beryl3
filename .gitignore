@@ -5,3 +5,9 @@ webapp/node_modules/
 *.sqlite3
 webapp/.env
 logs/
+gcs_keys/mateusz-344213-5c136b4db5c3.json
+webapp/src/beryl3_webapp.egg-info/dependency_links.txt
+webapp/src/beryl3_webapp.egg-info/SOURCES.txt
+webapp/src/beryl3_webapp.egg-info/top_level.txt
+webapp/src/beryl3_webapp.egg-info/requires.txt
+webapp/src/beryl3_webapp.egg-info/PKG-INFO

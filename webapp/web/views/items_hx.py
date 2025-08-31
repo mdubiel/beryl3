@@ -137,11 +137,19 @@ def toggle_item_favorite(request, hash):
             'function_args': {'hash': hash}
         })
     
-    # Create activity log entry
+    # Create activity log entry using simplified RecentActivity
     if was_favorite:
-        RecentActivity.log_item_unfavorited(user=request.user, item_name=item.name)
+        RecentActivity.objects.create(
+            created_by=request.user,
+            message=f"Unfavorited **{item.name}**",
+            icon="heart"
+        )
     else:
-        RecentActivity.log_item_favorited(user=request.user, item_name=item.name)
+        RecentActivity.objects.create(
+            created_by=request.user,
+            message=f"Favorited **{item.name}**", 
+            icon="star"
+        )
     logger.info("Created activity log entry for %s CollectionItem '%s' [%s] by user '%s' [%s]", action, item.name, item.hash, request.user.username, request.user.id)
 
     # Check if this is coming from item detail page or favorites page
