@@ -368,17 +368,27 @@
     <!-- Middleware Configuration -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'layers' size=20 %}
                 Middleware ({{ middleware_settings.MIDDLEWARE_COUNT }} items)
             </h2>
-            <div class="space-y-2">
-                {% for middleware in middleware_settings.MIDDLEWARE %}
-                <div class="flex items-center gap-2">
-                    <div class="badge badge-sm badge-outline">{{ forloop.counter }}</div>
-                    <code class="text-sm">{{ middleware }}</code>
-                </div>
-                {% endfor %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th class="w-16">Order</th>
+                            <th>Middleware Class</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for middleware in middleware_settings.MIDDLEWARE %}
+                        <tr>
+                            <td><span class="badge badge-sm badge-outline">{{ forloop.counter }}</span></td>
+                            <td class="font-mono text-sm">{{ middleware }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

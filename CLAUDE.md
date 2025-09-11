@@ -19,7 +19,13 @@ When user says "process TODO", execute the following workflow:
 
 ### Task Completion:
 - Mark completed tasks in TODO.md
+- Create a git commit for each completed task
 - Ensure all changes are tested and working
 - Create comprehensive documentation for each task
 
-This workflow ensures systematic completion of all TODO items with proper documentation and verification.
+### Commit Strategy:
+- One commit per completed TODO task
+- Commit message format: "task: [Task number] - [Brief description]"
+- Include all related changes in single commit
+
+This workflow ensures systematic completion of all TODO items with proper documentation, version control, and verification.
