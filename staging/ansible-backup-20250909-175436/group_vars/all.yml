@@ -1,0 +1,48 @@
+---
+# Global variables for all environments
+ansible_python_interpreter: /usr/bin/python3
+
+# Security settings
+firewall_enabled: true
+fail2ban_enabled: true
+ssh_password_authentication: false
+ssh_permit_root_login: false
+
+# SSL/TLS settings
+ssl_provider: letsencrypt
+ssl_email: "admin@example.com"
+ssl_staging: true  # Use Let's Encrypt staging for testing
+
+# Backup configuration
+backup_enabled: true
+backup_retention_days: 30
+backup_remote_enabled: false  # Enable when remote storage is configured
+
+# Monitoring defaults
+monitoring_enabled: true
+log_retention_days: 14
+metrics_retention_days: 30
+
+# System packages that should be installed on all servers
+common_packages:
+  - curl
+  - wget
+  - git
+  - htop
+  - tree
+  - jq
+  - unzip
+  - certbot
+  - python3-certbot-nginx
+  - fail2ban
+  - ufw
+  - logrotate
+
+# Docker settings (if using containerization)
+docker_enabled: false
+docker_compose_version: "2.20.0"
+
+# Node.js settings (for Tailwind CSS build)
+nodejs_version: "18"
+npm_packages:
+  - "@tailwindcss/cli@next"

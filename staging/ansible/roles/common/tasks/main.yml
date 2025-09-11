@@ -1,0 +1,90 @@
+---
+# Common system setup tasks
+- name: Update package cache (Arch Linux)
+  pacman:
+    update_cache: true
+  when: ansible_os_family == "Archlinux"
+
+- name: Update package cache (Debian/Ubuntu)
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Update package cache (RedHat/CentOS)
+  yum:
+    update_cache: true
+  when: ansible_os_family == "RedHat"
+
+- name: Install essential packages (Arch Linux)
+  pacman:
+    name:
+      - base-devel
+      - git
+      - curl
+      - wget
+      - vim
+      - htop
+      - docker
+      - docker-compose
+      - ufw
+      - rsync
+      - unzip
+    state: present
+  when: ansible_os_family == "Archlinux"
+
+- name: Install essential packages (Debian/Ubuntu)
+  apt:
+    name:
+      - build-essential
+      - git
+      - curl
+      - wget
+      - vim
+      - htop
+      - docker.io
+      - docker-compose
+      - ufw
+      - rsync
+      - unzip
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Start and enable Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Add ansible user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Create required directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  loop:
+    - "{{ shared_data_path | default('/opt/shared') }}"
+    - "{{ project_defaults.project_root | default('/opt/projects') }}"
+    - /opt/backups
+    - /var/log/applications
+
+- name: Set timezone
+  timezone:
+    name: "{{ server_timezone | default('UTC') }}"
+
+- name: Configure logrotate for application logs
+  template:
+    src: logrotate.conf.j2
+    dest: /etc/logrotate.d/applications
+    owner: root
+    group: root
+    mode: '0644'
+  when: log_config is defined

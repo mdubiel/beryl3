@@ -1,0 +1,59 @@
+# Multi-stage Dockerfile for {{ project_name }}
+FROM node:18-alpine AS css-builder
+
+WORKDIR /app
+COPY webapp/package*.json ./
+RUN npm install
+
+COPY webapp/ ./
+RUN npm run build:css
+
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PATH="/root/.cargo/bin:$PATH"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create app directory
+WORKDIR /app
+
+# Copy project files
+COPY . .
+
+# Copy built CSS from previous stage
+COPY --from=css-builder /app/webapp/static/css/tailwind.css /app/webapp/static/css/
+
+# Install Python dependencies
+RUN cd webapp && ~/.cargo/bin/uv sync --frozen
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app && \
+    mkdir -p /app/staticfiles /app/media /app/logs && \
+    chown -R app:app /app/staticfiles /app/media /app/logs
+
+USER app
+
+# Set working directory to webapp
+WORKDIR /app/webapp
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health/ || exit 1
+
+# Default command
+CMD ["sh", "-c", "~/.cargo/bin/uv run python manage.py migrate && ~/.cargo/bin/uv run gunicorn webapp.wsgi:application --bind 0.0.0.0:8000 --workers 4"]

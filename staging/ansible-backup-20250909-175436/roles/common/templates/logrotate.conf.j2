@@ -1,0 +1,12 @@
+# Logrotate configuration for application logs
+/var/log/applications/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    notifempty
+    create 0644 {{ ansible_user }} {{ ansible_user }}
+    postrotate
+        /bin/systemctl reload nginx > /dev/null 2>&1 || true
+    endscript
+}

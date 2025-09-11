@@ -1,0 +1,24 @@
+---
+# Main site playbook - deploys complete staging environment
+- name: Deploy Infrastructure
+  import_playbook: infra.yml
+  tags: ['infra', 'infrastructure']
+
+- name: Deploy Applications
+  hosts: staging
+  become: true
+  gather_facts: false
+  
+  roles:
+    - role: common
+      tags: ['common', 'system']
+    - role: security
+      tags: ['security', 'firewall']
+
+  tasks:
+    - name: Deploy projects
+      include_tasks: project-deploy.yml
+      vars:
+        project: "{{ item }}"
+      loop: "{{ projects }}"
+      tags: ['projects', 'deploy']

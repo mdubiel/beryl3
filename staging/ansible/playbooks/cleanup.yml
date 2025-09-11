@@ -1,0 +1,88 @@
+---
+# Cleanup playbook - removes all containers, networks, and data from staging environment
+- name: Clean Up Staging Environment
+  hosts: staging
+  become: true
+  gather_facts: false
+  
+  tasks:
+    - name: Get list of all containers
+      shell: docker ps -aq
+      register: all_containers
+      failed_when: false
+      changed_when: false
+
+    - name: Stop all running containers
+      shell: docker stop $(docker ps -q)
+      when: all_containers.stdout != ""
+      failed_when: false
+
+    - name: Remove all containers
+      shell: docker container prune -f
+      failed_when: false
+
+    - name: Remove specific containers by name
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: absent
+        force_kill: true
+      loop:
+        - nginx-proxy
+        - docker-registry
+        - prometheus
+        - grafana
+        - loki
+        - alertmanager
+        - node-exporter
+        - cadvisor
+        - promtail
+      failed_when: false
+
+    - name: Remove Docker networks
+      community.docker.docker_network:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - monitoring
+        - projects
+        - registry
+      failed_when: false
+
+    - name: Remove Docker images
+      shell: docker image prune -a -f
+      failed_when: false
+
+    - name: Remove Docker volumes
+      shell: docker volume prune -f
+      failed_when: false
+
+    - name: System-wide Docker cleanup
+      shell: docker system prune -a -f --volumes
+      failed_when: false
+
+    - name: Remove data directories
+      file:
+        path: "{{ shared_data_path }}"
+        state: absent
+      failed_when: false
+
+    - name: Recreate base shared directory
+      file:
+        path: "{{ shared_data_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: docker
+        mode: '0755'
+
+    - name: Display cleanup summary
+      debug:
+        msg: |
+          Cleanup completed for staging environment:
+          - All containers stopped and removed
+          - All custom networks removed
+          - All images pruned
+          - All volumes removed
+          - Data directories cleaned
+          - Base directories recreated
+          
+          Ready for fresh deployment!

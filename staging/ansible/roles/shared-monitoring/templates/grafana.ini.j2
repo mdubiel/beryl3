@@ -1,0 +1,70 @@
+[paths]
+data = /var/lib/grafana
+logs = /var/log/grafana
+plugins = /var/lib/grafana/plugins
+provisioning = /etc/grafana/provisioning
+
+[server]
+http_addr = 0.0.0.0
+http_port = 3000
+domain = grafana.{{ domain_suffix }}
+root_url = http://grafana.{{ domain_suffix }}/
+
+[database]
+type = sqlite3
+path = grafana.db
+
+[session]
+provider = file
+
+[datadog]
+app_key =
+
+[security]
+admin_user = {{ shared_services.grafana.admin_user | default('admin') }}
+admin_password = {{ shared_services.grafana.admin_password | default('admin') }}
+secret_key = SW2YcwTIb9zpOOhoPsMm
+
+[snapshots]
+external_enabled = true
+external_snapshot_url = https://snapshots-origin.raintank.io
+external_snapshot_name = Publish to snapshot.raintank.io
+
+[users]
+allow_sign_up = false
+allow_org_create = false
+auto_assign_org = true
+auto_assign_org_role = Viewer
+
+[auth.anonymous]
+enabled = false
+
+[auth.github]
+enabled = false
+
+[auth.google]
+enabled = false
+
+[auth.azuread]
+enabled = false
+
+[auth.generic_oauth]
+enabled = false
+
+[log]
+mode = console
+level = info
+
+[log.console]
+level = info
+format = console
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+
+[security]
+disable_gravatar = true
+
+[install]
+check_for_updates = false

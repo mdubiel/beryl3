@@ -1,0 +1,276 @@
+---
+# =====================================
+# Grafana Management Playbook
+# =====================================
+# Dedicated playbook for managing Grafana datasources and dashboards
+# Allows for independent updates to monitoring configuration
+
+- name: Manage Grafana Datasources and Dashboards
+  hosts: staging
+  become: yes
+  vars:
+    grafana_config_path: "{{ shared_data_path }}/grafana"
+    grafana_container_name: grafana
+    
+  pre_tasks:
+    - name: Ensure Grafana configuration directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ ansible_user }}"
+        group: docker
+      loop:
+        - "{{ grafana_config_path }}/provisioning"
+        - "{{ grafana_config_path }}/provisioning/datasources"
+        - "{{ grafana_config_path }}/provisioning/dashboards"
+        - "{{ grafana_config_path }}/dashboards"
+
+  tasks:
+    # ===========================================
+    # DATASOURCE MANAGEMENT
+    # ===========================================
+    
+    - name: Deploy Grafana datasources configuration
+      template:
+        src: ../roles/shared-monitoring/templates/grafana-datasources.yml.j2
+        dest: "{{ grafana_config_path }}/provisioning/datasources/datasources.yml"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      notify: restart grafana
+      tags: ['datasources']
+
+    # ===========================================
+    # DASHBOARD PROVISIONING CONFIGURATION
+    # ===========================================
+    
+    - name: Deploy Grafana dashboards provisioning configuration
+      template:
+        src: ../roles/shared-monitoring/templates/grafana-dashboards.yml.j2
+        dest: "{{ grafana_config_path }}/provisioning/dashboards/dashboards.yml"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      notify: restart grafana
+      tags: ['dashboard-config']
+
+    # ===========================================
+    # DASHBOARD FILES DEPLOYMENT
+    # ===========================================
+    
+    - name: Find all dashboard JSON files in roles
+      find:
+        paths: "{{ playbook_dir }}/../roles/shared-monitoring/files/grafana/dashboards/"
+        patterns: "*.json"
+      register: dashboard_files
+      delegate_to: localhost
+      tags: ['dashboards']
+
+    - name: Deploy Grafana dashboard files
+      copy:
+        src: "{{ item.path }}"
+        dest: "{{ grafana_config_path }}/dashboards/{{ item.path | basename }}"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      loop: "{{ dashboard_files.files }}"
+      notify: restart grafana
+      tags: ['dashboards']
+      
+    - name: Create dashboard index file
+      template:
+        dest: "{{ grafana_config_path }}/dashboards/dashboard-index.md"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+        content: |
+          # Grafana Dashboards Index
+          Generated: {{ ansible_date_time.iso8601 }}
+          
+          ## Available Dashboards
+          {% for file in dashboard_files.files %}
+          - {{ file.path | basename | regex_replace('\.json$', '') | replace('-', ' ') | title }}
+            - File: {{ file.path | basename }}
+            - Size: {{ file.size }} bytes
+            - Modified: {{ file.mtime | timestamp_to_datetime }}
+          {% endfor %}
+          
+          ## Management Commands
+          
+          ### Update Dashboards Only
+          ```bash
+          ansible-playbook -i inventory/staging.yml grafana-management.yml --tags dashboards
+          ```
+          
+          ### Update Datasources Only  
+          ```bash
+          ansible-playbook -i inventory/staging.yml grafana-management.yml --tags datasources
+          ```
+          
+          ### Restart Grafana
+          ```bash
+          ansible-playbook -i inventory/staging.yml grafana-management.yml --tags restart
+          ```
+      tags: ['dashboards']
+
+    # ===========================================
+    # CUSTOM DASHBOARD MANAGEMENT
+    # ===========================================
+    
+    - name: Check for custom dashboards directory
+      stat:
+        path: "{{ playbook_dir }}/../custom-dashboards/"
+      register: custom_dashboards_dir
+      delegate_to: localhost
+      tags: ['custom-dashboards']
+      
+    - name: Find custom dashboard files
+      find:
+        paths: "{{ playbook_dir }}/../custom-dashboards/"
+        patterns: "*.json"
+      register: custom_dashboard_files
+      delegate_to: localhost
+      when: custom_dashboards_dir.stat.exists
+      tags: ['custom-dashboards']
+
+    - name: Deploy custom Grafana dashboards
+      copy:
+        src: "{{ item.path }}"
+        dest: "{{ grafana_config_path }}/dashboards/custom-{{ item.path | basename }}"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      loop: "{{ custom_dashboard_files.files | default([]) }}"
+      notify: restart grafana
+      tags: ['custom-dashboards']
+
+    # ===========================================
+    # GRAFANA CONFIGURATION
+    # ===========================================
+    
+    - name: Deploy main Grafana configuration
+      template:
+        src: ../roles/shared-monitoring/templates/grafana.ini.j2
+        dest: "{{ grafana_config_path }}/config/grafana.ini"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      notify: restart grafana
+      tags: ['config']
+
+    # ===========================================
+    # BACKUP MANAGEMENT
+    # ===========================================
+    
+    - name: Create Grafana backup directory
+      file:
+        path: "{{ grafana_config_path }}/backups"
+        state: directory
+        mode: '0755'
+        owner: "{{ ansible_user }}"
+        group: docker
+      tags: ['backup']
+
+    - name: Backup current Grafana configuration
+      archive:
+        path:
+          - "{{ grafana_config_path }}/provisioning"
+          - "{{ grafana_config_path }}/dashboards"
+        dest: "{{ grafana_config_path }}/backups/grafana-config-{{ ansible_date_time.epoch }}.tar.gz"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      tags: ['backup']
+
+    - name: Keep only last 5 backups
+      shell: |
+        cd {{ grafana_config_path }}/backups
+        ls -t grafana-config-*.tar.gz | tail -n +6 | xargs -r rm
+      tags: ['backup']
+
+  post_tasks:
+    # ===========================================
+    # VERIFICATION AND HEALTH CHECKS
+    # ===========================================
+    
+    - name: Wait for Grafana to be ready (after restart)
+      uri:
+        url: "http://{{ ansible_host }}:3000/api/health"
+        method: GET
+        status_code: 200
+      retries: 12
+      delay: 5
+      when: grafana_restarted is defined
+      tags: ['verify']
+
+    - name: Verify Grafana datasources
+      uri:
+        url: "http://{{ ansible_host }}:3000/api/datasources"
+        method: GET
+        user: "{{ shared_services.grafana.admin_user }}"
+        password: "{{ shared_services.grafana.admin_password }}"
+        force_basic_auth: yes
+        status_code: 200
+      register: grafana_datasources
+      tags: ['verify']
+
+    - name: Display Grafana management summary
+      debug:
+        msg: |
+          ========================================
+          GRAFANA MANAGEMENT SUMMARY
+          ========================================
+          
+          📊 Configuration Paths:
+          - Config: {{ grafana_config_path }}/config/
+          - Datasources: {{ grafana_config_path }}/provisioning/datasources/
+          - Dashboard Config: {{ grafana_config_path }}/provisioning/dashboards/
+          - Dashboard Files: {{ grafana_config_path }}/dashboards/
+          - Backups: {{ grafana_config_path }}/backups/
+          
+          📈 Deployed Dashboards:
+          {% for file in dashboard_files.files %}
+          - {{ file.path | basename | regex_replace('\.json$', '') | replace('-', ' ') | title }}
+          {% endfor %}
+          {% if custom_dashboard_files is defined and custom_dashboard_files.files %}
+          
+          🔧 Custom Dashboards:
+          {% for file in custom_dashboard_files.files %}
+          - {{ file.path | basename | regex_replace('\.json$', '') | replace('-', ' ') | title }}
+          {% endfor %}
+          {% endif %}
+          
+          🔌 Datasources:
+          {{ (grafana_datasources.json | length) if grafana_datasources is defined else 'N/A' }} configured
+          
+          🌐 Access:
+          - HTTP: http://{{ ansible_host }}:3000
+          - HTTPS: https://grafana.{{ domain_suffix }}
+          - Credentials: {{ shared_services.grafana.admin_user }} / {{ shared_services.grafana.admin_password }}
+          
+          ⚡ Quick Commands:
+          - Update dashboards: ansible-playbook -i inventory/staging.yml grafana-management.yml --tags dashboards
+          - Update datasources: ansible-playbook -i inventory/staging.yml grafana-management.yml --tags datasources
+          - Restart Grafana: ansible-playbook -i inventory/staging.yml grafana-management.yml --tags restart
+          - Full backup: ansible-playbook -i inventory/staging.yml grafana-management.yml --tags backup
+          ========================================
+
+  handlers:
+    - name: restart grafana
+      community.docker.docker_container:
+        name: "{{ grafana_container_name }}"
+        state: started
+        restart: yes
+      register: grafana_restarted
+      tags: ['restart']
+
+    - name: reload grafana config
+      uri:
+        url: "http://{{ ansible_host }}:3000/api/admin/provisioning/dashboards/reload"
+        method: POST
+        user: "{{ shared_services.grafana.admin_user }}"
+        password: "{{ shared_services.grafana.admin_password }}"
+        force_basic_auth: yes
+        status_code: 200
+      ignore_errors: yes

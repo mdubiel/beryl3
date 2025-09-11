@@ -1,0 +1,35 @@
+---
+# Staging Environment Inventory
+all:
+  children:
+    staging:
+      hosts:
+        staging-server:
+          ansible_host: "{{ staging_server_ip | default('192.168.1.14') }}"
+          ansible_user: "{{ staging_user | default('ansible') }}"
+          ansible_ssh_private_key_file: "{{ ssh_key_path | default('~/.ssh/ansible_staging') }}"
+          
+          # Server specifications
+          server_role: staging
+          server_timezone: UTC
+          
+          # Shared services configuration
+          shared_services_enabled: true
+          shared_data_path: /opt/shared
+          
+          # Project-specific configuration
+          projects:
+            - name: beryl3
+              domain: "beryl3.staging.mdubiel.org"
+              port: 8000
+              db_port: 5432
+              redis_port: 6379
+              git_repo: "https://github.com/user/beryl3.git"
+              git_branch: main
+              python_version: "3.11"
+              
+          # Resource allocation
+          prometheus_memory: 1g
+          grafana_memory: 512m
+          loki_memory: 512m
+          postgres_memory_per_project: 1g

@@ -1,0 +1,90 @@
+# Main Nginx configuration for staging server (HTTP only, before SSL setup)
+# This handles routing to both monitoring and project services
+
+upstream grafana {
+    server 127.0.0.1:3000;
+}
+
+upstream prometheus {
+    server 127.0.0.1:9090;
+}
+
+upstream beryl3 {
+    server 127.0.0.1:8080;
+}
+
+# HTTP servers for certificate generation
+server {
+    listen 80;
+    server_name grafana.{{ domain_suffix }};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        try_files $uri =404;
+    }
+
+    location / {
+        proxy_pass http://grafana;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+    }
+}
+
+server {
+    listen 80;
+    server_name prometheus.{{ domain_suffix }};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        try_files $uri =404;
+    }
+
+    location / {
+        proxy_pass http://prometheus;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+server {
+    listen 80;
+    server_name beryl3.{{ domain_suffix }};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        try_files $uri =404;
+    }
+
+    location / {
+        proxy_pass http://beryl3;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+
+server {
+    listen 80;
+    server_name monitoring.{{ domain_suffix }};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        try_files $uri =404;
+    }
+
+    location / {
+        return 302 http://grafana.{{ domain_suffix }};
+    }
+}

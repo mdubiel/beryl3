@@ -1,0 +1,197 @@
+version: '3.8'
+
+networks:
+  {{ project_name }}:
+    name: {{ project_name }}
+    driver: bridge
+  monitoring:
+    external: true
+  projects:
+    external: true
+
+volumes:
+  {{ project_name }}_postgres_data:
+  {{ project_name }}_redis_data:
+  {{ project_name }}_static_files:
+  {{ project_name }}_media_files:
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: {{ project_name }}-postgres
+    environment:
+      POSTGRES_DB: {{ project_defaults.db_name | regex_replace('project_name', project_name) }}
+      POSTGRES_USER: {{ project_defaults.db_user | regex_replace('project_name', project_name) }}
+      POSTGRES_PASSWORD: {{ project_defaults.db_password }}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - {{ project_name }}_postgres_data:/var/lib/postgresql/data
+      - ./data/postgresql:/docker-entrypoint-initdb.d
+    ports:
+      - "{{ project_config.db_port }}:5432"
+    networks:
+      - {{ project_name }}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ project_defaults.db_user | regex_replace('project_name', project_name) }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Exporter for monitoring
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.12.0
+    container_name: {{ project_name }}-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://{{ project_defaults.db_user | regex_replace('project_name', project_name) }}:{{ project_defaults.db_password }}@postgres:5432/{{ project_defaults.db_name | regex_replace('project_name', project_name) }}?sslmode=disable"
+    ports:
+      - "{{ 9187 + loop.index0 }}:9187"
+    networks:
+      - {{ project_name }}
+      - monitoring
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: {{ project_name }}-redis
+    ports:
+      - "{{ project_config.redis_port }}:6379"
+    volumes:
+      - {{ project_name }}_redis_data:/data
+    networks:
+      - {{ project_name }}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Redis Exporter for monitoring
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.50.0
+    container_name: {{ project_name }}-redis-exporter
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "{{ 9121 + loop.index0 }}:9121"
+    networks:
+      - {{ project_name }}
+      - monitoring
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Django Web Application
+  web:
+    build: ./app
+    container_name: {{ project_name }}-web
+    env_file:
+      - ./config/.env
+    ports:
+      - "{{ project_config.port }}:8000"
+    volumes:
+      - ./app:/app
+      - {{ project_name }}_static_files:/app/staticfiles
+      - {{ project_name }}_media_files:/app/media
+      - ./logs:/app/logs
+    networks:
+      - {{ project_name }}
+      - monitoring
+      - projects
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        uv run python manage.py migrate &&
+        uv run python manage.py collectstatic --noinput &&
+        uv run gunicorn webapp.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Project Nginx (for static/media files serving)
+  nginx:
+    image: nginx:alpine
+    container_name: {{ project_name }}-nginx
+    ports:
+      - "{{ 8080 + loop.index0 }}:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - {{ project_name }}_static_files:/var/www/static:ro
+      - {{ project_name }}_media_files:/var/www/media:ro
+    networks:
+      - {{ project_name }}
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  # Nginx Exporter for monitoring
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    container_name: {{ project_name }}-nginx-exporter
+    command:
+      - '-nginx.scrape-uri=http://nginx:80/nginx_status'
+    ports:
+      - "{{ 9113 + loop.index0 }}:9113"
+    networks:
+      - {{ project_name }}
+      - monitoring
+    depends_on:
+      - nginx
+    restart: unless-stopped
+
+  # Worker for background tasks (if needed)
+  worker:
+    build: ./app
+    container_name: {{ project_name }}-worker
+    env_file:
+      - ./config/.env
+    volumes:
+      - ./app:/app
+      - ./logs:/app/logs
+    networks:
+      - {{ project_name }}
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    command: >
+      sh -c "
+        uv run python manage.py migrate &&
+        uv run python manage.py process_tasks
+      "
+
+  # Scheduler for periodic tasks (if needed)
+  scheduler:
+    build: ./app
+    container_name: {{ project_name }}-scheduler
+    env_file:
+      - ./config/.env
+    volumes:
+      - ./app:/app
+      - ./logs:/app/logs
+    networks:
+      - {{ project_name }}
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    command: >
+      sh -c "
+        uv run python manage.py migrate &&
+        uv run python manage.py run_scheduled_tasks
+      "

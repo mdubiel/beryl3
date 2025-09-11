@@ -1,0 +1,256 @@
+---
+# =====================================
+# Deploy Beryl3 Application with New Storage Settings
+# =====================================
+
+- name: Deploy Beryl3 Django Application
+  hosts: staging
+  become: yes
+  vars:
+    project_path: /opt/projects/beryl3
+    webapp_build_context: /tmp/beryl3-webapp-build
+    
+  pre_tasks:
+    - name: Ensure project directory exists
+      file:
+        path: "{{ project_path }}"
+        state: directory
+        mode: '0755'
+        owner: "{{ ansible_user }}"
+        group: docker
+
+  tasks:
+    # ===========================================
+    # COPY APPLICATION FILES
+    # ===========================================
+    
+    - name: Copy staging configuration files
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ project_path }}/{{ item.dest }}"
+        mode: "{{ item.mode | default('0644') }}"
+        owner: "{{ ansible_user }}"
+        group: docker
+      loop:
+        - { src: "../../.env.staging", dest: ".env" }
+        - { src: "../../gcs_keys/", dest: "gcs_keys/", mode: "0755" }
+      tags: ['config']
+
+    - name: Create Docker Compose file with correct paths
+      template:
+        src: ../templates/docker-compose.staging.yaml.j2
+        dest: "{{ project_path }}/docker-compose.yaml"
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: docker
+      tags: ['config']
+
+    - name: Copy webapp source code for building
+      synchronize:
+        src: "{{ playbook_dir }}/../../../webapp/"
+        dest: "{{ project_path }}/webapp/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=__pycache__"
+          - "--exclude=*.pyc"
+          - "--exclude=.pytest_cache"
+          - "--exclude=db.sqlite3"
+          - "--exclude=tmp/"
+      tags: ['source']
+
+    # ===========================================
+    # STOP CURRENT CONTAINERS
+    # ===========================================
+    
+    - name: Stop existing Beryl3 containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_path }}"
+        state: absent
+      ignore_errors: yes
+      tags: ['stop']
+
+    # ===========================================
+    # BUILD AND START NEW CONTAINERS
+    # ===========================================
+    
+    - name: Build and start Beryl3 containers with new storage settings
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_path }}"
+        build: always
+        state: present
+      register: compose_result
+      tags: ['deploy']
+
+    # ===========================================
+    # DATABASE SETUP
+    # ===========================================
+    
+    - name: Wait for database to be ready
+      wait_for:
+        port: 5432
+        host: "{{ ansible_host }}"
+        delay: 10
+        timeout: 60
+      tags: ['db-setup']
+
+    - name: Run database migrations
+      community.docker.docker_container_exec:
+        container: beryl3_staging_webapp
+        command: python manage.py migrate --noinput
+      register: migrate_result
+      tags: ['db-setup']
+
+    - name: Create Django superuser (if needed)
+      community.docker.docker_container_exec:
+        container: beryl3_staging_webapp
+        command: >
+          python manage.py shell -c "
+          from django.contrib.auth import get_user_model;
+          User = get_user_model();
+          if not User.objects.filter(is_superuser=True).exists():
+              User.objects.create_superuser('admin', 'admin@beryl3.local', 'admin123')
+          "
+      ignore_errors: yes
+      tags: ['db-setup']
+
+    # ===========================================
+    # GCS BUCKET SETUP
+    # ===========================================
+    
+    - name: Test GCS bucket access
+      community.docker.docker_container_exec:
+        container: beryl3_staging_webapp
+        command: python manage.py setup_gcs_bucket --test-access
+      register: gcs_test_result
+      ignore_errors: yes
+      tags: ['gcs-setup']
+
+    - name: Create GCS bucket folder structure
+      community.docker.docker_container_exec:
+        container: beryl3_staging_webapp
+        command: python manage.py setup_gcs_bucket --create-folders
+      register: gcs_folder_result
+      when: gcs_test_result is succeeded
+      tags: ['gcs-setup']
+
+    - name: Collect static files to GCS
+      community.docker.docker_container_exec:
+        container: beryl3_staging_webapp
+        command: python manage.py collectstatic --noinput --clear
+      register: collectstatic_result
+      when: gcs_test_result is succeeded
+      tags: ['gcs-setup']
+
+    # ===========================================
+    # VERIFICATION
+    # ===========================================
+    
+    - name: Wait for webapp to be ready
+      wait_for:
+        port: 8000
+        host: "{{ ansible_host }}"
+        delay: 5
+        timeout: 60
+      tags: ['verify']
+
+    - name: Test Django application health
+      uri:
+        url: "http://{{ ansible_host }}:8000/"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 3
+      delay: 5
+      tags: ['verify']
+
+    - name: Test Django metrics endpoints
+      uri:
+        url: "http://{{ ansible_host }}:8000{{ item }}"
+        method: GET
+        status_code: 200
+      loop:
+        - "/metrics"
+        - "/sys/metrics/prometheus/"
+      register: metrics_check
+      ignore_errors: yes
+      tags: ['verify']
+
+  post_tasks:
+    - name: Display deployment summary
+      debug:
+        msg: |
+          ========================================
+          BERYL3 DEPLOYMENT SUMMARY
+          ========================================
+          
+          📦 Deployment Status:
+          {% if compose_result is succeeded %}
+          ✅ Containers deployed successfully
+          {% else %}
+          ❌ Container deployment failed
+          {% endif %}
+          
+          🗄️ Database Setup:
+          {% if migrate_result is succeeded %}
+          ✅ Migrations completed
+          {% else %}
+          ❌ Migration failed: {{ migrate_result.stderr | default('Unknown error') }}
+          {% endif %}
+          
+          ☁️ GCS Storage:
+          {% if gcs_test_result is succeeded %}
+          ✅ GCS access confirmed
+          ✅ Bucket: beryl3-stage (mateusz-344213)
+          {% if collectstatic_result is succeeded %}
+          ✅ Static files uploaded to GCS
+          {% else %}
+          ⚠️  Static files collection failed
+          {% endif %}
+          {% else %}
+          ❌ GCS access failed: {{ gcs_test_result.stderr | default('Check credentials') }}
+          {% endif %}
+          
+          🌐 Application Access:
+          {% if health_check is succeeded %}
+          ✅ Django app: http://{{ ansible_host }}:8000
+          {% else %}
+          ❌ Application not responding
+          {% endif %}
+          
+          📊 Metrics Endpoints:
+          - Django Middleware: http://{{ ansible_host }}:8000/metrics
+          - Custom Business: http://{{ ansible_host }}:8000/sys/metrics/prometheus/
+          
+          🔧 Running Containers:
+          {% for service in compose_result.services | default([]) %}
+          - {{ service }}
+          {% endfor %}
+          
+          📂 Project Location: {{ project_path }}
+          
+          🚀 Next Steps:
+          1. Verify application functionality
+          2. Check GCS storage integration
+          3. Test static file serving
+          4. Monitor application metrics
+          ========================================
+
+    - name: Show container status
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      register: container_status
+      loop:
+        - beryl3_staging_webapp
+        - beryl3_staging_postgres
+        - beryl3_staging_redis
+        - beryl3_staging_nginx
+        - beryl3_staging_email_worker
+      ignore_errors: yes
+      tags: ['status']
+
+    - name: Display running containers
+      debug:
+        msg: "{{ item.container.Name }} is {{ item.container.State.Status }}"
+      loop: "{{ container_status.results }}"
+      when: item.exists
+      tags: ['status']

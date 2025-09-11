@@ -1,0 +1,54 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Django Application Logs - Staging",
+    "tags": ["django", "beryl3", "staging"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Application Logs Stream",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{application=\"beryl3\"}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 16,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "options": {
+          "showTime": true,
+          "showLabels": false,
+          "wrapLogMessage": true,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true,
+          "dedupStrategy": "none"
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [],
+    "liveNow": false,
+    "panels": [],
+    "schemaVersion": 37,
+    "style": "dark",
+    "templating": {
+      "list": []
+    },
+    "timepicker": {},
+    "version": 0,
+    "weekStart": ""
+  }
+}

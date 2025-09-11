@@ -1,0 +1,8 @@
+---
+# Shared monitoring handlers
+- name: restart monitoring stack
+  shell: |
+    cd {{ shared_data_path }}
+    docker-compose down
+    docker-compose up -d
+  become_user: "{{ ansible_user }}"
