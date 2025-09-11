@@ -131,6 +131,13 @@
                         {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
                     </a>
                     {% endif %}
+                    
+                    {% if EXTERNAL_RESEND_URL %}
+                    <a href="{{ EXTERNAL_RESEND_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
+                        {% lucide 'mail' size=14 class='inline mr-2' %} Resend
+                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
+                    </a>
+                    {% endif %}
                 </div>
             </nav>
         </div>
