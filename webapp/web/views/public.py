@@ -22,7 +22,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from faker import Faker
 
-from web.models import Collection, CollectionItem, RecentActivity, ItemType, ApplicationActivity
+from web.models import Collection, CollectionItem, RecentActivity, ItemType
 
 logger = logging.getLogger("webapp") # Ensure logger is initialized
 
@@ -36,25 +36,23 @@ def public_collection_view(request, hash):
     # Only allow access if the collection is not private.
     if collection.visibility == Collection.Visibility.PRIVATE:
         # Log access denied to private collection
-        ApplicationActivity.log_warning('public_collection_view', 
-            f"Access denied to private collection '{collection.name}'", 
-            user=None, meta={
-                'action': 'access_denied', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'visibility': collection.visibility, 'result': 'access_denied',
-                'function_args': {'hash': hash, 'request_method': request.method}})
+        logger.warning('public_collection_view: Access denied to private collection "%s" by anonymous user',
+                      collection.name,
+                      extra={'function': 'public_collection_view', 'action': 'access_denied', 
+                            'object_type': 'Collection', 'object_hash': collection.hash, 
+                            'object_name': collection.name, 'visibility': collection.visibility, 
+                            'result': 'access_denied', 'function_args': {'hash': hash, 'request_method': request.method}})
         
         # We raise Http404 to avoid leaking the existence of private collections.
         raise Http404("Collection not found or is private.")
     
     # Log successful public collection access
-    ApplicationActivity.log_info('public_collection_view', 
-        f"Public collection '{collection.name}' viewed by anonymous user", 
-        user=None, meta={
-            'action': 'public_view', 'object_type': 'Collection',
-            'object_hash': collection.hash, 'object_name': collection.name,
-            'visibility': collection.visibility, 'viewer_type': 'anonymous',
-            'function_args': {'hash': hash, 'request_method': request.method}})
+    logger.info('public_collection_view: Public collection "%s" viewed by anonymous user',
+               collection.name,
+               extra={'function': 'public_collection_view', 'action': 'public_view', 
+                     'object_type': 'Collection', 'object_hash': collection.hash, 
+                     'object_name': collection.name, 'visibility': collection.visibility, 
+                     'viewer_type': 'anonymous', 'function_args': {'hash': hash, 'request_method': request.method}})
     
     fake = Faker()
     dummy_name = fake.name()

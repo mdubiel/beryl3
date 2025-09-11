@@ -16,7 +16,7 @@ from django.db import transaction
 
 from web.decorators import log_execution_time
 from web.forms import CollectionItemForm
-from web.models import Collection, CollectionItem, RecentActivity, ItemType, ApplicationActivity
+from web.models import Collection, CollectionItem, RecentActivity, ItemType
 
 logger = logging.getLogger('webapp')
 
@@ -30,12 +30,12 @@ def collection_item_create_view(request, collection_hash):
     collection = get_object_or_404(Collection, hash=collection_hash, created_by=request.user)
 
     # Log form access
-    ApplicationActivity.log_info('collection_item_create_view', 
-        f"Item creation form accessed for collection '{collection.name}'", 
-        user=request.user, meta={
-            'action': 'form_access', 'object_type': 'CollectionItem',
-            'collection_hash': collection.hash, 'collection_name': collection.name, 'method': request.method,
-            'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
+    logger.info('collection_item_create_view: Item creation form accessed for collection "%s" by user %s [%s]',
+               collection.name, request.user.username, request.user.id,
+               extra={'function': 'collection_item_create_view', 'action': 'form_access', 
+                     'object_type': 'CollectionItem', 'collection_hash': collection.hash, 
+                     'collection_name': collection.name, 'method': request.method,
+                     'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
 
     if request.method == 'POST':
         logger.info("User '%s [%s]' is submitting a new item for collection '%s' [%s]", request.user.username, request.user.id, collection.name, collection.hash) 
@@ -57,14 +57,13 @@ def collection_item_create_view(request, collection_hash):
                 )
                 
                 # Log successful creation
-                ApplicationActivity.log_info('collection_item_create_view', 
-                    f"Item '{new_item.name}' created in collection '{collection.name}'", 
-                    user=request.user, meta={
-                        'action': 'created', 'object_type': 'CollectionItem',
-                        'object_hash': new_item.hash, 'object_name': new_item.name,
-                        'collection_hash': collection.hash, 'collection_name': collection.name,
-                        'status': new_item.status, 'result': 'success',
-                        'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
+                logger.info('collection_item_create_view: Item "%s" created in collection "%s" by user %s [%s]',
+                           new_item.name, collection.name, request.user.username, request.user.id,
+                           extra={'function': 'collection_item_create_view', 'action': 'created', 
+                                 'object_type': 'CollectionItem', 'object_hash': new_item.hash, 
+                                 'object_name': new_item.name, 'collection_hash': collection.hash, 
+                                 'collection_name': collection.name, 'status': new_item.status, 
+                                 'result': 'success', 'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
                 
                 # Log user activity
                 RecentActivity.log_item_added(
@@ -77,21 +76,20 @@ def collection_item_create_view(request, collection_hash):
                 return redirect(collection.get_absolute_url())
                 
             except Exception as e:
-                ApplicationActivity.log_error('collection_item_create_view', 
-                    f"Item creation failed in collection '{collection.name}': {str(e)}", 
-                    user=request.user, meta={
-                        'action': 'creation_error', 'object_type': 'CollectionItem',
-                        'collection_hash': collection.hash, 'collection_name': collection.name,
-                        'error': str(e), 'result': 'system_error'})
+                logger.error('collection_item_create_view: Item creation failed in collection "%s": %s by user %s [%s]',
+                            collection.name, str(e), request.user.username, request.user.id,
+                            extra={'function': 'collection_item_create_view', 'action': 'creation_error', 
+                                  'object_type': 'CollectionItem', 'collection_hash': collection.hash, 
+                                  'collection_name': collection.name, 'error': str(e), 'result': 'system_error'})
                 raise
         else:
             # Log form validation errors
-            ApplicationActivity.log_warning('collection_item_create_view', 
-                f"Item creation failed in collection '{collection.name}' due to validation errors", 
-                user=request.user, meta={
-                    'action': 'creation_failed', 'object_type': 'CollectionItem',
-                    'collection_hash': collection.hash, 'collection_name': collection.name,
-                    'errors': form.errors.as_json(), 'result': 'validation_error'})
+            logger.warning('collection_item_create_view: Item creation failed in collection "%s" due to validation errors by user %s [%s]',
+                          collection.name, request.user.username, request.user.id,
+                          extra={'function': 'collection_item_create_view', 'action': 'creation_failed', 
+                                'object_type': 'CollectionItem', 'collection_hash': collection.hash, 
+                                'collection_name': collection.name, 'errors': form.errors.as_json(), 
+                                'result': 'validation_error'})
     else:
         form = CollectionItemForm()
 
@@ -120,13 +118,12 @@ def collection_item_detail_view(request, hash):
         item_types = ItemType.objects.filter(is_deleted=False).order_by('display_name')
 
         # Log successful detail view
-        ApplicationActivity.log_info('collection_item_detail_view', 
-            f"Item '{item.name}' detail viewed successfully", 
-            user=request.user, meta={
-                'action': 'detail_view', 'object_type': 'CollectionItem',
-                'object_hash': item.hash, 'object_name': item.name,
-                'collection_hash': item.collection.hash, 'collection_name': item.collection.name,
-                'status': item.status})
+        logger.info('collection_item_detail_view: Item "%s" detail viewed successfully by user %s [%s]',
+                   item.name, request.user.username, request.user.id,
+                   extra={'function': 'collection_item_detail_view', 'action': 'detail_view', 
+                         'object_type': 'CollectionItem', 'object_hash': item.hash, 
+                         'object_name': item.name, 'collection_hash': item.collection.hash, 
+                         'collection_name': item.collection.name, 'status': item.status})
 
         context = {
             'item': item,
@@ -137,11 +134,10 @@ def collection_item_detail_view(request, hash):
         return render(request, 'items/item_detail.html', context)
         
     except Exception as e:
-        ApplicationActivity.log_warning('collection_item_detail_view', 
-            f"Item detail access failed for hash '{hash}': {str(e)}", 
-            user=request.user, meta={
-                'action': 'detail_view_failed', 'object_hash': hash,
-                'error': str(e), 'result': 'access_denied_or_error'})
+        logger.warning('collection_item_detail_view: Item detail access failed for hash "%s": %s by user %s [%s]',
+                      hash, str(e), request.user.username, request.user.id,
+                      extra={'function': 'collection_item_detail_view', 'action': 'detail_view_failed', 
+                            'object_hash': hash, 'error': str(e), 'result': 'access_denied_or_error'})
         raise
 
 @login_required
@@ -161,23 +157,23 @@ def collection_item_update_view(request, hash):
             logger.info("User '%s [%s]' updated item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
             
             # Log successful update
-            ApplicationActivity.log_info('collection_item_update_view', 
-                f"Item '{item.name}' updated successfully", 
-                user=request.user, meta={
-                    'action': 'updated', 'object_type': 'CollectionItem',
-                    'object_hash': item.hash, 'object_name': item.name,
-                    'collection_hash': item.collection.hash, 'result': 'success'})
+            logger.info('collection_item_update_view: Item "%s" updated successfully by user %s [%s]',
+                       item.name, request.user.username, request.user.id,
+                       extra={'function': 'collection_item_update_view', 'action': 'updated', 
+                             'object_type': 'CollectionItem', 'object_hash': item.hash, 
+                             'object_name': item.name, 'collection_hash': item.collection.hash, 
+                             'result': 'success'})
             
             messages.success(request, f"Item '{item.name}' was updated successfully!")
             return redirect(item.collection.get_absolute_url())
         else:
             # Log form validation errors
-            ApplicationActivity.log_warning('collection_item_update_view', 
-                f"Item '{item.name}' update failed due to validation errors", 
-                user=request.user, meta={
-                    'action': 'update_failed', 'object_type': 'CollectionItem',
-                    'object_hash': item.hash, 'object_name': item.name,
-                    'errors': form.errors.as_json(), 'result': 'validation_error'})
+            logger.warning('collection_item_update_view: Item "%s" update failed due to validation errors by user %s [%s]',
+                          item.name, request.user.username, request.user.id,
+                          extra={'function': 'collection_item_update_view', 'action': 'update_failed', 
+                                'object_type': 'CollectionItem', 'object_hash': item.hash, 
+                                'object_name': item.name, 'errors': form.errors.as_json(), 
+                                'result': 'validation_error'})
     else:
         logger.info("User '%s [%s]' is viewing the update form for item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
         form = CollectionItemForm(instance=item)

@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 
-from ..models import Collection, CollectionItem, MediaFile, CollectionImage, CollectionItemImage, ApplicationActivity
+from ..models import Collection, CollectionItem, MediaFile, CollectionImage, CollectionItemImage
 from ..forms import ImageUploadForm
 from ..decorators import owner_required
 
@@ -60,38 +60,28 @@ def collection_manage_images(request, hash):
                     logger.info(f"User {request.user.email} added image to Collection {collection.hash}")
                     
                     # Log application activity
-                    ApplicationActivity.log_info(
-                        'collection_image_upload',
-                        f'Added image "{media_file.original_filename}" to Collection {collection.name}',
-                        user=request.user,
-                        meta={
-                            'collection_hash': collection.hash,
-                            'media_file_hash': media_file.hash,
-                            'filename': media_file.original_filename,
-                            'file_size': media_file.file_size,
-                            'image_order': next_order
-                        }
-                    )
+                    logger.info('collection_image_upload: Added image "%s" to Collection %s by user %s [%s]',
+                               media_file.original_filename, collection.name, request.user.username, request.user.id,
+                               extra={'function': 'collection_image_upload', 'action': 'image_uploaded',
+                                     'collection_hash': collection.hash, 'media_file_hash': media_file.hash,
+                                     'filename': media_file.original_filename, 'file_size': media_file.file_size,
+                                     'image_order': next_order})
                     
                     return redirect('collection_manage_images', hash=hash)
                     
             except ValidationError as e:
                 messages.error(request, str(e))
-                ApplicationActivity.log_warning(
-                    'collection_image_upload_validation_error',
-                    f'Validation error uploading image to Collection {collection.name}: {str(e)}',
-                    user=request.user,
-                    meta={'collection_hash': collection.hash, 'error': str(e)}
-                )
+                logger.warning('collection_image_upload_validation_error: Validation error uploading image to Collection %s: %s by user %s [%s]',
+                              collection.name, str(e), request.user.username, request.user.id,
+                              extra={'function': 'collection_image_upload_validation_error',
+                                    'collection_hash': collection.hash, 'error': str(e)})
             except Exception as e:
                 logger.error(f"Error uploading image for Collection {collection.hash}: {str(e)}")
                 messages.error(request, 'An error occurred while uploading the image.')
-                ApplicationActivity.log_error(
-                    'collection_image_upload_error',
-                    f'Error uploading image to Collection {collection.name}: {str(e)}',
-                    user=request.user,
-                    meta={'collection_hash': collection.hash, 'error': str(e)}
-                )
+                logger.error('collection_image_upload_error: Error uploading image to Collection %s: %s by user %s [%s]',
+                            collection.name, str(e), request.user.username, request.user.id,
+                            extra={'function': 'collection_image_upload_error',
+                                  'collection_hash': collection.hash, 'error': str(e)})
     else:
         form = ImageUploadForm()
     
@@ -143,39 +133,28 @@ def item_manage_images(request, hash):
                     logger.info(f"User {request.user.email} added image to CollectionItem {item.hash}")
                     
                     # Log application activity
-                    ApplicationActivity.log_info(
-                        'item_image_upload',
-                        f'Added image "{media_file.original_filename}" to Item {item.name}',
-                        user=request.user,
-                        meta={
-                            'item_hash': item.hash,
-                            'collection_hash': item.collection.hash,
-                            'media_file_hash': media_file.hash,
-                            'filename': media_file.original_filename,
-                            'file_size': media_file.file_size,
-                            'image_order': next_order
-                        }
-                    )
+                    logger.info('item_image_upload: Added image "%s" to Item %s by user %s [%s]',
+                               media_file.original_filename, item.name, request.user.username, request.user.id,
+                               extra={'function': 'item_image_upload', 'action': 'image_uploaded',
+                                     'item_hash': item.hash, 'collection_hash': item.collection.hash,
+                                     'media_file_hash': media_file.hash, 'filename': media_file.original_filename,
+                                     'file_size': media_file.file_size, 'image_order': next_order})
                     
                     return redirect('item_manage_images', hash=hash)
                     
             except ValidationError as e:
                 messages.error(request, str(e))
-                ApplicationActivity.log_warning(
-                    'item_image_upload_validation_error',
-                    f'Validation error uploading image to Item {item.name}: {str(e)}',
-                    user=request.user,
-                    meta={'item_hash': item.hash, 'collection_hash': item.collection.hash, 'error': str(e)}
-                )
+                logger.warning('item_image_upload_validation_error: Validation error uploading image to Item %s: %s by user %s [%s]',
+                              item.name, str(e), request.user.username, request.user.id,
+                              extra={'function': 'item_image_upload_validation_error',
+                                    'item_hash': item.hash, 'collection_hash': item.collection.hash, 'error': str(e)})
             except Exception as e:
                 logger.error(f"Error uploading image for CollectionItem {item.hash}: {str(e)}")
                 messages.error(request, 'An error occurred while uploading the image.')
-                ApplicationActivity.log_error(
-                    'item_image_upload_error',
-                    f'Error uploading image to Item {item.name}: {str(e)}',
-                    user=request.user,
-                    meta={'item_hash': item.hash, 'collection_hash': item.collection.hash, 'error': str(e)}
-                )
+                logger.error('item_image_upload_error: Error uploading image to Item %s: %s by user %s [%s]',
+                            item.name, str(e), request.user.username, request.user.id,
+                            extra={'function': 'item_image_upload_error',
+                                  'item_hash': item.hash, 'collection_hash': item.collection.hash, 'error': str(e)})
     else:
         form = ImageUploadForm()
     
@@ -207,16 +186,13 @@ def set_default_image(request, hash):
             collection_image.save()
             
             # Log application activity
-            ApplicationActivity.log_info(
-                'collection_set_default_image',
-                f'Set "{collection_image.media_file.original_filename}" as default image for Collection {collection_image.collection.name}',
-                user=request.user,
-                meta={
-                    'collection_hash': collection_image.collection.hash,
-                    'media_file_hash': collection_image.media_file.hash,
-                    'filename': collection_image.media_file.original_filename
-                }
-            )
+            logger.info('collection_set_default_image: Set "%s" as default image for Collection %s by user %s [%s]',
+                       collection_image.media_file.original_filename, collection_image.collection.name,
+                       request.user.username, request.user.id,
+                       extra={'function': 'collection_set_default_image', 'action': 'default_image_set',
+                             'collection_hash': collection_image.collection.hash,
+                             'media_file_hash': collection_image.media_file.hash,
+                             'filename': collection_image.media_file.original_filename})
             
             # Return updated image gallery
             current_images = CollectionImage.objects.filter(collection=collection_image.collection).order_by('order')
@@ -237,17 +213,14 @@ def set_default_image(request, hash):
             item_image.save()
             
             # Log application activity
-            ApplicationActivity.log_info(
-                'item_set_default_image',
-                f'Set "{item_image.media_file.original_filename}" as default image for Item {item_image.item.name}',
-                user=request.user,
-                meta={
-                    'item_hash': item_image.item.hash,
-                    'collection_hash': item_image.item.collection.hash,
-                    'media_file_hash': item_image.media_file.hash,
-                    'filename': item_image.media_file.original_filename
-                }
-            )
+            logger.info('item_set_default_image: Set "%s" as default image for Item %s by user %s [%s]',
+                       item_image.media_file.original_filename, item_image.item.name,
+                       request.user.username, request.user.id,
+                       extra={'function': 'item_set_default_image', 'action': 'default_image_set',
+                             'item_hash': item_image.item.hash,
+                             'collection_hash': item_image.item.collection.hash,
+                             'media_file_hash': item_image.media_file.hash,
+                             'filename': item_image.media_file.original_filename})
             
             # Return updated image gallery
             current_images = CollectionItemImage.objects.filter(item=item_image.item).order_by('order')
@@ -259,30 +232,21 @@ def set_default_image(request, hash):
             
     except CollectionImage.DoesNotExist:
         logger.error(f"CollectionImage with media file hash {hash} not found")
-        ApplicationActivity.log_error(
-            'set_default_image_not_found',
-            f'CollectionImage with hash {hash} not found',
-            user=request.user,
-            meta={'media_file_hash': hash}
-        )
+        logger.error('set_default_image_not_found: CollectionImage with hash %s not found by user %s [%s]',
+                    hash, request.user.username, request.user.id,
+                    extra={'function': 'set_default_image_not_found', 'media_file_hash': hash})
         return JsonResponse({'error': 'Image not found'}, status=404)
     except CollectionItemImage.DoesNotExist:
         logger.error(f"CollectionItemImage with media file hash {hash} not found")
-        ApplicationActivity.log_error(
-            'set_default_image_not_found',
-            f'CollectionItemImage with hash {hash} not found',
-            user=request.user,
-            meta={'media_file_hash': hash}
-        )
+        logger.error('set_default_image_not_found: CollectionItemImage with hash %s not found by user %s [%s]',
+                    hash, request.user.username, request.user.id,
+                    extra={'function': 'set_default_image_not_found', 'media_file_hash': hash})
         return JsonResponse({'error': 'Image not found'}, status=404)
     except Exception as e:
         logger.error(f"Error setting default image {hash}: {str(e)}")
-        ApplicationActivity.log_error(
-            'set_default_image_error',
-            f'Error setting default image {hash}: {str(e)}',
-            user=request.user,
-            meta={'media_file_hash': hash, 'error': str(e)}
-        )
+        logger.error('set_default_image_error: Error setting default image %s: %s by user %s [%s]',
+                    hash, str(e), request.user.username, request.user.id,
+                    extra={'function': 'set_default_image_error', 'media_file_hash': hash, 'error': str(e)})
         return JsonResponse({'error': 'Failed to set default image'}, status=500)
 
 
@@ -324,18 +288,12 @@ def delete_image(request, hash):
                     logger.info(f"Set new default image for Collection {collection.hash}: {first_image.media_file.original_filename}")
                 
                 # Log application activity
-                ApplicationActivity.log_info(
-                    'collection_delete_image',
-                    f'Deleted image "{filename}" from Collection {collection.name}',
-                    user=request.user,
-                    meta={
-                        'collection_hash': collection.hash,
-                        'media_file_hash': hash,
-                        'filename': filename,
-                        'was_default': was_default,
-                        'remaining_images_count': remaining_images.count()
-                    }
-                )
+                logger.info('collection_delete_image: Deleted image "%s" from Collection %s by user %s [%s]',
+                           filename, collection.name, request.user.username, request.user.id,
+                           extra={'function': 'collection_delete_image', 'action': 'image_deleted',
+                                 'collection_hash': collection.hash, 'media_file_hash': hash,
+                                 'filename': filename, 'was_default': was_default,
+                                 'remaining_images_count': remaining_images.count()})
             
             # Return HTMX response to trigger page refresh
             response = HttpResponse()
@@ -373,19 +331,12 @@ def delete_image(request, hash):
                     logger.info(f"Set new default image for CollectionItem {item.hash}: {first_image.media_file.original_filename}")
                 
                 # Log application activity
-                ApplicationActivity.log_info(
-                    'item_delete_image',
-                    f'Deleted image "{filename}" from Item {item.name}',
-                    user=request.user,
-                    meta={
-                        'item_hash': item.hash,
-                        'collection_hash': item.collection.hash,
-                        'media_file_hash': hash,
-                        'filename': filename,
-                        'was_default': was_default,
-                        'remaining_images_count': remaining_images.count()
-                    }
-                )
+                logger.info('item_delete_image: Deleted image "%s" from Item %s by user %s [%s]',
+                           filename, item.name, request.user.username, request.user.id,
+                           extra={'function': 'item_delete_image', 'action': 'image_deleted',
+                                 'item_hash': item.hash, 'collection_hash': item.collection.hash,
+                                 'media_file_hash': hash, 'filename': filename,
+                                 'was_default': was_default, 'remaining_images_count': remaining_images.count()})
             
             # Return HTMX response to trigger page refresh
             response = HttpResponse()
@@ -394,30 +345,21 @@ def delete_image(request, hash):
             
     except CollectionImage.DoesNotExist:
         logger.error(f"CollectionImage with media file hash {hash} not found")
-        ApplicationActivity.log_error(
-            'delete_image_not_found',
-            f'CollectionImage with hash {hash} not found for deletion',
-            user=request.user,
-            meta={'media_file_hash': hash}
-        )
+        logger.error('delete_image_not_found: CollectionImage with hash %s not found for deletion by user %s [%s]',
+                    hash, request.user.username, request.user.id,
+                    extra={'function': 'delete_image_not_found', 'media_file_hash': hash})
         return JsonResponse({'error': 'Image not found'}, status=404)
     except CollectionItemImage.DoesNotExist:
         logger.error(f"CollectionItemImage with media file hash {hash} not found")
-        ApplicationActivity.log_error(
-            'delete_image_not_found',
-            f'CollectionItemImage with hash {hash} not found for deletion',
-            user=request.user,
-            meta={'media_file_hash': hash}
-        )
+        logger.error('delete_image_not_found: CollectionItemImage with hash %s not found for deletion by user %s [%s]',
+                    hash, request.user.username, request.user.id,
+                    extra={'function': 'delete_image_not_found', 'media_file_hash': hash})
         return JsonResponse({'error': 'Image not found'}, status=404)
     except Exception as e:
         logger.error(f"Error deleting image {hash}: {str(e)}")
-        ApplicationActivity.log_error(
-            'delete_image_error',
-            f'Error deleting image {hash}: {str(e)}',
-            user=request.user,
-            meta={'media_file_hash': hash, 'error': str(e)}
-        )
+        logger.error('delete_image_error: Error deleting image %s: %s by user %s [%s]',
+                    hash, str(e), request.user.username, request.user.id,
+                    extra={'function': 'delete_image_error', 'media_file_hash': hash, 'error': str(e)})
         return JsonResponse({'error': 'Failed to delete image'}, status=500)
 
 
@@ -453,16 +395,11 @@ def reorder_images(request, hash):
                         continue
             
             # Log application activity
-            ApplicationActivity.log_info(
-                'collection_reorder_images',
-                f'Reordered images for Collection {collection.name}',
-                user=request.user,
-                meta={
-                    'collection_hash': collection.hash,
-                    'new_order': image_hashes,
-                    'total_images': len(image_hashes)
-                }
-            )
+            logger.info('collection_reorder_images: Reordered images for Collection %s by user %s [%s]',
+                       collection.name, request.user.username, request.user.id,
+                       extra={'function': 'collection_reorder_images', 'action': 'images_reordered',
+                             'collection_hash': collection.hash, 'new_order': image_hashes,
+                             'total_images': len(image_hashes)})
             
             return JsonResponse({'success': True})
             
@@ -486,28 +423,19 @@ def reorder_images(request, hash):
                         continue
             
             # Log application activity
-            ApplicationActivity.log_info(
-                'item_reorder_images',
-                f'Reordered images for Item {item.name}',
-                user=request.user,
-                meta={
-                    'item_hash': item.hash,
-                    'collection_hash': item.collection.hash,
-                    'new_order': image_hashes,
-                    'total_images': len(image_hashes)
-                }
-            )
+            logger.info('item_reorder_images: Reordered images for Item %s by user %s [%s]',
+                       item.name, request.user.username, request.user.id,
+                       extra={'function': 'item_reorder_images', 'action': 'images_reordered',
+                             'item_hash': item.hash, 'collection_hash': item.collection.hash,
+                             'new_order': image_hashes, 'total_images': len(image_hashes)})
             
             return JsonResponse({'success': True})
             
     except Exception as e:
         logger.error(f"Error reordering images for {hash}: {str(e)}")
-        ApplicationActivity.log_error(
-            'reorder_images_error',
-            f'Error reordering images for {hash}: {str(e)}',
-            user=request.user,
-            meta={'object_hash': hash, 'error': str(e)}
-        )
+        logger.error('reorder_images_error: Error reordering images for %s: %s by user %s [%s]',
+                    hash, str(e), request.user.username, request.user.id,
+                    extra={'function': 'reorder_images_error', 'object_hash': hash, 'error': str(e)})
         return JsonResponse({'error': 'Failed to reorder images'}, status=500)
 
 
@@ -545,10 +473,7 @@ def switch_image(request, hash):
             
     except Exception as e:
         logger.error(f"Error switching image {hash}: {str(e)}")
-        ApplicationActivity.log_error(
-            'switch_image_error',
-            f'Error switching image {hash}: {str(e)}',
-            user=request.user,
-            meta={'media_file_hash': hash, 'error': str(e)}
-        )
+        logger.error('switch_image_error: Error switching image %s: %s by user %s [%s]',
+                    hash, str(e), request.user.username, request.user.id,
+                    extra={'function': 'switch_image_error', 'media_file_hash': hash, 'error': str(e)})
         return JsonResponse({'error': 'Failed to switch image'}, status=500)

@@ -14,7 +14,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST
 
 from web.decorators import log_execution_time
-from web.models import Collection, ApplicationActivity, RecentActivity
+from web.models import Collection, RecentActivity
 
 logger = logging.getLogger('webapp')
 
@@ -32,13 +32,12 @@ def update_collection_visibility(request, hash):
         logger.error("User '%s' [%s] attempted to update collection '%s' [%s] they do not own", request.user.username, request.user.id, collection.name, collection.hash)
         
         # Log unauthorized access attempt
-        ApplicationActivity.log_warning('update_collection_visibility', 
-            f"Unauthorized attempt to update collection '{collection.name}' visibility", 
-            user=request.user, meta={
-                'action': 'unauthorized_access', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'result': 'access_denied', 'function_args': {'hash': hash}
-            })
+        logger.warning('update_collection_visibility: Unauthorized attempt to update collection "%s" visibility by user %s [%s] - access denied',
+                      collection.name, request.user.username, request.user.id,
+                      extra={'function': 'update_collection_visibility', 'action': 'unauthorized_access', 
+                            'object_type': 'Collection', 'object_hash': collection.hash, 
+                            'object_name': collection.name, 'result': 'access_denied', 
+                            'function_args': {'hash': hash}})
         
         raise Http404("You do not have permission to edit this collection.")
 
@@ -50,15 +49,13 @@ def update_collection_visibility(request, hash):
         logger.info("User '%s' updated collection '%s' to visibility '%s'", request.user.username, collection.name, new_visibility)
         
         # Log successful visibility update
-        ApplicationActivity.log_info('update_collection_visibility', 
-            f"Collection '{collection.name}' visibility updated to '{new_visibility}'", 
-            user=request.user, meta={
-                'action': 'visibility_updated', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'old_visibility': request.POST.get('old_visibility', 'unknown'),
-                'new_visibility': new_visibility, 'result': 'success',
-                'function_args': {'hash': hash, 'new_visibility': new_visibility}
-            })
+        logger.info('update_collection_visibility: Collection "%s" visibility updated to "%s" by user %s [%s]',
+                   collection.name, new_visibility, request.user.username, request.user.id,
+                   extra={'function': 'update_collection_visibility', 'action': 'visibility_updated', 
+                         'object_type': 'Collection', 'object_hash': collection.hash, 
+                         'object_name': collection.name, 'old_visibility': request.POST.get('old_visibility', 'unknown'),
+                         'new_visibility': new_visibility, 'result': 'success',
+                         'function_args': {'hash': hash, 'new_visibility': new_visibility}})
         
         # Log user activity
         RecentActivity.log_collection_visibility_changed(
@@ -68,14 +65,12 @@ def update_collection_visibility(request, hash):
         )
     else:
         # Log invalid visibility value
-        ApplicationActivity.log_warning('update_collection_visibility', 
-            f"Invalid visibility '{new_visibility}' attempted for collection '{collection.name}'", 
-            user=request.user, meta={
-                'action': 'visibility_update_failed', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'invalid_visibility': new_visibility, 'result': 'validation_error',
-                'function_args': {'hash': hash, 'new_visibility': new_visibility}
-            })
+        logger.warning('update_collection_visibility: Invalid visibility "%s" attempted for collection "%s" by user %s [%s]',
+                      new_visibility, collection.name, request.user.username, request.user.id,
+                      extra={'function': 'update_collection_visibility', 'action': 'visibility_update_failed', 
+                            'object_type': 'Collection', 'object_hash': collection.hash, 
+                            'object_name': collection.name, 'invalid_visibility': new_visibility, 
+                            'result': 'validation_error', 'function_args': {'hash': hash, 'new_visibility': new_visibility}})
 
     context = {
         'collection': collection,
@@ -96,14 +91,12 @@ def update_collection_visibility(request, hash):
         logger.info("Returning updated collection list item for collection: '%s' [%s]", collection.name, collection.hash)
         
         # Log successful list item response rendering
-        ApplicationActivity.log_info('update_collection_visibility', 
-            f"Collection '{collection.name}' visibility update completed - list item rendered", 
-            user=request.user, meta={
-                'action': 'response_rendered', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'response_type': 'list_item', 'result': 'success',
-                'function_args': {'hash': hash, 'new_visibility': new_visibility}
-            })
+        logger.info('update_collection_visibility: Collection "%s" visibility update completed - list item rendered by user %s [%s]',
+                   collection.name, request.user.username, request.user.id,
+                   extra={'function': 'update_collection_visibility', 'action': 'response_rendered', 
+                         'object_type': 'Collection', 'object_hash': collection.hash, 
+                         'object_name': collection.name, 'response_type': 'list_item', 
+                         'result': 'success', 'function_args': {'hash': hash, 'new_visibility': new_visibility}})
         
         return render(request, 'partials/_collection_list_item.html', context)
 
@@ -111,13 +104,11 @@ def update_collection_visibility(request, hash):
     logger.info("Returning updated visibility dropdown for collection: '%s' [%s]", collection.name, collection.hash)
     
     # Log successful response rendering
-    ApplicationActivity.log_info('update_collection_visibility', 
-        f"Collection '{collection.name}' visibility update completed - visibility dropdown rendered", 
-        user=request.user, meta={
-            'action': 'response_rendered', 'object_type': 'Collection',
-            'object_hash': collection.hash, 'object_name': collection.name,
-            'response_type': 'visibility_dropdown', 'result': 'success',
-            'function_args': {'hash': hash, 'new_visibility': new_visibility}
-        })
+    logger.info('update_collection_visibility: Collection "%s" visibility update completed - visibility dropdown rendered by user %s [%s]',
+               collection.name, request.user.username, request.user.id,
+               extra={'function': 'update_collection_visibility', 'action': 'response_rendered', 
+                     'object_type': 'Collection', 'object_hash': collection.hash, 
+                     'object_name': collection.name, 'response_type': 'visibility_dropdown', 
+                     'result': 'success', 'function_args': {'hash': hash, 'new_visibility': new_visibility}})
     
     return render(request, 'partials/_collection_visibility_update.html', context)

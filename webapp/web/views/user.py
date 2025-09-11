@@ -13,7 +13,7 @@ from django.db.models import Count, Q
 from django.shortcuts import render
 
 from web.decorators import log_execution_time
-from web.models import Collection, CollectionItem, RecentActivity, ApplicationActivity
+from web.models import Collection, CollectionItem, RecentActivity
 
 logger = logging.getLogger('webapp')
 
@@ -48,13 +48,12 @@ def dashboard_view(request):
     favorite_items = user_items.filter(is_favorite=True).select_related('collection').prefetch_related('images__media_file').order_by('-updated')[:6]
 
     # Log successful dashboard access
-    ApplicationActivity.log_info('dashboard_view', 
-        f"Dashboard accessed - {stats_data['total_items']} items across {stats_data['total_lists']} collections", 
-        user=request.user, meta={
-            'action': 'dashboard_view', 'total_items': stats_data['total_items'],
-            'total_collections': stats_data['total_lists'], 'favorite_items': stats_data['favourite_count'],
-            'in_collection': stats_data['in_collection_count'], 'wanted': stats_data['wanted_count'],
-            'function_args': {}})
+    logger.info('dashboard_view: Dashboard accessed - %d items across %d collections by user %s [%s]',
+               stats_data['total_items'], stats_data['total_lists'], request.user.username, request.user.id,
+               extra={'function': 'dashboard_view', 'action': 'dashboard_view', 
+                     'total_items': stats_data['total_items'], 'total_collections': stats_data['total_lists'], 
+                     'favorite_items': stats_data['favourite_count'], 'in_collection': stats_data['in_collection_count'], 
+                     'wanted': stats_data['wanted_count'], 'function_args': {}})
 
     # Split collections: first 3 for cards, next 4 for thumbnails
     card_collections = collections_with_counts[:3]
@@ -92,11 +91,10 @@ def favorites_view(request):
     total_favorites = favorite_items.count()
     
     # Log favorites view access
-    ApplicationActivity.log_info('favorites_view', 
-        f"Favorites list accessed - {total_favorites} favorite items", 
-        user=request.user, meta={
-            'action': 'favorites_view', 'favorite_count': total_favorites,
-            'function_args': {}})
+    logger.info('favorites_view: Favorites list accessed - %d favorite items by user %s [%s]',
+               total_favorites, request.user.username, request.user.id,
+               extra={'function': 'favorites_view', 'action': 'favorites_view', 
+                     'favorite_count': total_favorites, 'function_args': {}})
 
     context = {
         "favorite_items": favorite_items,
@@ -121,11 +119,11 @@ def recent_activity_view(request):
     page_obj = paginator.get_page(page_number)
 
     # Log activity view access
-    ApplicationActivity.log_info('recent_activity_view', 
-        f"Recent activity list accessed - page {page_number}", 
-        user=request.user, meta={
-            'action': 'activity_view', 'page': page_number, 'total_activities': activity_list.count(),
-            'function_args': {'page': page_number}})
+    logger.info('recent_activity_view: Recent activity list accessed - page %s by user %s [%s]',
+               page_number, request.user.username, request.user.id,
+               extra={'function': 'recent_activity_view', 'action': 'activity_view', 
+                     'page': page_number, 'total_activities': activity_list.count(),
+                     'function_args': {'page': page_number}})
 
     context = {
         'page_obj': page_obj,

@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 
 from web.decorators import log_execution_time
 from web.forms import CollectionForm
-from web.models import Collection, CollectionItem, ItemType, ApplicationActivity, RecentActivity
+from web.models import Collection, CollectionItem, ItemType, RecentActivity
 
 logger = logging.getLogger('webapp')
 
@@ -29,12 +29,10 @@ def collection_create(request):
     logger.info("Collection creation view accessed by user: '%s' [%s]", request.user.username, request.user.id)
     
     # Log application activity
-    ApplicationActivity.log(
-        function_name='collection_create',
-        message=f"User accessed collection creation form",
-        user=request.user,
-        meta={'action': 'view_form', 'method': request.method, 'function_args': {'request_method': request.method}}
-    )
+    logger.info('collection_create: User %s [%s] accessed collection creation form',
+               request.user.username, request.user.id,
+               extra={'function': 'collection_create', 'action': 'view_form', 
+                     'method': request.method, 'function_args': {'request_method': request.method}})
 
     if request.method == 'POST':
         logger.info("User '%s [%s]' is submitting a new collection form", request.user.username, request.user.id)
@@ -54,19 +52,12 @@ def collection_create(request):
             )
             
             # Log successful collection creation
-            ApplicationActivity.log(
-                function_name='collection_create',
-                message=f"Collection '{new_collection.name}' created successfully",
-                user=request.user,
-                meta={
-                    'action': 'created',
-                    'object_type': 'Collection',
-                    'object_hash': new_collection.hash,
-                    'object_name': new_collection.name,
-                    'result': 'success',
-                    'function_args': {'request_method': request.method}
-                }
-            )
+            logger.info('collection_create: Collection "%s" created successfully by user %s [%s]',
+                       new_collection.name, request.user.username, request.user.id,
+                       extra={'function': 'collection_create', 'action': 'created',
+                             'object_type': 'Collection', 'object_hash': new_collection.hash,
+                             'object_name': new_collection.name, 'result': 'success',
+                             'function_args': {'request_method': request.method}})
             
             # Log user activity
             RecentActivity.log_collection_created(
@@ -78,18 +69,11 @@ def collection_create(request):
             return redirect(reverse('dashboard'))
         else:
             # Log form validation errors
-            ApplicationActivity.log(
-                function_name='collection_create',
-                message=f"Collection creation failed due to form validation errors",
-                user=request.user,
-                level=ApplicationActivity.Level.WARNING,
-                meta={
-                    'action': 'form_validation_failed',
-                    'errors': form.errors.as_json(),
-                    'result': 'validation_error',
-                    'function_args': {'request_method': request.method}
-                }
-            )
+            logger.warning('collection_create: Collection creation failed due to form validation errors by user %s [%s]',
+                          request.user.username, request.user.id,
+                          extra={'function': 'collection_create', 'action': 'form_validation_failed',
+                                'errors': form.errors.as_json(), 'result': 'validation_error',
+                                'function_args': {'request_method': request.method}})
 
     # If it's a GET request (or if the form was invalid), display a blank or bound form
     else:
@@ -117,12 +101,11 @@ def collection_list_view(request):
         ).order_by('-updated')
 
         # Log successful list view
-        ApplicationActivity.log_info('collection_list_view', 
-            f"Collection list accessed - {collections.count()} collections found", 
-            user=request.user, meta={
-                'action': 'list_view', 'object_type': 'Collection', 
-                'collection_count': collections.count(),
-                'function_args': {'request_method': request.method}})
+        logger.info('collection_list_view: Collection list accessed - %d collections found by user %s [%s]',
+                   collections.count(), request.user.username, request.user.id,
+                   extra={'function': 'collection_list_view', 'action': 'list_view', 
+                         'object_type': 'Collection', 'collection_count': collections.count(),
+                         'function_args': {'request_method': request.method}})
 
         context = {
             'collections': collections,
@@ -131,11 +114,11 @@ def collection_list_view(request):
         return render(request, 'collection/collection_list.html', context)
         
     except Exception as e:
-        ApplicationActivity.log_error('collection_list_view', 
-            f"Collection list loading failed: {str(e)}", 
-            user=request.user, meta={
-                'action': 'list_view_failed', 'error': str(e), 'result': 'system_error',
-                'function_args': {'request_method': request.method}})
+        logger.error('collection_list_view: Collection list loading failed: %s by user %s [%s]',
+                    str(e), request.user.username, request.user.id,
+                    extra={'function': 'collection_list_view', 'action': 'list_view_failed', 
+                          'error': str(e), 'result': 'system_error',
+                          'function_args': {'request_method': request.method}})
         raise
 
 @login_required
@@ -163,13 +146,12 @@ def collection_detail_view(request, hash):
         )
 
         # Log successful detail view
-        ApplicationActivity.log_info('collection_detail_view', 
-            f"Collection '{collection.name}' viewed with {stats['total_items']} items", 
-            user=request.user, meta={
-                'action': 'detail_view', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'item_count': stats['total_items'], 'visibility': collection.visibility,
-                'function_args': {'hash': hash, 'request_method': request.method}})
+        logger.info('collection_detail_view: Collection "%s" viewed with %d items by user %s [%s]',
+                   collection.name, stats['total_items'], request.user.username, request.user.id,
+                   extra={'function': 'collection_detail_view', 'action': 'detail_view', 
+                         'object_type': 'Collection', 'object_hash': collection.hash, 
+                         'object_name': collection.name, 'item_count': stats['total_items'], 
+                         'visibility': collection.visibility, 'function_args': {'hash': hash, 'request_method': request.method}})
 
         context = {
             'collection': collection,
@@ -183,12 +165,11 @@ def collection_detail_view(request, hash):
         return render(request, 'collection/collection_detail.html', context)
         
     except Exception as e:
-        ApplicationActivity.log_warning('collection_detail_view', 
-            f"Collection detail access failed for hash '{hash}': {str(e)}", 
-            user=request.user, meta={
-                'action': 'detail_view_failed', 'object_hash': hash,
-                'error': str(e), 'result': 'access_denied_or_error',
-                'function_args': {'hash': hash, 'request_method': request.method}})
+        logger.warning('collection_detail_view: Collection detail access failed for hash "%s": %s by user %s [%s]',
+                      hash, str(e), request.user.username, request.user.id,
+                      extra={'function': 'collection_detail_view', 'action': 'detail_view_failed', 
+                            'object_hash': hash, 'error': str(e), 'result': 'access_denied_or_error',
+                            'function_args': {'hash': hash, 'request_method': request.method}})
         raise
 
 @login_required
@@ -201,12 +182,12 @@ def collection_update_view(request, hash):
     collection = get_object_or_404(Collection, hash=hash, created_by=request.user)
 
     # Log form access
-    ApplicationActivity.log_info('collection_update_view', 
-        f"Collection '{collection.name}' update form accessed", 
-        user=request.user, meta={
-            'action': 'form_access', 'object_type': 'Collection',
-            'object_hash': collection.hash, 'object_name': collection.name, 'method': request.method,
-            'function_args': {'hash': hash, 'request_method': request.method}})
+    logger.info('collection_update_view: Collection "%s" update form accessed by user %s [%s]',
+               collection.name, request.user.username, request.user.id,
+               extra={'function': 'collection_update_view', 'action': 'form_access', 
+                     'object_type': 'Collection', 'object_hash': collection.hash, 
+                     'object_name': collection.name, 'method': request.method,
+                     'function_args': {'hash': hash, 'request_method': request.method}})
 
     if request.method == 'POST':
         logger.info("User '%s [%s]' is submitting an update for collection '%s' [%s]", request.user.username, request.user.id, collection.name, collection.hash)
@@ -218,24 +199,23 @@ def collection_update_view(request, hash):
             logger.info("User '%s [%s]' updated collection '%s [%s]'", request.user.username, request.user.id, collection.name, collection.hash)
             
             # Log successful update
-            ApplicationActivity.log_info('collection_update_view', 
-                f"Collection '{collection.name}' updated successfully", 
-                user=request.user, meta={
-                    'action': 'updated', 'object_type': 'Collection',
-                    'object_hash': collection.hash, 'object_name': collection.name, 'result': 'success',
-                    'function_args': {'hash': hash, 'request_method': request.method}})
+            logger.info('collection_update_view: Collection "%s" updated successfully by user %s [%s]',
+                       collection.name, request.user.username, request.user.id,
+                       extra={'function': 'collection_update_view', 'action': 'updated', 
+                             'object_type': 'Collection', 'object_hash': collection.hash, 
+                             'object_name': collection.name, 'result': 'success',
+                             'function_args': {'hash': hash, 'request_method': request.method}})
             
             messages.success(request, f"Collection '{collection.name}' was updated successfully!")
             return redirect(collection.get_absolute_url())
         else:
             # Log form validation errors
-            ApplicationActivity.log_warning('collection_update_view', 
-                f"Collection '{collection.name}' update failed due to validation errors", 
-                user=request.user, meta={
-                    'action': 'update_failed', 'object_type': 'Collection',
-                    'object_hash': collection.hash, 'object_name': collection.name,
-                    'errors': form.errors.as_json(), 'result': 'validation_error',
-                    'function_args': {'hash': hash, 'request_method': request.method}})
+            logger.warning('collection_update_view: Collection "%s" update failed due to validation errors by user %s [%s]',
+                          collection.name, request.user.username, request.user.id,
+                          extra={'function': 'collection_update_view', 'action': 'update_failed', 
+                                'object_type': 'Collection', 'object_hash': collection.hash, 
+                                'object_name': collection.name, 'errors': form.errors.as_json(), 
+                                'result': 'validation_error', 'function_args': {'hash': hash, 'request_method': request.method}})
     else:
         logger.info("User '%s [%s]' is viewing the update form for collection '%s' [%s]", request.user.username, request.user.id, collection.name, collection.hash)
         form = CollectionForm(instance=collection)
@@ -262,12 +242,12 @@ def collection_delete_view(request, hash):
         logger.warning("User '%s [%s]' attempted to delete collection '%s [%s]' with items.", request.user.username, request.user.id, collection.name, collection.hash)
         
         # Log deletion blocked
-        ApplicationActivity.log_warning('collection_delete_view', 
-            f"Collection '{collection.name}' deletion blocked - contains items", 
-            user=request.user, meta={
-                'action': 'deletion_blocked', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name, 'result': 'blocked',
-                'function_args': {'hash': hash, 'request_method': request.method}})
+        logger.warning('collection_delete_view: Collection "%s" deletion blocked - contains items by user %s [%s]',
+                      collection.name, request.user.username, request.user.id,
+                      extra={'function': 'collection_delete_view', 'action': 'deletion_blocked', 
+                            'object_type': 'Collection', 'object_hash': collection.hash, 
+                            'object_name': collection.name, 'result': 'blocked',
+                            'function_args': {'hash': hash, 'request_method': request.method}})
         
         messages.error(request, "Cannot delete a collection that still contains items.")
         return redirect(collection.get_absolute_url())
@@ -280,12 +260,12 @@ def collection_delete_view(request, hash):
         logger.info("User '%s [%s]' deleted collection '%s [%s]'", request.user.username, request.user.id, collection_name, collection_hash)
         
         # Log successful deletion
-        ApplicationActivity.log_info('collection_delete_view', 
-            f"Collection '{collection_name}' deleted successfully", 
-            user=request.user, meta={
-                'action': 'deleted', 'object_type': 'Collection',
-                'object_hash': collection_hash, 'object_name': collection_name, 'result': 'success',
-                'function_args': {'hash': hash, 'request_method': request.method}})
+        logger.info('collection_delete_view: Collection "%s" deleted successfully by user %s [%s]',
+                   collection_name, request.user.username, request.user.id,
+                   extra={'function': 'collection_delete_view', 'action': 'deleted', 
+                         'object_type': 'Collection', 'object_hash': collection_hash, 
+                         'object_name': collection_name, 'result': 'success',
+                         'function_args': {'hash': hash, 'request_method': request.method}})
         
         # Log user activity
         RecentActivity.log_collection_deleted(
@@ -297,12 +277,11 @@ def collection_delete_view(request, hash):
         return redirect('collection_list')
         
     except Exception as e:
-        ApplicationActivity.log_error('collection_delete_view', 
-            f"Collection '{collection.name}' deletion failed: {str(e)}", 
-            user=request.user, meta={
-                'action': 'deletion_error', 'object_type': 'Collection',
-                'object_hash': collection.hash, 'object_name': collection.name,
-                'error': str(e), 'result': 'system_error',
-                'function_args': {'hash': hash, 'request_method': request.method}})
+        logger.error('collection_delete_view: Collection "%s" deletion failed: %s by user %s [%s]',
+                    collection.name, str(e), request.user.username, request.user.id,
+                    extra={'function': 'collection_delete_view', 'action': 'deletion_error', 
+                          'object_type': 'Collection', 'object_hash': collection.hash, 
+                          'object_name': collection.name, 'error': str(e), 'result': 'system_error',
+                          'function_args': {'hash': hash, 'request_method': request.method}})
         raise
 

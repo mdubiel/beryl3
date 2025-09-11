@@ -28,7 +28,7 @@ from django.contrib import messages
 from django.conf import settings
 
 from web.decorators import log_execution_time
-from web.models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, MediaFile, ApplicationActivity
+from web.models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, MediaFile
 from core.lucide import LucideIcons
 
 logger = logging.getLogger('webapp')
@@ -1958,94 +1958,3 @@ def cleanup_abandoned_files():
         return 0
 
 
-@application_admin_required
-@log_execution_time
-def sys_application_activity(request):
-    """
-    Display paginated list of all application activities for administrators
-    """
-    logger.info("System application activity accessed by admin user '%s' [%s]", request.user.username, request.user.id)
-    
-    # Get filter parameters
-    level_filter = request.GET.get('level', '')
-    function_filter = request.GET.get('function', '')
-    user_filter = request.GET.get('user', '')
-    search = request.GET.get('search', '')
-    
-    # Base queryset
-    activities = ApplicationActivity.objects.select_related('user').all()
-    
-    # Apply filters
-    if level_filter:
-        activities = activities.filter(level=level_filter)
-    
-    if function_filter:
-        activities = activities.filter(function_name=function_filter)
-        
-    if user_filter:
-        if user_filter == 'anonymous':
-            activities = activities.filter(user__isnull=True)
-        else:
-            activities = activities.filter(user_id=user_filter)
-    
-    if search:
-        activities = activities.filter(
-            Q(message__icontains=search) |
-            Q(function_name__icontains=search) |
-            Q(user__email__icontains=search)
-        )
-    
-    # Pagination
-    paginator = Paginator(activities, 50)  # 50 activities per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Get filter options for dropdowns
-    available_levels = ApplicationActivity.objects.values_list('level', flat=True).distinct()
-    available_functions = ApplicationActivity.objects.values_list('function_name', flat=True).distinct().order_by('function_name')
-    available_users = User.objects.filter(
-        applicationactivity__isnull=False
-    ).distinct().order_by('email')
-    
-    # Statistics
-    total_activities = ApplicationActivity.objects.count()
-    activities_today = ApplicationActivity.objects.filter(
-        created__date=timezone.now().date()
-    ).count()
-    error_activities = ApplicationActivity.objects.filter(
-        level=ApplicationActivity.Level.ERROR
-    ).count()
-    
-    context = {
-        'page_obj': page_obj,
-        'activities': page_obj,
-        'available_levels': available_levels,
-        'available_functions': available_functions,
-        'available_users': available_users,
-        'level_filter': level_filter,
-        'function_filter': function_filter,
-        'user_filter': user_filter,
-        'search': search,
-        'total_activities': total_activities,
-        'activities_today': activities_today,
-        'error_activities': error_activities,
-    }
-    
-    return render(request, 'sys/application_activity.html', context)
-
-
-@application_admin_required
-@log_execution_time
-def sys_application_activity_detail(request, activity_id):
-    """
-    Display detailed view of a specific application activity
-    """
-    logger.info("System application activity detail accessed by admin user '%s' [%s]", request.user.username, request.user.id)
-    
-    activity = get_object_or_404(ApplicationActivity.objects.select_related('user'), id=activity_id)
-    
-    context = {
-        'activity': activity,
-    }
-    
-    return render(request, 'sys/application_activity_detail.html', context)
