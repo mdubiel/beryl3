@@ -19,55 +19,12 @@
 {% endblock header %}
 
 {% block content %}
-<div class="grid grid-cols-1 gap-6">
-    <!-- Media Storage Statistics -->
-    {% if media_stats and not media_stats.error %}
-    <div class="card bg-base-100 shadow-sm">
-        <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
-                {% lucide 'hard-drive' size=20 %}
-                Media Storage Statistics
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                <div class="stat">
-                    <div class="stat-title">Total Files</div>
-                    <div class="stat-value text-primary">{{ media_stats.total_files }}</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-title">Active Files</div>
-                    <div class="stat-value text-success">{{ media_stats.active_files }}</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-title">Missing Files</div>
-                    <div class="stat-value text-error">{{ media_stats.missing_files }}</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-title">Recent Uploads</div>
-                    <div class="stat-value text-info">{{ media_stats.recent_uploads }}</div>
-                </div>
-            </div>
-            
-            {% if media_stats.type_distribution %}
-            <div class="mt-4">
-                <h3 class="font-semibold mb-2">Media Type Distribution</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                    {% for type_stat in media_stats.type_distribution %}
-                    <div class="flex justify-between">
-                        <span>{{ type_stat.media_type }}</span>
-                        <span class="font-mono">{{ type_stat.count }} files</span>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+<div class="grid grid-cols-1 gap-8">
 
     <!-- Django Core Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'settings' size=20 %}
                 Django Core Settings
             </h2>
@@ -101,7 +58,7 @@
     <!-- Database Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'database' size=20 %}
                 Database Configuration
             </h2>
@@ -129,7 +86,7 @@
     <!-- Media/Storage Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'cloud' size=20 %}
                 Media & Storage Configuration
             </h2>
@@ -163,7 +120,7 @@
     <!-- Email Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'mail' size=20 %}
                 Email Configuration
             </h2>
@@ -195,7 +152,7 @@
     <!-- Authentication Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'shield' size=20 %}
                 Authentication & User Settings
             </h2>
@@ -227,7 +184,7 @@
     <!-- Security Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'lock' size=20 %}
                 Security Configuration
             </h2>
@@ -259,38 +216,39 @@
     <!-- Application Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'package' size=20 %}
                 Installed Applications ({{ app_settings.TOTAL_APPS }} total)
             </h2>
-            
-            <div class="tabs tabs-bordered mb-4">
-                <input type="radio" name="app_tabs" role="tab" class="tab" aria-label="Custom Apps" checked />
-                <div role="tabpanel" class="tab-content py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th class="w-1/3">Application Name</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         {% for app in app_settings.CUSTOM_APPS %}
-                        <div class="badge badge-primary">{{ app }}</div>
+                        <tr>
+                            <td class="font-mono text-sm">{{ app }}</td>
+                            <td><span class="badge badge-primary">Custom</span></td>
+                        </tr>
                         {% endfor %}
-                    </div>
-                </div>
-
-                <input type="radio" name="app_tabs" role="tab" class="tab" aria-label="Django Apps" />
-                <div role="tabpanel" class="tab-content py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {% for app in app_settings.DJANGO_APPS %}
-                        <div class="badge badge-secondary">{{ app }}</div>
+                        <tr>
+                            <td class="font-mono text-sm">{{ app }}</td>
+                            <td><span class="badge badge-secondary">Django Core</span></td>
+                        </tr>
                         {% endfor %}
-                    </div>
-                </div>
-
-                <input type="radio" name="app_tabs" role="tab" class="tab" aria-label="Auth Apps" />
-                <div role="tabpanel" class="tab-content py-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {% for app in app_settings.ALLAUTH_APPS %}
-                        <div class="badge badge-accent">{{ app }}</div>
+                        <tr>
+                            <td class="font-mono text-sm">{{ app }}</td>
+                            <td><span class="badge badge-accent">Authentication</span></td>
+                        </tr>
                         {% endfor %}
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -298,7 +256,7 @@
     <!-- System Information -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'info' size=20 %}
                 System Information
             </h2>
@@ -330,7 +288,7 @@
     <!-- Environment Variables -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'terminal' size=20 %}
                 Environment Variables
             </h2>
@@ -360,7 +318,7 @@
     <!-- Logging Configuration -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'file-text' size=20 %}
                 Logging Configuration
             </h2>
@@ -382,7 +340,7 @@
     <!-- Static Files Settings -->
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body">
-            <h2 class="card-title flex items-center gap-2">
+            <h2 class="card-title flex items-center gap-2 mb-4">
                 {% lucide 'folder' size=20 %}
                 Static Files Configuration
             </h2>
