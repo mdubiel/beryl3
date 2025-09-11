@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_DB: ${PG_USER}
     ports:
-      - "${PG_PORT}:5432"
+      - "${PG_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -15,9 +15,124 @@ services:
     image: inbucket/inbucket:latest
     container_name: beryl3_inbucket
     ports:
-      - "${INBUCKET_WEB_PORT}:9000"
-      - "${INBUCKET_SMTP_PORT}:2500"
+      - "${INBUCKET_WEB_PORT:-9000}:9000"
+      - "${INBUCKET_SMTP_PORT:-2500}:2500"
     restart: unless-stopped
+
+  # Sentry services - DISABLED FOR NOW
+  # Uncomment when ready to re-enable Sentry integration
+  # sentry:
+  #   image: getsentry/sentry:latest
+  #   container_name: beryl3_sentry
+  #   ports:
+  #     - "${SENTRY_WEB_PORT:-9001}:9000"
+  #   environment:
+  #     SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+  #     SENTRY_POSTGRES_HOST: postgres
+  #     SENTRY_POSTGRES_PORT: 5432
+  #     SENTRY_DB_NAME: ${SENTRY_DB_NAME}
+  #     SENTRY_DB_USER: ${SENTRY_DB_USER}
+  #     SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
+  #     SENTRY_REDIS_HOST: redis
+  #     SENTRY_REDIS_PORT: 6379
+  #     SENTRY_USE_KAFKA: 'false'
+  #     SENTRY_KAFKA_HOSTS: ''
+  #     SENTRY_SINGLE_ORGANIZATION: 'true'
+  #     CELERY_BROKER_URL: 'redis://redis:6379/0'
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   restart: unless-stopped
+  #   volumes:
+  #     - sentry_data:/var/lib/sentry/files
+
+  # sentry-worker:
+  #   image: getsentry/sentry:latest
+  #   container_name: beryl3_sentry_worker
+  #   command: ["sentry", "run", "worker"]
+  #   environment:
+  #     SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+  #     SENTRY_POSTGRES_HOST: postgres
+  #     SENTRY_POSTGRES_PORT: 5432
+  #     SENTRY_DB_NAME: ${SENTRY_DB_NAME}
+  #     SENTRY_DB_USER: ${SENTRY_DB_USER}
+  #     SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
+  #     SENTRY_REDIS_HOST: redis
+  #     SENTRY_REDIS_PORT: 6379
+  #     SENTRY_USE_KAFKA: 'false'
+  #     SENTRY_KAFKA_HOSTS: ''
+  #     SENTRY_SINGLE_ORGANIZATION: 'true'
+  #     CELERY_BROKER_URL: 'redis://redis:6379/0'
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - sentry
+  #   restart: unless-stopped
+  #   volumes:
+  #     - sentry_data:/var/lib/sentry/files
+
+  # sentry-cron:
+  #   image: getsentry/sentry:latest
+  #   container_name: beryl3_sentry_cron
+  #   command: ["sentry", "run", "cron"]
+  #   environment:
+  #     SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+  #     SENTRY_POSTGRES_HOST: postgres
+  #     SENTRY_POSTGRES_PORT: 5432
+  #     SENTRY_DB_NAME: ${SENTRY_DB_NAME}
+  #     SENTRY_DB_USER: ${SENTRY_DB_USER}
+  #     SENTRY_DB_PASSWORD: ${SENTRY_DB_PASSWORD}
+  #     SENTRY_REDIS_HOST: redis
+  #     SENTRY_REDIS_PORT: 6379
+  #     SENTRY_USE_KAFKA: 'false'
+  #     SENTRY_KAFKA_HOSTS: ''
+  #     SENTRY_SINGLE_ORGANIZATION: 'true'
+  #     CELERY_BROKER_URL: 'redis://redis:6379/0'
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - sentry
+  #   restart: unless-stopped
+  #   volumes:
+  #     - sentry_data:/var/lib/sentry/files
+
+  redis:
+    image: redis:7-alpine
+    container_name: beryl3_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  # Log Collection Stack
+  loki:
+    image: grafana/loki:latest
+    container_name: beryl3_loki
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    volumes:
+      - loki_data:/loki
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: beryl3_grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
 
 volumes:
   postgres_data:
+  sentry_data:
+  redis_data:
+  loki_data:
+  grafana_data:

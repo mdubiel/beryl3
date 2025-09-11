@@ -11,9 +11,16 @@ PYTHON = python
 MANAGE_PY = uv run $(PYTHON) manage.py
 SERVER_ADDRESS = 0.0.0.0:8000
 
+# Docker variables
+DOCKER_IMAGE_NAME = beryl3-webapp
+DOCKER_TAG = latest
+DOCKER_REGISTRY = 192.168.1.14:5000
+DOCKER_NAMESPACE = mdubiel.org
+DOCKER_REGISTRY_IMAGE = $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE_NAME):$(DOCKER_TAG)
+
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build docker-push docker-deploy deploy-staging
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -68,3 +75,34 @@ clean:
 help: ## Display this help message
 	@echo "Available make targets:"
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' | sort
+
+# Docker targets
+docker-build: ## Build Docker image for containerized deployment
+	@echo "Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_TAG)"
+	docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_TAG) .
+	@echo "Docker image built successfully!"
+
+docker-push: docker-build ## Build and push Docker image to staging registry
+	@echo "Tagging image for registry: $(DOCKER_REGISTRY_IMAGE)"
+	docker tag $(DOCKER_IMAGE_NAME):$(DOCKER_TAG) $(DOCKER_REGISTRY_IMAGE)
+	@echo "Pushing image to registry: $(DOCKER_REGISTRY)"
+	docker push $(DOCKER_REGISTRY_IMAGE)
+	@echo "Docker image pushed successfully!"
+	@echo "Image available at: $(DOCKER_REGISTRY_IMAGE)"
+
+docker-deploy: docker-push ## Build, push, and display deployment information
+	@echo "=== DEPLOYMENT INFORMATION ==="
+	@echo "Docker Image: $(DOCKER_REGISTRY_IMAGE)"
+	@echo "Registry URL: http://$(DOCKER_REGISTRY)"
+	@echo "Image digest: $$(docker images --digests $(DOCKER_REGISTRY_IMAGE) --format 'table {{.Repository}}:{{.Tag}}\t{{.Digest}}' | tail -n +2)"
+	@echo "=== USAGE ==="
+	@echo "To deploy this image, use:"
+	@echo "docker run -d -p 8000:8000 --env-file .env $(DOCKER_REGISTRY_IMAGE)"
+	@echo "=== ANSIBLE DEPLOYMENT ==="
+	@echo "Update your ansible playbook to use: $(DOCKER_REGISTRY_IMAGE)"
+
+deploy-staging: ## Deploy application to staging environment (beryl3-stage.mdubiel.org)
+	@echo "Deploying Beryl3 to staging environment..."
+	@echo "Domain: beryl3-stage.mdubiel.org"
+	@echo "Image: $(DOCKER_REGISTRY_IMAGE)"
+	cd ../staging/ansible && ansible-playbook -i inventory/staging.yml playbooks/deploy-app.yml
