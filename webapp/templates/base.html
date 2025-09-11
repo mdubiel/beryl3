@@ -1,9 +1,6 @@
 {% load static %}
 {% load lucide %}
 {% load django_htmx %}
-{% if debug %}
-  {% load django_browser_reload %}
-{% endif %}
 
 <!DOCTYPE html>
 <html lang="en" data-theme="berylfe">
@@ -256,8 +253,5 @@
         </nav>
     </footer>
 
-{% if debug %}
-    {% django_browser_reload_script %}
-{% endif %}
 </body>
 </html>

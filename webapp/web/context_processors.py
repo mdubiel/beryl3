@@ -18,6 +18,9 @@ def external_services(request):
         'EXTERNAL_DB_URL': getattr(settings, 'EXTERNAL_DB_URL', None),
         'EXTERNAL_INBUCKET_URL': getattr(settings, 'EXTERNAL_INBUCKET_URL', None),
         'EXTERNAL_MONITORING_URL': getattr(settings, 'EXTERNAL_MONITORING_URL', None),
+        'EXTERNAL_SENTRY_URL': getattr(settings, 'EXTERNAL_SENTRY_URL', None),
+        'EXTERNAL_LOKI_URL': getattr(settings, 'EXTERNAL_LOKI_URL', None),
+        'EXTERNAL_GRAFANA_URL': getattr(settings, 'EXTERNAL_GRAFANA_URL', None),
         'APPLICATION_ACTIVITY_LOGGING': getattr(settings, 'APPLICATION_ACTIVITY_LOGGING', True),
     }
 

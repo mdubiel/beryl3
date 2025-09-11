@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, debug
 
 
 urlpatterns = [
@@ -128,6 +128,9 @@ urlpatterns = [
     # HTMX endpoints
     path('sys/validate-lucide-icon/', sys.sys_validate_lucide_icon, name='sys_validate_lucide_icon'),
     path('sys/lucide-icon-search/', sys.sys_lucide_icon_search, name='sys_lucide_icon_search'),
+    
+    # Debug endpoints (only enabled in DEBUG mode)
+    path('debug/sentry-test/', debug.sentry_test, name='sentry_test'),
 ]
 
 if settings.DEBUG:

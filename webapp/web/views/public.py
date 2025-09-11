@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
+from post_office import mail
 from django.core.validators import validate_email
 from django.db import transaction
 from django.http import Http404, HttpResponseBadRequest
@@ -192,13 +192,13 @@ Thank you!
             'guest_email': guest_email,
         })
         
-        send_mail(
+        mail.send(
+            recipients=[guest_email],
+            sender=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com'),
             subject=subject,
             message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com'),
-            recipient_list=[guest_email],
             html_message=html_message,
-            fail_silently=False,
+            priority='high',  # High priority for reservation confirmations
         )
         
         logger.info("Confirmation email sent to '%s' for reservation of item '%s' [%s]", guest_email, item.name, item.hash)
