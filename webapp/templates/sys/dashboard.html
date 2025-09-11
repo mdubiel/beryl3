@@ -190,8 +190,20 @@
                 </a>
                 {% if EXTERNAL_DB_URL %}
                 <a href="{{ EXTERNAL_DB_URL }}" target="_blank" class="btn btn-outline">
-                    {% lucide 'link' size=16 class='mr-2' %}
+                    {% lucide 'database' size=16 class='mr-2' %}
                     Database Admin
+                </a>
+                {% endif %}
+                {% if EXTERNAL_GRAFANA_URL %}
+                <a href="{{ EXTERNAL_GRAFANA_URL }}" target="_blank" class="btn btn-outline">
+                    {% lucide 'activity' size=16 class='mr-2' %}
+                    Log Dashboard
+                </a>
+                {% endif %}
+                {% if EXTERNAL_LOKI_URL %}
+                <a href="{{ EXTERNAL_LOKI_URL }}" target="_blank" class="btn btn-outline">
+                    {% lucide 'file-text' size=16 class='mr-2' %}
+                    Log API
                 </a>
                 {% endif %}
             </div>
@@ -217,6 +229,9 @@
                             {% if EXTERNAL_DB_URL %}DB {% endif %}
                             {% if EXTERNAL_INBUCKET_URL %}EMAIL {% endif %}
                             {% if EXTERNAL_MONITORING_URL %}MONITOR {% endif %}
+                            {% if EXTERNAL_SENTRY_URL %}SENTRY {% endif %}
+                            {% if EXTERNAL_LOKI_URL %}LOKI {% endif %}
+                            {% if EXTERNAL_GRAFANA_URL %}GRAFANA {% endif %}
                         </span>
                     </div>
                 </div>
