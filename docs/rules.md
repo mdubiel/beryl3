@@ -372,4 +372,61 @@ This pattern ensures consistent user experience, proper visual hierarchy, and ma
 
 ---
 
+## Documentation Standards
+
+### Location Requirements
+- **ALL documentation** must be placed in the `/docs` directory at project root
+- **NO documentation files** should exist outside of `/docs` 
+- **Application-specific docs** (like component READMEs) must be moved to `/docs` with descriptive names
+- **Infrastructure docs** must be consolidated into `/docs` regardless of deployment location
+
+### File Organization
+- **Use descriptive filenames** that clearly indicate content and scope
+- **Use kebab-case** for all markdown files (e.g., `infrastructure-services.md`)
+- **Group related documentation** using common prefixes:
+  - `infrastructure-*` for infrastructure-related docs
+  - `development-*` for development-specific guides
+  - `deployment-*` for deployment procedures
+- **Maintain the index**: Update `docs/index.md` when adding/removing documentation
+
+### Content Structure
+- **Start with clear purpose statement** - what does this document cover?
+- **Include navigation sections** for longer documents
+- **Use consistent heading hierarchy** (H1 for title, H2 for main sections, etc.)
+- **Provide cross-references** to related documentation
+- **Include examples** where appropriate
+- **Add table of contents** for documents longer than 10 sections
+
+### Markdown Standards
+- **Use standard markdown syntax** for maximum compatibility
+- **Include code language identifiers** in fenced code blocks
+- **Use relative links** for internal documentation references
+- **Employ consistent formatting** for commands, code, and file paths
+- **Add meaningful alt text** for images and diagrams
+
+### Maintenance Requirements
+- **Update documentation** during feature development, not as an afterthought
+- **Review accuracy** during code reviews
+- **Check cross-references** when moving or renaming files
+- **Archive outdated content** rather than leaving stale information
+- **Version control** all documentation changes alongside code changes
+
+### Documentation Types
+- **README files**: Project overviews and quick start guides
+- **Architecture docs**: System design and component relationships  
+- **API documentation**: Endpoint specifications and usage examples
+- **Deployment guides**: Step-by-step deployment procedures
+- **Troubleshooting guides**: Common issues and solutions
+- **User guides**: Feature documentation and workflows
+
+### Enforcement
+- **Code reviews** must include documentation review
+- **No features** should be merged without appropriate documentation updates
+- **Documentation debt** should be tracked and prioritized like technical debt
+- **Regular audits** of documentation accuracy and relevance
+
+This centralized approach ensures all team members can easily find, maintain, and contribute to project documentation.
+
+---
+
 *This document should be updated as the project evolves and new patterns emerge. Always prioritize simplicity, security, and user experience in development decisions.*
