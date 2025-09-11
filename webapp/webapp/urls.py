@@ -25,6 +25,7 @@ urlpatterns = [
     path('', include('web.urls')),
     path('api/', include('api.urls')),
     path('core/', include('core.urls')),
+    path('', include('django_prometheus.urls')),
 ]
 
 if settings.DEBUG:
