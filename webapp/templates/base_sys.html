@@ -78,6 +78,10 @@
                     {% lucide 'database' size=14 class='inline mr-2' %} Backup & Restore
                 </a>
                 
+                <a href="{% url 'sys_email_queue' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'email_queue' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'send' size=14 class='inline mr-2' %} Email Queue
+                </a>
+                
                 <a href="{% url 'sys_media_browser' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'media' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'image' size=14 class='inline mr-2' %} Media Browser
                 </a>

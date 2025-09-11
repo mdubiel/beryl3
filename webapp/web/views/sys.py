@@ -11,6 +11,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import PermissionDenied
 from post_office import mail
+from post_office.models import Email, EmailTemplate
 from django.core.paginator import Paginator
 from django.db.models import Count, Q, Avg, Max
 from django.db import models
@@ -1956,5 +1957,172 @@ def cleanup_abandoned_files():
     except Exception as e:
         logger.error("Error during abandoned files cleanup: %s", str(e))
         return 0
+
+
+# Email Queue Management Views
+
+@application_admin_required
+def sys_email_queue(request):
+    """
+    Display email queue status and management interface.
+    Shows pending, sent, failed emails and provides queue management tools.
+    """
+    logger.info("email_queue: SYS email queue accessed by user %s [%s]", 
+        request.user.username, request.user.id,
+        extra={
+            'function': 'sys_email_queue',
+            'action': 'admin_access',
+            'result': 'success'
+        })
+    
+    # Get email statistics - using numeric status values from STATUS_CHOICES
+    # 0=sent, 1=failed, 2=queued, 3=requeued
+    total_emails = Email.objects.count()
+    pending_emails = Email.objects.filter(status__in=[2, 3]).count()  # queued + requeued
+    sent_emails = Email.objects.filter(status=0).count()  # sent
+    failed_emails = Email.objects.filter(status=1).count()  # failed
+    
+    # Get recent emails (last 100)
+    recent_emails = Email.objects.select_related().order_by('-created')[:100]
+    
+    # Get queue processing statistics
+    last_sent_email = Email.objects.filter(status=0).order_by('-sent').first()  # sent
+    last_failed_email = Email.objects.filter(status=1).order_by('-modified').first()  # failed
+    
+    # Check for stale pending emails (older than 1 hour)
+    stale_threshold = timezone.now() - timedelta(hours=1)
+    stale_emails = Email.objects.filter(
+        status__in=[2, 3],  # queued + requeued
+        created__lt=stale_threshold
+    ).count()
+    
+    context = {
+        'total_emails': total_emails,
+        'pending_emails': pending_emails,
+        'sent_emails': sent_emails,
+        'failed_emails': failed_emails,
+        'stale_emails': stale_emails,
+        'recent_emails': recent_emails,
+        'last_sent_email': last_sent_email,
+        'last_failed_email': last_failed_email,
+        'queue_health': 'healthy' if stale_emails == 0 else 'warning' if stale_emails < 10 else 'critical',
+    }
+    
+    return render(request, 'sys/email_queue.html', context)
+
+
+@application_admin_required 
+@require_http_methods(["POST"])
+def sys_email_queue_process(request):
+    """
+    Manually trigger email queue processing via Django management command.
+    """
+    from django.core.management import call_command
+    from io import StringIO
+    import sys
+    
+    logger.info("email_queue_process: Manual queue processing triggered by user %s [%s]", 
+        request.user.username, request.user.id,
+        extra={
+            'function': 'sys_email_queue_process',
+            'action': 'manual_trigger',
+            'result': 'started'
+        })
+    
+    try:
+        # Capture command output
+        old_stdout = sys.stdout
+        sys.stdout = mystdout = StringIO()
+        
+        # Run the send_queued_mail command
+        call_command('send_queued_mail', verbosity=1)
+        
+        # Restore stdout and get output
+        sys.stdout = old_stdout
+        output = mystdout.getvalue()
+        
+        # Count emails processed (basic parsing)
+        lines = output.split('\n')
+        processed_count = len([line for line in lines if 'sent' in line.lower()])
+        
+        logger.info("email_queue_process: Manual processing completed - %d emails processed", 
+            processed_count,
+            extra={
+                'function': 'sys_email_queue_process',
+                'action': 'manual_trigger',
+                'result': 'success',
+                'emails_processed': processed_count
+            })
+        
+        messages.success(request, f'Queue processing completed. {processed_count} emails processed.')
+        
+    except Exception as e:
+        logger.error("email_queue_process: Manual processing failed: %s", str(e),
+            extra={
+                'function': 'sys_email_queue_process',
+                'action': 'manual_trigger',
+                'result': 'error',
+                'error': str(e)
+            })
+        
+        messages.error(request, f'Queue processing failed: {str(e)}')
+    
+    return redirect('sys_email_queue')
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_email_queue_cleanup(request):
+    """
+    Clean up old emails from the queue (sent emails older than specified days).
+    """
+    from django.core.management import call_command
+    from io import StringIO
+    import sys
+    
+    days = int(request.POST.get('days', 30))
+    
+    logger.info("email_queue_cleanup: Cleanup triggered by user %s [%s] for %d days", 
+        request.user.username, request.user.id, days,
+        extra={
+            'function': 'sys_email_queue_cleanup',
+            'action': 'cleanup_trigger',
+            'days': days
+        })
+    
+    try:
+        # Capture command output
+        old_stdout = sys.stdout
+        sys.stdout = mystdout = StringIO()
+        
+        # Run the cleanup_mail command
+        call_command('cleanup_mail', days=days, verbosity=1)
+        
+        # Restore stdout and get output
+        sys.stdout = old_stdout
+        output = mystdout.getvalue()
+        
+        logger.info("email_queue_cleanup: Cleanup completed for %d days", days,
+            extra={
+                'function': 'sys_email_queue_cleanup', 
+                'action': 'cleanup_trigger',
+                'result': 'success',
+                'days': days
+            })
+        
+        messages.success(request, f'Email cleanup completed for emails older than {days} days.')
+        
+    except Exception as e:
+        logger.error("email_queue_cleanup: Cleanup failed: %s", str(e),
+            extra={
+                'function': 'sys_email_queue_cleanup',
+                'action': 'cleanup_trigger',
+                'result': 'error',
+                'error': str(e)
+            })
+        
+        messages.error(request, f'Email cleanup failed: {str(e)}')
+    
+    return redirect('sys_email_queue')
 
 

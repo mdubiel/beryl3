@@ -1,0 +1,227 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Email Queue - Admin{% endblock title %}
+
+{% block page_title %}Email Queue Management{% endblock %}
+{% block page_description %}Monitor and manage the email delivery queue{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 gap-8">
+    
+    <!-- Queue Statistics -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-base-content/70">Total Emails</p>
+                        <p class="text-2xl font-bold">{{ total_emails }}</p>
+                    </div>
+                    {% lucide 'mail' size=24 class='text-base-content/50' %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-base-content/70">Pending</p>
+                        <p class="text-2xl font-bold text-warning">{{ pending_emails }}</p>
+                    </div>
+                    {% lucide 'clock' size=24 class='text-warning' %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-base-content/70">Sent</p>
+                        <p class="text-2xl font-bold text-success">{{ sent_emails }}</p>
+                    </div>
+                    {% lucide 'check-circle' size=24 class='text-success' %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-base-content/70">Failed</p>
+                        <p class="text-2xl font-bold text-error">{{ failed_emails }}</p>
+                    </div>
+                    {% lucide 'x-circle' size=24 class='text-error' %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Queue Health & Actions -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="card-title flex items-center gap-2">
+                    {% lucide 'activity' size=20 %}
+                    Queue Health & Management
+                </h2>
+                
+                <div class="flex items-center gap-2">
+                    <div class="badge 
+                        {% if queue_health == 'healthy' %}badge-success{% elif queue_health == 'warning' %}badge-warning{% else %}badge-error{% endif %}">
+                        {{ queue_health|title }}
+                    </div>
+                    {% if stale_emails > 0 %}
+                    <span class="text-sm text-warning">{{ stale_emails }} stale emails</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-sm text-base-content/70">Last Email Sent:</p>
+                    <p class="font-mono text-sm">
+                        {% if last_sent_email %}
+                            {{ last_sent_email.sent|date:"M d, Y H:i:s" }}
+                        {% else %}
+                            No emails sent yet
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-base-content/70">Last Failed Email:</p>
+                    <p class="font-mono text-sm">
+                        {% if last_failed_email %}
+                            {{ last_failed_email.modified|date:"M d, Y H:i:s" }}
+                        {% else %}
+                            No failed emails
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex gap-2 flex-wrap">
+                <form method="post" action="{% url 'sys_email_queue_process' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        {% lucide 'send' size=14 class='mr-2' %}
+                        Process Queue Now
+                    </button>
+                </form>
+                
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-outline btn-sm">
+                        {% lucide 'trash-2' size=14 class='mr-2' %}
+                        Cleanup Old Emails
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                        <li>
+                            <form method="post" action="{% url 'sys_email_queue_cleanup' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="days" value="7">
+                                <button type="submit">Cleanup (7 days)</button>
+                            </form>
+                        </li>
+                        <li>
+                            <form method="post" action="{% url 'sys_email_queue_cleanup' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="days" value="30">
+                                <button type="submit">Cleanup (30 days)</button>
+                            </form>
+                        </li>
+                        <li>
+                            <form method="post" action="{% url 'sys_email_queue_cleanup' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="days" value="90">
+                                <button type="submit">Cleanup (90 days)</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cron Information -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title flex items-center gap-2 mb-4">
+                {% lucide 'timer' size=20 %}
+                Scheduled Processing
+            </h2>
+            <div class="bg-base-200 p-4 rounded-lg font-mono text-sm">
+                <p class="text-base-content/70 mb-2">Recommended crontab entry:</p>
+                <code class="text-sm">
+                    # Send queued emails every minute<br>
+                    * * * * * cd /app && python manage.py send_queued_mail >> /var/log/email_queue.log 2>&1<br><br>
+                    # Cleanup old emails weekly on Sunday at 2 AM<br>
+                    0 2 * * 0 cd /app && python manage.py cleanup_mail --days=90 >> /var/log/email_cleanup.log 2>&1
+                </code>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Emails -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title flex items-center gap-2 mb-4">
+                {% lucide 'list' size=20 %}
+                Recent Emails (Last 100)
+            </h2>
+            
+            {% if recent_emails %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Created</th>
+                            <th>To</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Sent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for email in recent_emails %}
+                        <tr>
+                            <td class="font-mono text-xs">{{ email.created|date:"M d H:i" }}</td>
+                            <td class="font-mono text-sm">{{ email.to|truncatechars:30 }}</td>
+                            <td class="text-sm">{{ email.subject|truncatechars:40 }}</td>
+                            <td>
+                                {% if email.status == 0 %}
+                                    <span class="badge badge-success badge-sm">sent</span>
+                                {% elif email.status == 1 %}
+                                    <span class="badge badge-error badge-sm">failed</span>
+                                {% elif email.status == 2 %}
+                                    <span class="badge badge-warning badge-sm">queued</span>
+                                {% elif email.status == 3 %}
+                                    <span class="badge badge-info badge-sm">requeued</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if email.priority == 0 %}low{% elif email.priority == 1 %}medium{% elif email.priority == 2 %}high{% else %}now{% endif %}
+                            </td>
+                            <td class="font-mono text-xs">
+                                {% if email.sent %}{{ email.sent|date:"M d H:i" }}{% else %}-{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-base-content/70">
+                <div class="flex flex-col items-center gap-2">
+                    {% lucide 'inbox' size=48 class='opacity-50' %}
+                    <p>No emails in the queue yet</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
