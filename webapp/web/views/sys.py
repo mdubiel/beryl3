@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import Group
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
+from post_office import mail
 from django.core.paginator import Paginator
 from django.db.models import Count, Q, Avg, Max
 from django.db import models
@@ -390,10 +390,9 @@ def sys_metrics(request):
     return render(request, 'sys/metrics.html', context)
 
 
-@application_admin_required
 def sys_prometheus_metrics(request):
     """Prometheus-compatible metrics endpoint for Grafana"""
-    logger.info("Prometheus metrics accessed by admin user '%s' [%s]", request.user.username, request.user.id)
+    logger.info("Prometheus metrics accessed")
     
     # Time-based metrics
     now = timezone.now()
@@ -801,13 +800,13 @@ Best regards,
 The Beryl Team
 """
         
-        send_mail(
-            subject,
-            plain_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email_address],
+        mail.send(
+            recipients=[email_address],
+            sender=settings.DEFAULT_FROM_EMAIL,
+            subject=subject,
+            message=plain_message,
             html_message=html_message,
-            fail_silently=False,
+            priority='high',  # High priority for admin password resets
         )
         
         # Log the action
@@ -1466,15 +1465,26 @@ def sys_settings(request):
     }
     
     # Email settings
+    email_host = getattr(settings, 'EMAIL_HOST', 'Not configured')
+    is_resend = email_host == 'smtp.resend.com'
+    is_inbucket = 'inbucket' in email_host.lower() or getattr(settings, 'USE_INBUCKET', False)
+    
     email_settings = {
         'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Not configured'),
-        'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'Not configured'),
+        'EMAIL_HOST': email_host,
         'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'Not configured'),
         'EMAIL_USE_TLS': getattr(settings, 'EMAIL_USE_TLS', False),
         'EMAIL_USE_SSL': getattr(settings, 'EMAIL_USE_SSL', False),
-        'EMAIL_HOST_USER': '***HIDDEN***' if getattr(settings, 'EMAIL_HOST_USER', None) else 'Not set',
+        'EMAIL_HOST_USER': getattr(settings, 'EMAIL_HOST_USER', 'Not set') if not is_resend else '***HIDDEN***',
         'EMAIL_HOST_PASSWORD': '***HIDDEN***' if getattr(settings, 'EMAIL_HOST_PASSWORD', None) else 'Not set',
         'DEFAULT_FROM_EMAIL': getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not configured'),
+        
+        # Email service detection
+        'EMAIL_SERVICE': 'Resend' if is_resend else ('Inbucket' if is_inbucket else 'Custom SMTP'),
+        'RESEND_CONFIGURED': is_resend,
+        'INBUCKET_CONFIGURED': is_inbucket,
+        
+        # Legacy Inbucket settings (for backwards compatibility)
         'USE_INBUCKET': getattr(settings, 'USE_INBUCKET', False),
         'INBUCKET_SMTP_PORT': getattr(settings, 'INBUCKET_SMTP_PORT', 2500),
     }
