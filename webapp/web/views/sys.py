@@ -78,6 +78,20 @@ def sys_dashboard(request):
     # Item status breakdown
     status_stats = CollectionItem.objects.values('status').annotate(count=Count('id'))
     
+    # System information
+    from django.db import connection
+    import django
+    
+    database_engine = connection.settings_dict.get('ENGINE', 'Unknown')
+    if 'postgresql' in database_engine:
+        database_engine = 'PostgreSQL'
+    elif 'mysql' in database_engine:
+        database_engine = 'MySQL'
+    elif 'sqlite' in database_engine:
+        database_engine = 'SQLite'
+    else:
+        database_engine = database_engine.split('.')[-1] if '.' in database_engine else database_engine
+    
     context = {
         'total_users': total_users,
         'active_users': active_users,
@@ -88,6 +102,9 @@ def sys_dashboard(request):
         'visibility_stats': visibility_stats,
         'status_stats': status_stats,
         'debug': settings.DEBUG,
+        'django_version': django.get_version(),
+        'database_engine': database_engine,
+        'now': timezone.now(),
     }
     
     return render(request, 'sys/dashboard.html', context)

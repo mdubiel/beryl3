@@ -141,6 +141,8 @@ staging-app-logs: ## Show staging application logs
 	@echo "Showing staging application logs..."
 	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose logs webapp --tail=50"
 
-staging-status: ## Show status of all staging containers
-	@echo "=== STAGING CONTAINER STATUS ==="
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "docker ps"
+staging-status: ## Show status of all staging containers with detailed service status
+	@echo "=== STAGING SERVICES STATUS ==="
+	@echo "Checking all staging services..."
+	@echo
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a 'echo "=== BERYL3 APPLICATION SERVICES ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep beryl3_staging | awk "{if(\$$4 ~ /Up/) status=\"UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"DOWN\"; else if(\$$4 ~ /Restart/) status=\"RESTARTING\"; else status=\"UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== SHARED INFRASTRUCTURE SERVICES ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep -E "(grafana|prometheus|loki|alertmanager|adminer|registry|nginx-proxy)" | head -10 | awk "{if(\$$4 ~ /Up/) status=\"UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"DOWN\"; else if(\$$4 ~ /Restart/) status=\"RESTARTING\"; else status=\"UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== MONITORING & EXPORTERS ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep -E "(exporter|promtail|blackbox|cadvisor)" | awk "{if(\$$4 ~ /Up/) status=\"UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"DOWN\"; else if(\$$4 ~ /Restart/) status=\"RESTARTING\"; else status=\"UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== SUMMARY ==="; TOTAL=$$(docker ps -a | tail -n +2 | wc -l); RUNNING=$$(docker ps | tail -n +2 | wc -l); STOPPED=$$((TOTAL - RUNNING)); RESTARTING=$$(docker ps -a | grep -c Restart); echo "Total Services: $$TOTAL"; echo "Running: $$RUNNING"; echo "Stopped/Error: $$STOPPED"; if [ $$RESTARTING -gt 0 ]; then echo "Restarting: $$RESTARTING"; fi'

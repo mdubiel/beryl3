@@ -6,14 +6,14 @@
 
 4. ✅ **COMPLETED** - We are now using cron feautres to proceed email queue. I want to have another view in 'SYS' which will display that queue, together with crontab, and information when it was recently flushed. Also I want to have a button to manually trigger queue processing. Add a link to this view to SYS "System modules" section.
 
-5. External services sidenav section in SYS is missing links to other services like Resend, Graphana or adminer. Add them to this section, similar to others. It might require changing condition statements. 
+5. ✅ **COMPLETED** - External services sidenav section in SYS is missing links to other services like Resend, Graphana or adminer. Add them to this section, similar to others. It might require changing condition statements. 
 
-6. When accessing `/sys/email-queue` I got Error 500.
+6. ✅ **COMPLETED** - When accessing `/sys/email-queue` I got Error 500.
 
-7. HTTPS certificates are not completed. Verify all endpoints are working over SSL, and update NGNIX configuration to use SSL (redirect from plain HTTP when needed)
+7. ✅ **COMPLETED** - HTTPS certificates are not completed. Verify all endpoints are working over SSL, and update NGNIX configuration to use SSL (redirect from plain HTTP when needed)
 
-8. Find all occourences of `example.com`. I think this is used as an example domain. This has to be moved away to env variable. For dev it is: beryl3.localdomain, for stage it is beryl3-stage.mdubiel.org and for production it is beryl.com. Also display this variable in SYS.
+8. ✅ **COMPLETED** - Find all occourences of `example.com`. I think this is used as an example domain. This has to be moved away to env variable. For dev it is: beryl3.localdomain, for stage it is beryl3-stage.mdubiel.org and for production it is beryl.com. Also display this variable in SYS.
 
-9. In SYS, /sys/dashboard, the section 'SYSTEM INFO' is showing invalid information about database.
+9. ✅ **COMPLETED** - In SYS, /sys/dashboard, the section 'SYSTEM INFO' is showing invalid information about database.
 
-10. In makefile, when listing status of services from command `staging-status` list all services with the appropiate status is is UP, DOWN, ERROR or whatever other state it is.
+10. ✅ **COMPLETED** - In makefile, when listing status of services from command `staging-status` list all services with the appropiate status is is UP, DOWN, ERROR or whatever other state it is.
