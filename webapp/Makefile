@@ -20,7 +20,7 @@ DOCKER_REGISTRY_IMAGE = $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE_NA
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build docker-push docker-deploy deploy-staging
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build docker-push docker-deploy deploy-staging staging-infra-start staging-infra-stop staging-infra-restart staging-app-start staging-app-stop staging-app-restart staging-app-logs staging-status
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -106,3 +106,33 @@ deploy-staging: ## Deploy application to staging environment (beryl3-stage.mdubi
 	@echo "Domain: beryl3-stage.mdubiel.org"
 	@echo "Image: $(DOCKER_REGISTRY_IMAGE)"
 	cd ../staging/ansible && ansible-playbook -i inventory/staging.yml playbooks/deploy-app.yml
+
+# Staging Infrastructure Management
+staging-infra-start: ## Start staging infrastructure services (monitoring, databases)
+	@echo "Starting staging infrastructure services..."
+	cd ../staging/ansible && ansible-playbook -i inventory/staging.yml playbooks/infra.yml
+
+staging-infra-stop: ## Stop staging infrastructure services
+	@echo "Stopping staging infrastructure services..."
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "docker stop $$(docker ps -q --filter 'network=monitoring' --filter 'network=registry' 2>/dev/null) 2>/dev/null || true"
+
+staging-infra-restart: staging-infra-stop staging-infra-start ## Restart staging infrastructure services
+
+# Staging Application Management  
+staging-app-start: ## Start staging application containers (webapp, nginx, workers)
+	@echo "Starting staging application containers..."
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose up -d webapp postgres redis email_worker --no-deps"
+
+staging-app-stop: ## Stop staging application containers
+	@echo "Stopping staging application containers..."
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose stop"
+
+staging-app-restart: staging-app-stop staging-app-start ## Restart staging application containers
+
+staging-app-logs: ## Show staging application logs
+	@echo "Showing staging application logs..."
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose logs webapp --tail=50"
+
+staging-status: ## Show status of all staging containers
+	@echo "=== STAGING CONTAINER STATUS ==="
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "docker ps"
