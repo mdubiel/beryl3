@@ -1987,8 +1987,8 @@ def sys_email_queue(request):
     recent_emails = Email.objects.select_related().order_by('-created')[:100]
     
     # Get queue processing statistics
-    last_sent_email = Email.objects.filter(status=0).order_by('-sent').first()  # sent
-    last_failed_email = Email.objects.filter(status=1).order_by('-modified').first()  # failed
+    last_sent_email = Email.objects.filter(status=0).order_by('-last_updated').first()  # sent
+    last_failed_email = Email.objects.filter(status=1).order_by('-last_updated').first()  # failed
     
     # Check for stale pending emails (older than 1 hour)
     stale_threshold = timezone.now() - timedelta(hours=1)

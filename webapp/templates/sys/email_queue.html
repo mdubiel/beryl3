@@ -42,7 +42,7 @@
                         <p class="text-sm text-base-content/70">Sent</p>
                         <p class="text-2xl font-bold text-success">{{ sent_emails }}</p>
                     </div>
-                    {% lucide 'check-circle' size=24 class='text-success' %}
+                    {% lucide 'check' size=24 class='text-success' %}
                 </div>
             </div>
         </div>
@@ -54,7 +54,7 @@
                         <p class="text-sm text-base-content/70">Failed</p>
                         <p class="text-2xl font-bold text-error">{{ failed_emails }}</p>
                     </div>
-                    {% lucide 'x-circle' size=24 class='text-error' %}
+                    {% lucide 'x' size=24 class='text-error' %}
                 </div>
             </div>
         </div>
@@ -85,7 +85,7 @@
                     <p class="text-sm text-base-content/70">Last Email Sent:</p>
                     <p class="font-mono text-sm">
                         {% if last_sent_email %}
-                            {{ last_sent_email.sent|date:"M d, Y H:i:s" }}
+                            {{ last_sent_email.last_updated|date:"M d, Y H:i:s" }}
                         {% else %}
                             No emails sent yet
                         {% endif %}
@@ -95,7 +95,7 @@
                     <p class="text-sm text-base-content/70">Last Failed Email:</p>
                     <p class="font-mono text-sm">
                         {% if last_failed_email %}
-                            {{ last_failed_email.modified|date:"M d, Y H:i:s" }}
+                            {{ last_failed_email.last_updated|date:"M d, Y H:i:s" }}
                         {% else %}
                             No failed emails
                         {% endif %}
@@ -206,7 +206,7 @@
                                 {% if email.priority == 0 %}low{% elif email.priority == 1 %}medium{% elif email.priority == 2 %}high{% else %}now{% endif %}
                             </td>
                             <td class="font-mono text-xs">
-                                {% if email.sent %}{{ email.sent|date:"M d H:i" }}{% else %}-{% endif %}
+                                {% if email.status == 0 %}{{ email.last_updated|date:"M d H:i" }}{% else %}-{% endif %}
                             </td>
                         </tr>
                         {% endfor %}
