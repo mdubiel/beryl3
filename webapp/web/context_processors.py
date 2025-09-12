@@ -22,6 +22,7 @@ def external_services(request):
         'EXTERNAL_LOKI_URL': getattr(settings, 'EXTERNAL_LOKI_URL', None),
         'EXTERNAL_GRAFANA_URL': getattr(settings, 'EXTERNAL_GRAFANA_URL', None),
         'EXTERNAL_RESEND_URL': getattr(settings, 'EXTERNAL_RESEND_URL', None),
+        'SITE_DOMAIN': getattr(settings, 'SITE_DOMAIN', 'beryl3.localdomain'),
     }
 
 

@@ -552,5 +552,8 @@ EXTERNAL_LOKI_URL = env('EXTERNAL_LOKI_URL') if env('EXTERNAL_LOKI_URL') else No
 EXTERNAL_GRAFANA_URL = env('EXTERNAL_GRAFANA_URL') if env('EXTERNAL_GRAFANA_URL') else None
 EXTERNAL_RESEND_URL = env('EXTERNAL_RESEND_URL') if env('EXTERNAL_RESEND_URL') else None
 
+# Site Domain Configuration
+SITE_DOMAIN = env('SITE_DOMAIN', default='beryl3.localdomain')
+
 # Application Activity Logging Configuration
 APPLICATION_ACTIVITY_LOGGING = env('APPLICATION_ACTIVITY_LOGGING')

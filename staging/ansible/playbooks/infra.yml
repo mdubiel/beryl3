@@ -270,7 +270,7 @@
                 valid_status_codes: [200]
                 method: GET
                 headers:
-                  Host: vhost.example.com
+                  Host: {{ beryl3_app.domain | default('beryl3-stage.mdubiel.org') }}
                   Accept-Language: en-US
                 preferred_ip_protocol: "ip4"
                 ip_protocol_fallback: false
@@ -299,7 +299,7 @@
               prober: dns
               timeout: 5s
               dns:
-                query_name: "example.com"
+                query_name: "{{ beryl3_app.domain | default('beryl3-stage.mdubiel.org') }}"
                 query_type: "A"
                 valid_rcodes:
                   - NOERROR

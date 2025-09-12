@@ -219,6 +219,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                     <div class="terminal-text mb-2">Django Version: <span class="terminal-accent">{{ django_version|default:"Unknown" }}</span></div>
+                    <div class="terminal-text mb-2">Site Domain: <span class="terminal-accent">{{ SITE_DOMAIN }}</span></div>
                     <div class="terminal-text mb-2">Database: <span class="terminal-accent">{{ database_engine|default:"SQLite" }}</span></div>
                     <div class="terminal-text mb-2">Debug Mode: <span class="{% if debug %}terminal-danger{% else %}terminal-accent{% endif %}">{{ debug|yesno:"ENABLED,DISABLED" }}</span></div>
                 </div>
