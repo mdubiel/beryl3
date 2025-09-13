@@ -142,6 +142,13 @@
                         {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
                     </a>
                     {% endif %}
+                    
+                    {% if EXTERNAL_REGISTRY_URL %}
+                    <a href="{{ EXTERNAL_REGISTRY_URL }}" target="_blank" class="terminal-menu-item block px-3 py-2 text-sm terminal-text">
+                        {% lucide 'package' size=14 class='inline mr-2' %} Registry
+                        {% lucide 'link' size=10 class='inline ml-1 opacity-60' %}
+                    </a>
+                    {% endif %}
                 </div>
             </nav>
         </div>

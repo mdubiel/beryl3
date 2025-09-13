@@ -10,7 +10,7 @@ ssh_permit_root_login: false
 
 # SSL/TLS settings
 ssl_provider: letsencrypt
-ssl_email: "admin@{{ beryl3_app.domain | default('beryl3-stage.mdubiel.org') }}"
+ssl_email: "admin@{{ beryl3_app.domain | default('beryl3.staging.mdubiel.org') }}"
 ssl_staging: true  # Use Let's Encrypt staging for testing
 
 # Backup configuration
@@ -70,7 +70,7 @@ shared_services:
 
 # Application deployment settings
 beryl3_app:
-  domain: "beryl3-stage.mdubiel.org"
+  domain: "beryl3.staging.mdubiel.org"
   registry_url: "192.168.1.14:5000"
   registry_namespace: "mdubiel.org"
   image_name: "beryl3-webapp"

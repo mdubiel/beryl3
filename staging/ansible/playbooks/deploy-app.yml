@@ -144,10 +144,10 @@
           - name: projects
           - name: monitoring
 
-    - name: Generate nginx configuration for application
+    - name: Generate comprehensive staging proxy configuration
       template:
-        src: beryl3-nginx-http.conf.j2
-        dest: "{{ shared_data_path }}/nginx/config/beryl3.conf"
+        src: staging-proxy.conf.j2
+        dest: "{{ shared_data_path }}/nginx/config/default.conf"
         mode: '0644'
         owner: "{{ ansible_user }}"
         group: docker
