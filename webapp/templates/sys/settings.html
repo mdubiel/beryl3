@@ -201,6 +201,16 @@
                                     <span class="badge badge-error">Disabled</span>
                                 {% elif value == 0 %}
                                     <span class="badge badge-neutral">{{ value }}</span>
+                                {% elif key == 'CSRF_TRUSTED_ORIGINS' %}
+                                    {% if value %}
+                                        <div class="space-y-1">
+                                            {% for origin in value %}
+                                                <div class="badge badge-success badge-sm">{{ origin }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="badge badge-error">Not configured</span>
+                                    {% endif %}
                                 {% else %}
                                     {{ value }}
                                 {% endif %}
@@ -209,6 +219,111 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staging Fixes Status -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title flex items-center gap-2 mb-4">
+                {% lucide 'wrench' size=20 %}
+                Staging Environment Fixes
+                {% if staging_fixes.FIX_STATUS == 'Applied' %}
+                    <span class="badge badge-success">{{ staging_fixes.FIX_STATUS }}</span>
+                {% else %}
+                    <span class="badge badge-error">{{ staging_fixes.FIX_STATUS }}</span>
+                {% endif %}
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <tbody>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">CSRF_FIX_APPLIED</td>
+                            <td class="font-mono text-sm">
+                                {% if staging_fixes.CSRF_FIX_APPLIED %}
+                                    <span class="badge badge-success">Yes</span>
+                                {% else %}
+                                    <span class="badge badge-error">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">CSRF_TRUSTED_ORIGINS_COUNT</td>
+                            <td class="font-mono text-sm">
+                                <span class="badge badge-info">{{ staging_fixes.CSRF_TRUSTED_ORIGINS_COUNT }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">STAGING_DOMAIN_CONFIGURED</td>
+                            <td class="font-mono text-sm">
+                                {% if staging_fixes.STAGING_DOMAIN_CONFIGURED %}
+                                    <span class="badge badge-success">Yes</span>
+                                {% else %}
+                                    <span class="badge badge-error">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">HTTPS_SUPPORT</td>
+                            <td class="font-mono text-sm">
+                                {% if staging_fixes.CSRF_HTTPS_CONFIGURED %}
+                                    <span class="badge badge-success">Configured</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Not Configured</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">HTTP_SUPPORT</td>
+                            <td class="font-mono text-sm">
+                                {% if staging_fixes.CSRF_HTTP_CONFIGURED %}
+                                    <span class="badge badge-success">Configured</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Not Configured</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">LOGGING_FIX_APPLIED</td>
+                            <td class="font-mono text-sm">
+                                {% if staging_fixes.LOGGING_FIX_APPLIED %}
+                                    <span class="badge badge-success">Yes</span>
+                                    <span class="text-xs text-base-content/70 ml-2">LogRecord filename conflict resolved</span>
+                                {% else %}
+                                    <span class="badge badge-error">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-mono text-sm font-semibold w-1/3">CSRF_ORIGINS_LIST</td>
+                            <td class="font-mono text-sm">
+                                {% if staging_fixes.CSRF_ORIGINS_LIST %}
+                                    <div class="space-y-1">
+                                        {% for origin in staging_fixes.CSRF_ORIGINS_LIST %}
+                                            <div class="badge badge-outline">{{ origin }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-base-content/50">No origins configured</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 p-4 bg-info/10 rounded-lg">
+                <div class="flex items-start gap-2">
+                    {% lucide 'info' size=16 class='text-info mt-0.5' %}
+                    <div class="text-sm">
+                        <p class="font-semibold text-info mb-1">Applied Fixes:</p>
+                        <ul class="text-xs text-base-content/70 space-y-1">
+                            <li>• CSRF verification error resolved by configuring CSRF_TRUSTED_ORIGINS</li>
+                            <li>• Image upload logging error fixed by renaming conflicting LogRecord fields</li>
+                            <li>• Environment variable loading improved for containerized deployments</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

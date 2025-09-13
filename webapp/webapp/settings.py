@@ -67,8 +67,14 @@ env = environ.Env(
     LOKI_ENABLED=(bool, False)
 )
 
-# Read variables from .env file
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+# Read variables from .env file (if it exists)
+# In Docker containers, environment variables are usually provided directly
+env_file_path = os.path.join(BASE_DIR, '.env')
+if os.path.exists(env_file_path):
+    environ.Env.read_env(env_file_path)
+else:
+    # Environment variables are provided directly (e.g., via Docker env_file)
+    logging.debug("[ENV DEBUG] No .env file found, using system environment variables")
 
 # SENTRY CONFIGURATION FOR ERROR MONITORING
 # Initialize Sentry SDK if DSN is provided
@@ -112,6 +118,16 @@ if SENTRY_DSN:
 SECRET_KEY = env('SECRET_KEY')  # Required: Django secret key for cryptographic signing
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')  # Required: Specific domains for production
+
+# Debug logging for CSRF_TRUSTED_ORIGINS
+csrf_env_value = os.environ.get('CSRF_TRUSTED_ORIGINS', 'NOT_SET')
+logging.debug(f"[CSRF DEBUG] Environment variable CSRF_TRUSTED_ORIGINS: {csrf_env_value}")
+
+parsed_csrf_origins = env.list('CSRF_TRUSTED_ORIGINS', default=[])
+logging.debug(f"[CSRF DEBUG] Parsed CSRF_TRUSTED_ORIGINS: {parsed_csrf_origins}")
+
+CSRF_TRUSTED_ORIGINS = parsed_csrf_origins
+logging.debug(f"[CSRF DEBUG] Final CSRF_TRUSTED_ORIGINS setting: {CSRF_TRUSTED_ORIGINS}")
 
 DATABASES = {
     'default': {
@@ -377,12 +393,17 @@ LOGGING = {
             "filters": ["user_info"],
         },
     },
+    # ROOT LOGGER
+    "root": {
+        "level": "DEBUG",
+        "handlers": ["console"],
+    },
     # LOGGERS
     # Define which loggers to use.
     "loggers": {
         "django": {
             "handlers": ["console", "file"],
-            "level": "INFO",
+            "level": "DEBUG" if DEBUG else "INFO",
             "propagate": True,
         },
         "performance": {

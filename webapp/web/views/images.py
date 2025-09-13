@@ -64,7 +64,7 @@ def collection_manage_images(request, hash):
                                media_file.original_filename, collection.name, request.user.username, request.user.id,
                                extra={'function': 'collection_image_upload', 'action': 'image_uploaded',
                                      'collection_hash': collection.hash, 'media_file_hash': media_file.hash,
-                                     'filename': media_file.original_filename, 'file_size': media_file.file_size,
+                                     'original_filename': media_file.original_filename, 'file_size': media_file.file_size,
                                      'image_order': next_order})
                     
                     return redirect('collection_manage_images', hash=hash)
@@ -137,7 +137,7 @@ def item_manage_images(request, hash):
                                media_file.original_filename, item.name, request.user.username, request.user.id,
                                extra={'function': 'item_image_upload', 'action': 'image_uploaded',
                                      'item_hash': item.hash, 'collection_hash': item.collection.hash,
-                                     'media_file_hash': media_file.hash, 'filename': media_file.original_filename,
+                                     'media_file_hash': media_file.hash, 'original_filename': media_file.original_filename,
                                      'file_size': media_file.file_size, 'image_order': next_order})
                     
                     return redirect('item_manage_images', hash=hash)
@@ -192,7 +192,7 @@ def set_default_image(request, hash):
                        extra={'function': 'collection_set_default_image', 'action': 'default_image_set',
                              'collection_hash': collection_image.collection.hash,
                              'media_file_hash': collection_image.media_file.hash,
-                             'filename': collection_image.media_file.original_filename})
+                             'original_filename': collection_image.media_file.original_filename})
             
             # Return updated image gallery
             current_images = CollectionImage.objects.filter(collection=collection_image.collection).order_by('order')
@@ -220,7 +220,7 @@ def set_default_image(request, hash):
                              'item_hash': item_image.item.hash,
                              'collection_hash': item_image.item.collection.hash,
                              'media_file_hash': item_image.media_file.hash,
-                             'filename': item_image.media_file.original_filename})
+                             'original_filename': item_image.media_file.original_filename})
             
             # Return updated image gallery
             current_images = CollectionItemImage.objects.filter(item=item_image.item).order_by('order')
@@ -292,7 +292,7 @@ def delete_image(request, hash):
                            filename, collection.name, request.user.username, request.user.id,
                            extra={'function': 'collection_delete_image', 'action': 'image_deleted',
                                  'collection_hash': collection.hash, 'media_file_hash': hash,
-                                 'filename': filename, 'was_default': was_default,
+                                 'original_filename': filename, 'was_default': was_default,
                                  'remaining_images_count': remaining_images.count()})
             
             # Return HTMX response to trigger page refresh
@@ -335,7 +335,7 @@ def delete_image(request, hash):
                            filename, item.name, request.user.username, request.user.id,
                            extra={'function': 'item_delete_image', 'action': 'image_deleted',
                                  'item_hash': item.hash, 'collection_hash': item.collection.hash,
-                                 'media_file_hash': hash, 'filename': filename,
+                                 'media_file_hash': hash, 'original_filename': filename,
                                  'was_default': was_default, 'remaining_images_count': remaining_images.count()})
             
             # Return HTMX response to trigger page refresh

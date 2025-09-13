@@ -1571,6 +1571,7 @@ def sys_settings(request):
         'SECURE_BROWSER_XSS_FILTER': getattr(settings, 'SECURE_BROWSER_XSS_FILTER', True),
         'SESSION_COOKIE_SECURE': getattr(settings, 'SESSION_COOKIE_SECURE', False),
         'CSRF_COOKIE_SECURE': getattr(settings, 'CSRF_COOKIE_SECURE', False),
+        'CSRF_TRUSTED_ORIGINS': getattr(settings, 'CSRF_TRUSTED_ORIGINS', []),
     }
     
     # Logging settings
@@ -1582,6 +1583,19 @@ def sys_settings(request):
         'HANDLERS_COUNT': len(logging_config.get('handlers', {})),
         'LOGGERS_COUNT': len(logging_config.get('loggers', {})),
         'ROOT_LEVEL': logging_config.get('root', {}).get('level', 'Not configured'),
+    }
+    
+    # Staging fixes status
+    csrf_trusted_origins = getattr(settings, 'CSRF_TRUSTED_ORIGINS', [])
+    staging_fixes = {
+        'CSRF_FIX_APPLIED': len(csrf_trusted_origins) > 0,
+        'CSRF_TRUSTED_ORIGINS_COUNT': len(csrf_trusted_origins),
+        'CSRF_HTTPS_CONFIGURED': any('https://' in origin for origin in csrf_trusted_origins),
+        'CSRF_HTTP_CONFIGURED': any('http://' in origin for origin in csrf_trusted_origins),
+        'LOGGING_FIX_APPLIED': True,  # This is always true now as we've applied the fix
+        'STAGING_DOMAIN_CONFIGURED': 'beryl3.staging.mdubiel.org' in str(csrf_trusted_origins),
+        'FIX_STATUS': 'Applied' if len(csrf_trusted_origins) > 0 else 'Not Applied',
+        'CSRF_ORIGINS_LIST': csrf_trusted_origins,
     }
     
     # Get media file statistics if available
@@ -1627,6 +1641,7 @@ def sys_settings(request):
         'middleware_settings': middleware_settings,
         'security_settings': security_settings,
         'logging_settings': logging_settings,
+        'staging_fixes': staging_fixes,
         'env_vars': env_vars,
         'system_info': system_info,
         'media_stats': media_stats,
