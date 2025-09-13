@@ -1,0 +1,67 @@
+---
+# Verify Application Services
+
+- name: Verify application containers are running
+  community.docker.docker_container_info:
+    name: "{{ item }}"
+  register: container_status
+  loop:
+    - beryl3-webapp
+    - beryl3-email-worker
+    - beryl3-postgres
+    - beryl3-redis
+
+- name: Display application container status
+  debug:
+    msg: "{{ item.container.Name }} is {{ item.container.State.Status }}"
+  loop: "{{ container_status.results }}"
+  when: item.exists
+
+- name: Test application health
+  uri:
+    url: "http://{{ ansible_host }}:8000/"
+    method: GET
+    status_code: 200
+  register: health_check
+  retries: 3
+  delay: 5
+
+- name: Display application summary
+  debug:
+    msg: |
+      ========================================
+      BERYL3 APPLICATION STATUS
+      ========================================
+      
+      🌐 Application Access:
+      {% if health_check is succeeded %}
+      ✅ Django App: http://{{ ansible_host }}:8000
+      ✅ HTTPS Access: https://beryl3.staging.mdubiel.org
+      ✅ Admin Panel: https://beryl3.staging.mdubiel.org/admin/
+      {% else %}
+      ❌ Application not responding
+      {% endif %}
+      
+      🗄️ Database & Cache:
+      - PostgreSQL: beryl3-postgres:5432
+      - Redis: beryl3-redis:6379
+      
+      📊 Metrics & Monitoring:
+      - Application Metrics: http://{{ ansible_host }}:8000/metrics
+      - Business Metrics: http://{{ ansible_host }}:8000/sys/metrics/prometheus/
+      - Logs: Available in Loki/Grafana
+      
+      🔧 Background Services:
+      - Email Worker: beryl3-email-worker (processing queue)
+      
+      📂 Data Locations:
+      - App Root: {{ app_root }}
+      - Media Files: {{ app_root }}/media
+      - Logs: {{ app_root }}/logs
+      - Database Data: {{ app_root }}/data/postgres
+      
+      🎯 Management Commands:
+      - View logs: docker logs beryl3-webapp
+      - Database shell: docker exec -it beryl3-postgres psql -U beryl3_user -d beryl3
+      - Django shell: docker exec -it beryl3-webapp python manage.py shell
+      ========================================

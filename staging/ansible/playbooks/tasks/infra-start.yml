@@ -1,0 +1,256 @@
+---
+# Start Infrastructure Containers
+
+- name: Start nginx-proxy container
+  community.docker.docker_container:
+    name: nginx-proxy
+    image: nginx:alpine
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8081"
+    volumes:
+      - "{{ shared_data_path }}/nginx/config:/etc/nginx/conf.d:ro"
+      - "{{ shared_data_path }}/nginx/ssl:/etc/nginx/ssl:ro"
+      - "/opt/ssl:/etc/ssl:ro"
+    labels:
+      prometheus.scrape: "false"
+      service.name: "nginx-proxy"
+      service.component: "reverse-proxy"
+    networks:
+      - name: monitoring
+      - name: projects
+      - name: registry
+
+- name: Start Docker Registry container
+  community.docker.docker_container:
+    name: docker-registry
+    image: registry:2
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ registry_port | default(5000) }}:5000"
+    volumes:
+      - "{{ shared_data_path }}/registry/data:/var/lib/registry"
+      - "{{ shared_data_path }}/registry/config:/etc/docker/registry:ro"
+      - "{{ shared_data_path }}/registry/auth:/auth:ro"
+    env:
+      REGISTRY_CONFIG_PATH: /etc/docker/registry/config.yml
+    labels:
+      prometheus.scrape: "true"
+      service.name: "docker-registry"
+      service.component: "artifact-storage"
+    networks:
+      - name: registry
+      - name: monitoring
+
+- name: Start Prometheus container
+  community.docker.docker_container:
+    name: prometheus
+    image: prom/prometheus:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ shared_services.prometheus.port }}:9090"
+    volumes:
+      - "{{ shared_data_path }}/prometheus/config:/etc/prometheus:ro"
+      - "{{ shared_data_path }}/prometheus/data:/prometheus"
+    command: >
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --storage.tsdb.retention.time={{ shared_services.prometheus.retention_time }}
+      --web.console.libraries=/usr/share/prometheus/console_libraries
+      --web.console.templates=/usr/share/prometheus/consoles
+      --web.enable-lifecycle
+      --web.enable-admin-api
+    networks:
+      - name: monitoring
+
+- name: Start Grafana container
+  community.docker.docker_container:
+    name: grafana
+    image: grafana/grafana:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ shared_services.grafana.port }}:3000"
+    volumes:
+      - "{{ shared_data_path }}/grafana/data:/var/lib/grafana"
+      - "{{ shared_data_path }}/grafana/config/grafana.ini:/etc/grafana/grafana.ini:ro"
+      - "{{ shared_data_path }}/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "{{ shared_data_path }}/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+    env:
+      GF_SECURITY_ADMIN_USER: "{{ shared_services.grafana.admin_user }}"
+      GF_SECURITY_ADMIN_PASSWORD: "{{ shared_services.grafana.admin_password }}"
+    labels:
+      prometheus.scrape: "true"
+      service.name: "grafana"
+      service.component: "visualization"
+    networks:
+      - name: monitoring
+
+- name: Start Loki container
+  community.docker.docker_container:
+    name: loki
+    image: grafana/loki:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ shared_services.loki.port }}:3100"
+    volumes:
+      - "{{ shared_data_path }}/loki/config:/etc/loki:ro"
+      - "{{ shared_data_path }}/loki/data:/tmp/loki"
+    command: -config.file=/etc/loki/loki.yml
+    networks:
+      - name: monitoring
+
+- name: Start AlertManager container
+  community.docker.docker_container:
+    name: alertmanager
+    image: prom/alertmanager:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ shared_services.alertmanager.port }}:9093"
+    volumes:
+      - "{{ shared_data_path }}/alertmanager/config:/etc/alertmanager:ro"
+      - "{{ shared_data_path }}/alertmanager/data:/alertmanager"
+    networks:
+      - name: monitoring
+
+- name: Start Node Exporter container
+  community.docker.docker_container:
+    name: node-exporter
+    image: prom/node-exporter:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ shared_services.node_exporter.port }}:9100"
+    command: >
+      --path.procfs=/host/proc
+      --path.sysfs=/host/sys
+      --path.rootfs=/host
+      --collector.filesystem.mount-points-exclude='^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/:/host:ro"
+    networks:
+      - name: monitoring
+
+- name: Start cAdvisor container
+  community.docker.docker_container:
+    name: cadvisor
+    image: gcr.io/cadvisor/cadvisor:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:rw"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+    networks:
+      - name: monitoring
+
+- name: Start Promtail container
+  community.docker.docker_container:
+    name: promtail
+    image: grafana/promtail:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "{{ shared_services.promtail.port }}:9080"
+    volumes:
+      - "{{ shared_data_path }}/promtail/config:/etc/promtail:ro"
+      - "/var/log:/var/log:ro"
+    command: -config.file=/etc/promtail/promtail.yml
+    labels:
+      prometheus.scrape: "true"
+      service.name: "promtail"
+      service.component: "log-shipping"
+    networks:
+      - name: monitoring
+
+- name: Start Blackbox Exporter container
+  community.docker.docker_container:
+    name: blackbox-exporter
+    image: prom/blackbox-exporter:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "9115:9115"
+    volumes:
+      - "{{ shared_data_path }}/blackbox/config:/config:ro"
+    command: --config.file=/config/blackbox.yml
+    labels:
+      prometheus.scrape: "true"
+      service.name: "blackbox-exporter"
+      service.component: "health-probes"
+    networks:
+      - name: monitoring
+
+- name: Start Nginx Prometheus Exporter container
+  community.docker.docker_container:
+    name: nginx-prometheus-exporter
+    image: nginx/nginx-prometheus-exporter:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "9113:9113"
+    command: --nginx.scrape-uri=http://nginx-proxy:8081/nginx_status
+    labels:
+      prometheus.scrape: "true"
+      service.name: "nginx-prometheus-exporter"
+      service.component: "nginx-metrics"
+    networks:
+      - name: monitoring
+
+- name: Start Docker Registry UI container
+  community.docker.docker_container:
+    name: docker-registry-ui
+    image: joxit/docker-registry-ui:2.0
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "8082:80"
+    env:
+      REGISTRY_URL: http://192.168.1.14:5000
+      REGISTRY_TITLE: "Beryl3 Registry"
+      DELETE_IMAGES: "true"
+      SHOW_CONTENT_DIGEST: "true"
+      NGINX_PROXY_PASS_URL: http://192.168.1.14:5000
+      SINGLE_REGISTRY: "true"
+      SHOW_CATALOG_NB_TAGS: "true"
+      CATALOG_ELEMENTS_LIMIT: "1000"
+      REGISTRY_USERNAME: "registry"
+      REGISTRY_PASSWORD: "registry123"
+    labels:
+      prometheus.scrape: "false"
+      service.name: "docker-registry-ui"
+      service.component: "registry-interface"
+    networks:
+      - name: registry
+      - name: monitoring
+
+- name: Start Adminer PostgreSQL Management container
+  community.docker.docker_container:
+    name: adminer
+    image: adminer:latest
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "8084:8080"
+    env:
+      ADMINER_DEFAULT_SERVER: "postgres"
+      ADMINER_DESIGN: "pepa-linha"
+    labels:
+      prometheus.scrape: "false"
+      service.name: "adminer"
+      service.component: "database-management"
+    networks:
+      - name: monitoring
+      - name: projects

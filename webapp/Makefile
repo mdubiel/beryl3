@@ -20,7 +20,7 @@ DOCKER_REGISTRY_IMAGE = $(DOCKER_REGISTRY)/$(DOCKER_NAMESPACE)/$(DOCKER_IMAGE_NA
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build docker-push docker-deploy deploy-staging staging-infra-start staging-infra-stop staging-infra-restart staging-monitoring-start staging-monitoring-stop staging-app-start staging-app-stop staging-app-restart staging-app-logs staging-status
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build docker-push docker-deploy deploy-staging infra-deploy infra-start infra-stop infra-restart app-deploy app-start app-stop app-restart app-logs staging-status
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -101,48 +101,60 @@ docker-deploy: docker-push ## Build, push, and display deployment information
 	@echo "=== ANSIBLE DEPLOYMENT ==="
 	@echo "Update your ansible playbook to use: $(DOCKER_REGISTRY_IMAGE)"
 
-deploy-staging: ## Deploy application to staging environment (beryl3-stage.mdubiel.org)
+deploy-staging: ## Deploy application to staging environment (beryl3.staging.mdubiel.org)
 	@echo "Deploying Beryl3 to staging environment..."
-	@echo "Domain: beryl3-stage.mdubiel.org"
+	@echo "Domain: beryl3.staging.mdubiel.org"
 	@echo "Image: $(DOCKER_REGISTRY_IMAGE)"
 	cd ../staging/ansible && ansible-playbook -i inventory/staging.yml playbooks/deploy-app.yml
 
-# Staging Infrastructure Management
-staging-infra-start: ## Start staging infrastructure services (grafana, loki, monitoring, registry)
-	@echo "Starting staging infrastructure services..."
-	cd ../staging/ansible && ansible-playbook -i inventory/staging.yml playbooks/infra.yml
+# =====================================
+# STAGING INFRASTRUCTURE MANAGEMENT
+# =====================================
+# Infrastructure: nginx, grafana, loki, prometheus, monitoring tools, registry
 
-staging-infra-stop: ## Stop staging infrastructure services (grafana, loki, monitoring, registry)
-	@echo "Stopping staging infrastructure services..."
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "docker stop $$(docker ps -q --filter 'network=monitoring' --filter 'network=registry' 2>/dev/null) 2>/dev/null || true"
+infra-deploy: ## Deploy complete staging infrastructure (full setup)
+	@echo "🚀 Deploying staging infrastructure (nginx, grafana, loki, prometheus, monitoring, registry)..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/infra-manage.yml -e action=deploy
 
-staging-infra-restart: staging-infra-stop staging-infra-start ## Restart staging infrastructure services
+infra-start: ## Start staging infrastructure services
+	@echo "▶️  Starting staging infrastructure services..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/infra-manage.yml -e action=start
 
-staging-monitoring-start: ## Start monitoring services (grafana, loki) from docker-compose
-	@echo "Starting monitoring services (grafana, loki)..."
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose up -d grafana loki --no-deps"
+infra-stop: ## Stop staging infrastructure services
+	@echo "⏹️  Stopping staging infrastructure services..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/infra-manage.yml -e action=stop
 
-staging-monitoring-stop: ## Stop monitoring services (grafana, loki)
-	@echo "Stopping monitoring services (grafana, loki)..."
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose stop grafana loki"
+infra-restart: ## Restart staging infrastructure services
+	@echo "🔄 Restarting staging infrastructure services..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/infra-manage.yml -e action=restart
 
-# Staging Application Management  
-staging-app-start: ## Start staging application containers (webapp, nginx, postgres, redis, workers)
-	@echo "Starting staging application containers..."
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose up -d webapp nginx postgres redis email_worker --no-deps"
+# =====================================
+# STAGING APPLICATION MANAGEMENT
+# =====================================
+# Application: beryl3 webapp, email worker, postgres, redis
 
-staging-app-stop: ## Stop staging application containers (webapp, nginx, postgres, redis, workers)
-	@echo "Stopping staging application containers..."
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose stop webapp nginx postgres redis email_worker"
+app-deploy: ## Deploy complete beryl3 application (full setup)
+	@echo "🚀 Deploying beryl3 application (webapp, email worker, postgres, redis)..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/app-manage.yml -e action=deploy
 
-staging-app-restart: staging-app-stop staging-app-start ## Restart staging application containers
+app-start: ## Start beryl3 application services
+	@echo "▶️  Starting beryl3 application services..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/app-manage.yml -e action=start
 
-staging-app-logs: ## Show staging application logs
-	@echo "Showing staging application logs..."
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "cd /opt/projects/beryl3 && docker compose logs webapp --tail=50"
+app-stop: ## Stop beryl3 application services
+	@echo "⏹️  Stopping beryl3 application services..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/app-manage.yml -e action=stop
+
+app-restart: ## Restart beryl3 application services
+	@echo "🔄 Restarting beryl3 application services..."
+	cd ../staging && ansible-playbook -i ansible/inventory/staging.yml ansible/playbooks/app-manage.yml -e action=restart
+
+app-logs: ## Show beryl3 application logs
+	@echo "📋 Showing beryl3 application logs..."
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a "docker logs beryl3-webapp --tail=50"
 
 staging-status: ## Show status of all staging containers with detailed service status
-	@echo "=== STAGING SERVICES STATUS ==="
+	@echo "=== STAGING ENVIRONMENT STATUS ==="
 	@echo "Checking all staging services..."
 	@echo
-	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a 'echo "=== BERYL3 APPLICATION SERVICES ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep beryl3_staging | awk "{if(\$$4 ~ /Up/) status=\"UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"DOWN\"; else if(\$$4 ~ /Restart/) status=\"RESTARTING\"; else status=\"UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== SHARED INFRASTRUCTURE SERVICES ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep -E "(grafana|prometheus|loki|alertmanager|adminer|registry|nginx-proxy)" | head -10 | awk "{if(\$$4 ~ /Up/) status=\"UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"DOWN\"; else if(\$$4 ~ /Restart/) status=\"RESTARTING\"; else status=\"UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== MONITORING & EXPORTERS ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep -E "(exporter|promtail|blackbox|cadvisor)" | awk "{if(\$$4 ~ /Up/) status=\"UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"DOWN\"; else if(\$$4 ~ /Restart/) status=\"RESTARTING\"; else status=\"UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== SUMMARY ==="; TOTAL=$$(docker ps -a | tail -n +2 | wc -l); RUNNING=$$(docker ps | tail -n +2 | wc -l); STOPPED=$$((TOTAL - RUNNING)); RESTARTING=$$(docker ps -a | grep -c Restart); echo "Total Services: $$TOTAL"; echo "Running: $$RUNNING"; echo "Stopped/Error: $$STOPPED"; if [ $$RESTARTING -gt 0 ]; then echo "Restarting: $$RESTARTING"; fi'
+	cd ../staging && ansible staging-server -i ansible/inventory/staging.yml -m shell -a 'echo "=== 🌐 INFRASTRUCTURE SERVICES ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep -E "^[a-z0-9]+.*\s+(nginx-proxy|grafana|loki|prometheus|alertmanager|adminer|registry|cadvisor|node-exporter|promtail|blackbox)" | awk "{if(\$$4 ~ /Up/) status=\"🟢 UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"🔴 DOWN\"; else if(\$$4 ~ /Restart/) status=\"🟡 RESTARTING\"; else status=\"❓ UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== 🚀 APPLICATION SERVICES ==="; echo "SERVICE NAME                   STATUS"; echo "------------------------------------------------"; docker ps -a | grep -E "^[a-z0-9]+.*\s+beryl3-" | awk "{if(\$$4 ~ /Up/) status=\"🟢 UP\"; else if(\$$4 ~ /Exited|Exit/) status=\"🔴 DOWN\"; else if(\$$4 ~ /Restart/) status=\"🟡 RESTARTING\"; else status=\"❓ UNKNOWN\"; printf \"%-30s %s\\n\", \$$NF, status}"; echo; echo "=== 📊 SUMMARY ==="; TOTAL=$$(docker ps -a | tail -n +2 | wc -l); RUNNING=$$(docker ps | tail -n +2 | wc -l); STOPPED=$$((TOTAL - RUNNING)); echo "Total Services: $$TOTAL"; echo "🟢 Running: $$RUNNING"; echo "🔴 Stopped/Error: $$STOPPED"'

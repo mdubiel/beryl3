@@ -1,0 +1,14 @@
+---
+# Restart Application Containers
+
+- name: Restart beryl3 application containers
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: started
+    restart: true
+  loop:
+    - beryl3-postgres
+    - beryl3-redis
+    - beryl3-webapp
+    - beryl3-email-worker
+  ignore_errors: true

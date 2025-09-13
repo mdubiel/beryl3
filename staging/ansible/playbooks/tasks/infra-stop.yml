@@ -1,0 +1,22 @@
+---
+# Stop Infrastructure Containers
+
+- name: Stop infrastructure containers
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+    - nginx-proxy
+    - docker-registry
+    - docker-registry-ui
+    - prometheus
+    - grafana
+    - loki
+    - alertmanager
+    - node-exporter
+    - cadvisor
+    - promtail
+    - blackbox-exporter
+    - nginx-prometheus-exporter
+    - adminer
+  ignore_errors: true

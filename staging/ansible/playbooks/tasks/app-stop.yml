@@ -1,0 +1,13 @@
+---
+# Stop Application Containers
+
+- name: Stop beryl3 application containers
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: stopped
+  loop:
+    - beryl3-webapp
+    - beryl3-email-worker
+    - beryl3-postgres
+    - beryl3-redis
+  ignore_errors: true

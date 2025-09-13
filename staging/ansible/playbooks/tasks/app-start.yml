@@ -1,0 +1,90 @@
+---
+# Start Application Containers
+
+- name: Start PostgreSQL container for application
+  community.docker.docker_container:
+    name: beryl3-postgres
+    image: postgres:15
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "5432:5432"
+    env:
+      POSTGRES_DB: beryl3
+      POSTGRES_USER: beryl3_user
+      POSTGRES_PASSWORD: "{{ vault_postgres_password | default('beryl3_secure_pass') }}"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - "{{ app_root }}/data/postgres:/var/lib/postgresql/data"
+    labels:
+      prometheus.scrape: "true"
+      service.name: "beryl3-postgres"
+      service.component: "database"
+    networks:
+      - name: projects
+      - name: monitoring
+
+- name: Start Redis container for application
+  community.docker.docker_container:
+    name: beryl3-redis
+    image: redis:7-alpine
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass beryl3_redis_pass
+    volumes:
+      - "{{ app_root }}/data/redis:/data"
+    labels:
+      prometheus.scrape: "false"
+      service.name: "beryl3-redis"
+      service.component: "cache"
+    networks:
+      - name: projects
+      - name: monitoring
+
+- name: Start Beryl3 application container
+  community.docker.docker_container:
+    name: beryl3-webapp
+    image: "192.168.1.14:5000/mdubiel.org/beryl3-webapp:latest"
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: "{{ app_root }}/.env"
+    volumes:
+      - "{{ app_root }}/media:/app/media"
+      - "{{ app_root }}/logs:/app/logs"
+      - "{{ app_root }}/gcs-credentials.json:/app/gcs-credentials.json:ro"
+    labels:
+      prometheus.scrape: "true"
+      service.name: "beryl3-webapp"
+      service.component: "web-application"
+      traefik.enable: "true"
+      traefik.http.routers.beryl3.rule: "Host(`beryl3.staging.mdubiel.org`)"
+      traefik.http.routers.beryl3.entrypoints: "websecure"
+      traefik.http.routers.beryl3.tls.certresolver: "letsencrypt"
+      traefik.http.services.beryl3.loadbalancer.server.port: "8000"
+    networks:
+      - name: projects
+      - name: monitoring
+
+# NOTE: Email worker temporarily disabled - image not available in registry
+# - name: Start Beryl3 email worker container
+#   community.docker.docker_container:
+#     name: beryl3-email-worker
+#     image: "192.168.1.14:5000/mdubiel.org/beryl3-email_worker:latest"
+#     state: started
+#     restart_policy: unless-stopped
+#     command: ["python", "manage.py", "send_queued_mail", "--processes", "2"]
+#     env_file: "{{ app_root }}/.env"
+#     volumes:
+#       - "{{ app_root }}/logs:/app/logs"
+#       - "{{ app_root }}/gcs-credentials.json:/app/gcs-credentials.json:ro"
+#     labels:
+#       prometheus.scrape: "false"
+#       service.name: "beryl3-email-worker"
+#       service.component: "email-processing"
+#     networks:
+#       - name: projects
+#       - name: monitoring

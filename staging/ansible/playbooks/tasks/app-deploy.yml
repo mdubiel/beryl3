@@ -1,0 +1,99 @@
+---
+# Application Deployment Tasks
+# Full deployment of beryl3 application including database and workers
+
+- name: Ensure application directory exists
+  file:
+    path: "{{ app_root }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: docker
+
+- name: Create application directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: docker
+  loop:
+    - "{{ app_root }}/data"
+    - "{{ app_root }}/logs"
+    - "{{ app_root }}/media"
+    - "{{ app_root }}/media/collections"
+    - "{{ app_root }}/media/items"
+    - "{{ app_root }}/static"
+
+- name: Generate application environment file
+  template:
+    src: beryl3.env.j2
+    dest: "{{ app_root }}/.env"
+    mode: '0600'
+    owner: "{{ ansible_user }}"
+    group: docker
+
+- name: Copy GCS credentials file
+  copy:
+    src: "{{ lookup('env', 'HOME') }}/projects/beryl3/gcs_keys/mateusz-344213-5c136b4db5c3.json"
+    dest: "{{ app_root }}/gcs-credentials.json"
+    mode: '0644'
+    owner: "{{ ansible_user }}"
+    group: docker
+
+- name: Create Docker network for projects
+  community.docker.docker_network:
+    name: projects
+    state: present
+
+- name: Pull application Docker images
+  community.docker.docker_image:
+    name: "{{ item }}"
+    source: pull
+    state: present
+  loop:
+    - postgres:15
+    - redis:7-alpine
+    - "192.168.1.14:5000/mdubiel.org/beryl3-webapp:latest"
+
+- name: Start application containers
+  include_tasks: app-start.yml
+
+- name: Wait for database to be ready
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 5432
+    delay: 10
+    timeout: 60
+
+- name: Run database migrations
+  community.docker.docker_container_exec:
+    container: beryl3-webapp
+    command: uv run python manage.py migrate --noinput
+  register: migrate_result
+
+- name: Create Django superuser (if needed)
+  community.docker.docker_container_exec:
+    container: beryl3-webapp
+    command: >
+      uv run python manage.py shell -c "
+      from django.contrib.auth import get_user_model;
+      User = get_user_model();
+      if not User.objects.filter(is_superuser=True).exists():
+          User.objects.create_superuser('admin', 'admin@beryl3.local', 'admin123')
+      "
+  ignore_errors: yes
+
+- name: Test GCS bucket access
+  community.docker.docker_container_exec:
+    container: beryl3-webapp
+    command: uv run python manage.py setup_gcs_bucket --test-access
+  register: gcs_test_result
+  ignore_errors: yes
+
+- name: Collect static files to GCS
+  community.docker.docker_container_exec:
+    container: beryl3-webapp
+    command: uv run python manage.py collectstatic --noinput --clear
+  register: collectstatic_result
+  when: gcs_test_result is succeeded
