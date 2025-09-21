@@ -38,9 +38,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if not settings.USE_GCS_STORAGE:
+        if not getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False):
             self.stdout.write(
-                self.style.WARNING('GCS storage is not enabled. Check USE_GCS_STORAGE setting.')
+                self.style.WARNING('GCS storage is not enabled. Check FEATURE_FLAGS.USE_GCS_STORAGE setting.')
             )
             return
 

@@ -11,34 +11,39 @@ from faker import Faker
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from allauth.account.models import EmailAddress
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
 
-    help = "Generates test data for collections and items for a specific user."
+    help = "Creates a regular user and generates test data for collections and items."
 
     def add_arguments(self, parser):
-        # We add a command-line argument to specify the user ID.
         parser.add_argument(
-            '--user-id',
-            type=int,
-            help='The ID of the user to create data for.',
-            required=True
+            '--recreate',
+            action='store_true',
+            help='Delete and recreate user if they already exist',
         )
 
     @transaction.atomic
     def handle(self, *args, **options):
-        user_id = options['user_id']
-        self.stdout.write(f"Starting to seed data for user with ID: {user_id}...")
+        self.stdout.write("Creating regular user and seeding test data...")
 
-        # Get the User
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            self.stdout.write(self.style.ERROR(f"User with ID {user_id} not found. Aborting.")) # pylint: disable=no-member
+        # Create or get the regular user
+        user = self.create_user(
+            email='user@mdubiel.org',
+            password='User123!',
+            recreate=options['recreate']
+        )
+        
+        if not user:
+            self.stdout.write(self.style.ERROR("Failed to create user. Aborting."))
             return
+
+        self.stdout.write(f"Created/found user: {user.email} (ID: {user.id})")
+        self.verify_email(user)
 
         # Initialize Faker
         faker = Faker()
@@ -72,3 +77,49 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"Successfully seeded data for user '{user.username}'.")
             ) # pylint: disable=no-member
+
+    def create_user(self, email, password, recreate=False):
+        """Create a regular user."""
+        try:
+            # Check if user exists by email
+            existing_user = User.objects.get(email=email)
+            if recreate:
+                existing_user.delete()
+                self.stdout.write(f'  Deleted existing user: {email}')
+            else:
+                self.stdout.write(f'  User {email} already exists, using existing user')
+                return existing_user
+        except User.DoesNotExist:
+            pass
+        
+        # Create the user
+        user = User(
+            email=email,
+            username=email,  # Use email as username
+            is_superuser=False,
+            is_staff=False,
+            is_active=True
+        )
+        user.set_password(password)
+        user.save()
+        
+        self.stdout.write(f'  Created regular user: {email} (ID: {user.id})')
+        return user
+
+    def verify_email(self, user):
+        """Mark email as verified for django-allauth."""
+        email_address, created = EmailAddress.objects.get_or_create(
+            user=user,
+            email=user.email,
+            defaults={
+                'verified': True,
+                'primary': True
+            }
+        )
+        
+        if not created and not email_address.verified:
+            email_address.verified = True
+            email_address.primary = True
+            email_address.save()
+        
+        self.stdout.write(f'    Email {user.email} marked as verified')

@@ -32,72 +32,116 @@ This workflow ensures systematic completion of all TODO items with proper docume
 
 ## Environment Configuration Standards
 
+### Unified Environment Management System
+**Golden Source of Truth**: All environment variables are managed through a single golden file system located in `workflows/envs/`.
+
+#### Golden Source File
+- **Location**: `workflows/envs/env.gold`
+- **Purpose**: Single source of truth for all environment variables
+- **Format**: Contains environment-specific values using emoji indicators (🏠 DEV, 🧪 QA, 🚀 PROD)
+- **Usage**: Update this file first, then run synchronization scripts
+
+#### Environment Files
+- **Local**: `webapp/.env` (development)
+- **QA**: `workflows/envs/qa.env` 
+- **Production**: `workflows/envs/prod.env`
+- **Generation**: All files generated from golden source using `uv run python workflows/bin/sync-env-files.py`
+
+#### Management Scripts
+All environment management scripts are located in `workflows/bin/`:
+- **`sync-env-files.py`**: Synchronize environment files from golden source
+- **`compare-envs.py`**: Compare environments and detect configuration drift  
+- **`scan-codebase.py`**: Scan codebase for environment variable usage
+- **`secrets_manager.py`**: Manage Google Cloud secrets for QA/Production
+
+#### Workflow
+1. Update `workflows/envs/env.gold` with new variables and environment-specific values
+2. Run `uv run python workflows/bin/sync-env-files.py [local|qa|prod]` to generate environment files
+3. For QA/Prod: Run `uv run python workflows/bin/secrets_manager.py` to update cloud secrets
+4. Validate with `uv run python workflows/bin/compare-envs.py qa prod`
+
 ### .env File Management
 **Single Source of Truth**: Each environment should have only ONE .env file configuration source.
 
-#### Staging Environment
-- **Location**: `/staging/ansible/playbooks/templates/beryl3.env.j2` (Ansible template)
-- **Deployment**: Generated during deployment via `ansible/playbooks/deploy-app.yml`
-- **Target**: `/opt/beryl3/.env` on staging server
-- **DO NOT**: Use static `.env` or `.env.staging` files in staging directory
+#### Development Environment
+- **Location**: `webapp/.env` (local development)
+- **Management**: Manual configuration for local development
+- **Features**: SQLite database, local services, debug mode enabled
+
+#### QA Environment
+- **Location**: Generated from golden source of truth using `workflows/bin/sync-env-files.py`
+- **Target**: `workflows/envs/qa.env` file in webapp directory
+- **Generation**: Automated from `workflows/envs/env.gold` with QA-specific values
+- **Features**: PostgreSQL database, Cloud Run deployment, Google Cloud services
+
+#### Production Environment
+- **Location**: Generated from golden source of truth using `workflows/bin/sync-env-files.py`
+- **Target**: `workflows/envs/prod.env` file in webapp directory  
+- **Management**: Managed via `workflows/bin/secrets_manager.py` and related scripts
+- **Features**: PostgreSQL database, Google Cloud services, monitoring enabled
 
 #### Key Configuration Requirements
-- **External Service URLs**: Must use externally accessible FQDNs/IP addresses, NOT container names
-- **HTTPS**: All external URLs must use HTTPS in staging/production
-- **Domain Configuration**: Use proper domain names from inventory variables
-
-#### External Services Template Variables
-External service URLs are generated using Ansible variables:
-```yaml
-EXTERNAL_DB_URL=https://{{ ansible_host }}:8084
-EXTERNAL_GRAFANA_URL=https://{{ ansible_host }}:3000
-EXTERNAL_LOKI_URL=https://{{ ansible_host }}:3100
-EXTERNAL_MONITORING_URL=https://{{ ansible_host }}:9090
-EXTERNAL_REGISTRY_URL=https://{{ ansible_host }}:8082
-EXTERNAL_RESEND_URL=https://resend.com/dashboard
-SITE_DOMAIN={{ beryl3_app.domain | default('beryl3.staging.mdubiel.org') }}
-```
+- **Database Selection**: Determined by `DB_ENGINE` environment variable
+- **Feature Flags**: Consolidated into `FEATURE_FLAGS` system with DEBUG-based defaults
+- **External Service URLs**: Must use externally accessible FQDNs/IP addresses
+- **Security**: Secrets stored in Google Cloud Secret Manager for QA/Production
 
 #### Deployment Process
-1. **deploy-app.yml**: Generates `.env` from template with proper variables
-2. **docker-compose.yaml**: Uses `${VARIABLE}` syntax to read from `.env`
-3. **Container**: Receives all environment variables from docker-compose
+1. **Development**: Local `.env` file with SQLite and local services
+2. **QA**: Python scripts generate configuration and deploy to Cloud Run
+3. **Production**: Secret Manager integration with Cloud Run services
 
 #### Common Issues to Avoid
 - ❌ Multiple .env files (`.env`, `.env.staging`, etc.)
-- ❌ Container names in external URLs (`http://grafana:3000`)  
-- ❌ HTTP URLs in staging/production environments
-- ❌ Hardcoded environment variables in docker-compose
-- ❌ Static .env files copied by Ansible playbooks
+- ❌ Hardcoded database configuration instead of using `DB_ENGINE`
+- ❌ Mixed production detection logic with feature flags
+- ❌ Secrets committed to version control
 
 #### Verification
-After deployment, verify external services panel shows:
-- All services with HTTPS URLs
-- Externally accessible IP addresses/domains
-- Working links to each service
+After deployment, verify:
+- Correct database backend is used based on `DB_ENGINE`
+- Feature flags are properly configured for environment
+- External service URLs are accessible
+- Secrets are properly referenced from Secret Manager
 
-## Nginx Proxy Configuration Standards
+## Deployment and Management Architecture
 
-### Staging Environment Proxy
-**Template Location**: `/staging/ansible/playbooks/templates/staging-proxy.conf.j2`
-**Deployment**: Generated during deployment via `deploy-app.yml`
-**Target**: `/opt/shared/nginx/config/default.conf` on staging server
+### Python-Based Workflow System
+The project uses Python scripts in `workflows/bin/` for all deployment and management tasks, replacing previous Ansible-based infrastructure.
 
-#### Configured Subdomains (HTTPS with SSL)
-- `beryl3.staging.mdubiel.org` → beryl3-webapp:8000
-- `grafana.staging.mdubiel.org` → grafana:3000  
-- `prometheus.staging.mdubiel.org` → prometheus:9090
-- `loki.staging.mdubiel.org` → loki:3100
-- `adminer.staging.mdubiel.org` → adminer:8080
-- `registry.staging.mdubiel.org` → docker-registry:5000
-- `monitoring.staging.mdubiel.org` → redirects to Grafana
+#### Core Management Scripts
+- **`setup_qa_database.py`**: Sets up QA database environment in Google Cloud SQL
+- **`manage_database.py`**: Start/stop/restart database instances
+- **`secrets_manager.py`**: Manage Google Cloud Secret Manager integration
+- **`deploy_webapp.py`**: Deploy webapp to Google Cloud Run
+- **`build_images.py`** / **`push_images.py`**: Docker image management
+- **`deploy_jobs.py`**: Deploy Cloud Run Jobs for background tasks
+- **`status.py`**: Check status of all services and infrastructure
 
-#### Features
-- HTTP to HTTPS redirect for all subdomains
-- Let's Encrypt challenge support (/.well-known/acme-challenge/)
-- Modern SSL/TLS configuration (TLSv1.2, TLSv1.3)
-- Security headers (HSTS, X-Frame-Options, etc.)
-- Service-specific optimizations (Docker registry large uploads, etc.)
+#### Environment-Specific Workflows
 
-#### Persistence
-**IMPORTANT**: Never manually edit nginx configuration files on the server. All changes must be made in the Ansible template `staging-proxy.conf.j2` to ensure persistence across deployments.
+**Development**:
+- Local `.env` configuration
+- SQLite database
+- Django development server (`make run-dev-server`)
+- Local services (optional)
+
+**QA Environment**:
+- Google Cloud SQL PostgreSQL database
+- Google Cloud Run for webapp deployment
+- Google Cloud Storage for media files
+- Google Cloud Secret Manager for configuration
+- Automated via `make qa-*` targets
+
+**Production Environment**:
+- Same infrastructure as QA but with production-grade configuration
+- Enhanced monitoring and logging
+- Production-level resource allocation
+- Managed via workflow scripts and Cloud Run Jobs
+
+#### Key Benefits
+- **No Ansible Dependency**: Pure Python scripts, easier to maintain and debug
+- **Integrated Secrets Management**: Direct integration with Google Cloud Secret Manager
+- **Consistent API**: All scripts follow similar patterns and error handling
+- **Cloud-Native**: Designed specifically for Google Cloud Platform
+- **Automated Tasks**: Cloud Run Jobs handle recurring maintenance tasks

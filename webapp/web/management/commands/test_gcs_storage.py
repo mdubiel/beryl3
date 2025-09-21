@@ -74,12 +74,11 @@ class Command(BaseCommand):
         """Test if GCS configuration is properly set"""
         self.stdout.write('\n📋 Configuration Check:')
         
-        use_gcs = getattr(settings, 'USE_GCS_STORAGE', False)
-        is_production = not getattr(settings, 'DEBUG', True)
+        use_gcs = getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False)
         
         self.stdout.write(f'   DEBUG mode: {settings.DEBUG}')
-        self.stdout.write(f'   USE_GCS_STORAGE: {use_gcs}')
-        self.stdout.write(f'   Should use GCS: {is_production or use_gcs}')
+        self.stdout.write(f'   USE_GCS_STORAGE feature flag: {use_gcs}')
+        self.stdout.write(f'   Should use GCS: {use_gcs}')
         
         if detailed:
             gcs_settings = {
@@ -115,11 +114,10 @@ class Command(BaseCommand):
         storage_class = default_storage.__class__.__name__
         self.stdout.write(f'   Storage class: {storage_class}')
         
-        # Check if we're using the expected storage type
-        use_gcs = getattr(settings, 'USE_GCS_STORAGE', False)
-        is_production = not getattr(settings, 'DEBUG', True)
+        # Check if we're using the expected storage type based on feature flag
+        use_gcs = getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False)
         
-        if is_production or use_gcs:
+        if use_gcs:
             if 'GoogleCloudStorage' in storage_class:
                 self.stdout.write(self.style.SUCCESS('   ✅ Using Google Cloud Storage'))
             else:
