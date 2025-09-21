@@ -1486,7 +1486,7 @@ def sys_settings(request):
     # Email settings
     email_host = getattr(settings, 'EMAIL_HOST', 'Not configured')
     is_resend = email_host == 'smtp.resend.com'
-    is_inbucket = 'inbucket' in email_host.lower() or getattr(settings, 'USE_INBUCKET', False)
+    is_inbucket = 'inbucket' in email_host.lower() or getattr(settings, 'FEATURE_FLAGS', {}).get('USE_INBUCKET', False)
     
     email_settings = {
         'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Not configured'),
@@ -1504,13 +1504,13 @@ def sys_settings(request):
         'INBUCKET_CONFIGURED': is_inbucket,
         
         # Legacy Inbucket settings (for backwards compatibility)
-        'USE_INBUCKET': getattr(settings, 'USE_INBUCKET', False),
+        'USE_INBUCKET': getattr(settings, 'FEATURE_FLAGS', {}).get('USE_INBUCKET', False),
         'INBUCKET_SMTP_PORT': getattr(settings, 'INBUCKET_SMTP_PORT', 2500),
     }
     
     # Media/Storage settings
     media_settings = {
-        'USE_GCS_STORAGE': getattr(settings, 'USE_GCS_STORAGE', False),
+        'USE_GCS_STORAGE': getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False),
         'GCS_BUCKET_NAME': getattr(settings, 'GCS_BUCKET_NAME', 'Not configured'),
         'GCS_PROJECT_ID': getattr(settings, 'GCS_PROJECT_ID', 'Not configured'),
         'GCS_LOCATION': getattr(settings, 'GCS_LOCATION', 'media'),
@@ -1593,7 +1593,7 @@ def sys_settings(request):
         'CSRF_HTTPS_CONFIGURED': any('https://' in origin for origin in csrf_trusted_origins),
         'CSRF_HTTP_CONFIGURED': any('http://' in origin for origin in csrf_trusted_origins),
         'LOGGING_FIX_APPLIED': True,  # This is always true now as we've applied the fix
-        'STAGING_DOMAIN_CONFIGURED': 'beryl3.staging.mdubiel.org' in str(csrf_trusted_origins),
+        # Staging domain removed - using QA environment only
         'FIX_STATUS': 'Applied' if len(csrf_trusted_origins) > 0 else 'Not Applied',
         'CSRF_ORIGINS_LIST': csrf_trusted_origins,
     }
@@ -1609,11 +1609,10 @@ def sys_settings(request):
     # Environment variables (filtered for security)
     env_vars = {}
     safe_env_vars = [
-        'DEBUG', 'ALLOWED_HOSTS', 'USE_INBUCKET', 'USE_GCS_STORAGE', 
+        'DEBUG', 'ALLOWED_HOSTS', 'FEATURE_FLAGS',
         'GCS_BUCKET_NAME', 'GCS_PROJECT_ID', 'GCS_LOCATION',
         'EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_USE_TLS', 'DEFAULT_FROM_EMAIL',
-        'INBUCKET_SMTP_PORT', 'DB_ENGINE', 'PG_HOST', 'PG_PORT', 'PG_DB',
-        'APPLICATION_ACTIVITY_LOGGING'
+        'INBUCKET_SMTP_PORT', 'DB_ENGINE', 'PG_HOST', 'PG_PORT', 'PG_DB'
     ]
     
     for var in safe_env_vars:

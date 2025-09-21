@@ -1,7 +1,0 @@
----
-# Container-based handlers
-- name: restart nginx container
-  shell: |
-    cd {{ shared_data_path }}
-    docker-compose restart nginx-proxy
-  become_user: "{{ ansible_user }}"

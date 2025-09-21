@@ -24,18 +24,16 @@ class BerylMediaStorage:
     @staticmethod
     def get_storage():
         """
-        Returns the appropriate storage backend based on configuration.
+        Returns the appropriate storage backend based on FEATURE_FLAGS.USE_GCS_STORAGE.
         
         Logic:
-        - Development + USE_GCS=False: Local filesystem storage
-        - Development + USE_GCS=True: Google Cloud Storage
-        - Production: Always Google Cloud Storage
+        - USE_GCS_STORAGE=False: Local filesystem storage (default for DEBUG=True)
+        - USE_GCS_STORAGE=True: Google Cloud Storage (default for DEBUG=False)
         """
-        # Check if we should use GCS
-        use_gcs = getattr(settings, 'USE_GCS_STORAGE', False)
-        is_production = not getattr(settings, 'DEBUG', True)
+        # Check if we should use GCS - controlled by feature flag only
+        use_gcs = getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False)
         
-        if is_production or use_gcs:
+        if use_gcs:
             return GoogleCloudStorage(
                 bucket_name=getattr(settings, 'GCS_BUCKET_NAME'),
                 project_id=getattr(settings, 'GCS_PROJECT_ID', None),

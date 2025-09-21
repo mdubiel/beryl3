@@ -30,7 +30,7 @@ This directory contains all project documentation organized by category and purp
 
 ### Deployment Guides
 - **[docker-deployment.md](docker-deployment.md)** - Docker containerization, build, and registry deployment
-- **[ansible-deployment.md](ansible-deployment.md)** - Ansible-based deployment instructions and configuration
+- **[qa-cloudrun-deployment.md](qa-cloudrun-deployment.md)** - Cloud Run deployment procedures for QA environment
 - **[deployment.md](deployment.md)** - General deployment procedures and workflows
 
 ### Environment-Specific

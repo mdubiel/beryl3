@@ -268,11 +268,10 @@ class MediaFile(BerylModel):
         Override save to set storage backend based on current configuration
         """
         if not self.storage_backend:
-            # Determine storage backend based on current settings
-            use_gcs = getattr(settings, 'USE_GCS_STORAGE', False)
-            is_production = not getattr(settings, 'DEBUG', True)
+            # Determine storage backend based on feature flag only
+            use_gcs = getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False)
             
-            if is_production or use_gcs:
+            if use_gcs:
                 self.storage_backend = self.StorageBackend.GCS
             else:
                 self.storage_backend = self.StorageBackend.LOCAL

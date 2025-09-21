@@ -10,9 +10,6 @@ import os
 import logging
 
 import environ
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,11 +21,11 @@ env = environ.Env(
     # Development/Production mode (defaults to False for security)
     DEBUG=(bool, False),
     
-    # Database engine (defaults to PostgreSQL)
-    DB_ENGINE=(str, 'django.db.backends.postgresql'),
+    # Database engine (defaults to SQLite for development)
+    DB_ENGINE=(str, 'django.db.backends.sqlite3'),
     
     # Email settings (development defaults)
-    USE_INBUCKET=(bool, False),
+    # USE_INBUCKET - moved to FEATURE_FLAGS system
     EMAIL_HOST=(str, 'localhost'),
     EMAIL_PORT=(int, 587),
     EMAIL_USE_TLS=(bool, True),
@@ -38,7 +35,7 @@ env = environ.Env(
     DEFAULT_FROM_EMAIL=(str, 'webmaster@localhost'),
     
     # Google Cloud Storage (optional)
-    USE_GCS_STORAGE=(bool, False),
+    # USE_GCS_STORAGE - moved to FEATURE_FLAGS system
     GCS_BUCKET_NAME=(str, ''),
     GCS_PROJECT_ID=(str, ''),
     GCS_CREDENTIALS_PATH=(str, ''),
@@ -54,7 +51,7 @@ env = environ.Env(
     EXTERNAL_RESEND_URL=(str, ''),
     
     # Application features
-    APPLICATION_ACTIVITY_LOGGING=(bool, True),
+    # APPLICATION_ACTIVITY_LOGGING - moved to FEATURE_FLAGS system
     
     # Sentry configuration (optional)
     SENTRY_DSN=(str, ''),
@@ -64,60 +61,70 @@ env = environ.Env(
     
     # Log forwarding configuration (optional)
     LOKI_URL=(str, ''),
-    LOKI_ENABLED=(bool, False)
+    # LOKI_ENABLED - moved to FEATURE_FLAGS system
+    
+    # Google Cloud Logging configuration
+    # USE_GOOGLE_CLOUD_LOGGING - moved to FEATURE_FLAGS system
+    GOOGLE_CLOUD_LOGGING_PROJECT_ID=(str, ''),
+    GOOGLE_CLOUD_LOGGING_RESOURCE_TYPE=(str, 'gce_instance'),
+    GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH=(str, '')
 )
 
 # Read variables from .env file (if it exists)
 # In Docker containers, environment variables are usually provided directly
 env_file_path = os.path.join(BASE_DIR, '.env')
 if os.path.exists(env_file_path):
-    environ.Env.read_env(env_file_path)
+    env.read_env(env_file_path)
 else:
     # Environment variables are provided directly (e.g., via Docker env_file)
     logging.debug("[ENV DEBUG] No .env file found, using system environment variables")
 
-# SENTRY CONFIGURATION FOR ERROR MONITORING
-# Initialize Sentry SDK if DSN is provided
-SENTRY_DSN = env('SENTRY_DSN')
-if SENTRY_DSN:
-    sentry_logging = LoggingIntegration(
-        level=logging.INFO,        # Capture info and above as breadcrumbs
-        event_level=logging.ERROR  # Send error events to Sentry
-    )
-    
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        environment=env('SENTRY_ENVIRONMENT'),
-        integrations=[
-            DjangoIntegration(
-                transaction_style='url',       # Track transactions by URL pattern
-                middleware_spans=True,         # Track middleware execution
-                signals_spans=False,          # Disable signals tracking (can be noisy)
-            ),
-            sentry_logging,
-        ],
-        # Performance Monitoring
-        traces_sample_rate=env('SENTRY_TRACES_SAMPLE_RATE'),    # Adjust for production load
-        profiles_sample_rate=env('SENTRY_PROFILES_SAMPLE_RATE'), # Profiling sample rate
-        
-        # Security and Privacy
-        send_default_pii=True,               # Include user data in errors (email, username)
-        attach_stacktrace=True,              # Attach stack traces to messages
-        
-        # Release tracking
-        release=env('SENTRY_RELEASE', default=None),  # Optional: track releases
-        
-        # Filter out health check and monitoring requests
-        before_send_transaction=lambda event, hint: None if (
-            event.get('request', {}).get('url', '').endswith('/health/') or
-            event.get('request', {}).get('url', '').endswith('/metrics/')
-        ) else event,
-    )
 
 # CRITICAL SETTINGS - NO DEFAULTS, WILL RAISE ERROR IF MISSING
 SECRET_KEY = env('SECRET_KEY')  # Required: Django secret key for cryptographic signing
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')  # Required: Specific domains for production
+
+# =====================================
+# FEATURE FLAGS SYSTEM
+# =====================================
+# Consolidated feature flags with DEBUG-based defaults and environment overrides
+# Pattern: DEBUG=True sets development defaults, DEBUG=False sets production defaults
+# Individual flags can be overridden via environment variables
+
+def _get_feature_flag(flag_name: str, dev_default: bool, prod_default: bool) -> bool:
+    """Get feature flag value with DEBUG-based defaults and environment override."""
+    debug_based_default = dev_default if DEBUG else prod_default
+    return env(flag_name, default=debug_based_default)
+
+# Feature flags configuration
+FEATURE_FLAGS = {
+    # Storage backend: Local filesystem vs Google Cloud Storage
+    'USE_GCS_STORAGE': _get_feature_flag('USE_GCS_STORAGE', dev_default=False, prod_default=True),
+    
+    # Email backend: Inbucket (dev) vs SMTP (prod)
+    'USE_INBUCKET': _get_feature_flag('USE_INBUCKET', dev_default=True, prod_default=False),
+    
+    # Logging integrations
+    'LOKI_ENABLED': _get_feature_flag('LOKI_ENABLED', dev_default=False, prod_default=False),
+    'USE_GOOGLE_CLOUD_LOGGING': _get_feature_flag('USE_GOOGLE_CLOUD_LOGGING', dev_default=False, prod_default=True),
+    
+    # Development tools and debugging
+    'BROWSER_RELOAD': _get_feature_flag('BROWSER_RELOAD', dev_default=True, prod_default=False),
+    'DJANGO_TOOLBAR': _get_feature_flag('DJANGO_TOOLBAR', dev_default=False, prod_default=False),
+    
+    # Activity and audit logging  
+    'APPLICATION_ACTIVITY_LOGGING': _get_feature_flag('APPLICATION_ACTIVITY_LOGGING', dev_default=True, prod_default=True),
+    
+    # Database backend: SQLite (dev) vs PostgreSQL (prod)
+}
+
+# Backward compatibility - expose individual flags as module-level variables
+USE_GCS_STORAGE = FEATURE_FLAGS['USE_GCS_STORAGE']
+USE_INBUCKET = FEATURE_FLAGS['USE_INBUCKET'] 
+LOKI_ENABLED = FEATURE_FLAGS['LOKI_ENABLED']
+USE_GOOGLE_CLOUD_LOGGING = FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']
+APPLICATION_ACTIVITY_LOGGING = FEATURE_FLAGS['APPLICATION_ACTIVITY_LOGGING']
 
 # Debug logging for CSRF_TRUSTED_ORIGINS
 csrf_env_value = os.environ.get('CSRF_TRUSTED_ORIGINS', 'NOT_SET')
@@ -129,16 +136,29 @@ logging.debug(f"[CSRF DEBUG] Parsed CSRF_TRUSTED_ORIGINS: {parsed_csrf_origins}"
 CSRF_TRUSTED_ORIGINS = parsed_csrf_origins
 logging.debug(f"[CSRF DEBUG] Final CSRF_TRUSTED_ORIGINS setting: {CSRF_TRUSTED_ORIGINS}")
 
-DATABASES = {
-    'default': {
-        'ENGINE': env('DB_ENGINE'),
-        'NAME': env('PG_DB'),      # Required: Database name
-        'USER': env('PG_USER'),    # Required: Database user
-        'PASSWORD': env('PG_PASSWORD'),  # Required: Database password
-        'HOST': env('PG_HOST'),    # Required: Database host
-        'PORT': env.int('PG_PORT'),  # Required: Database port
+# Database configuration - determined by DB_ENGINE setting
+db_engine = env('DB_ENGINE', default='django.db.backends.sqlite3')
+
+if db_engine == 'django.db.backends.sqlite3':
+    # SQLite database configuration
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # PostgreSQL or other database configuration
+    DATABASES = {
+        'default': {
+            'ENGINE': db_engine,
+            'NAME': env('PG_DB'),      # Required: Database name
+            'USER': env('PG_USER'),    # Required: Database user
+            'PASSWORD': env('PG_PASSWORD'),  # Required: Database password
+            'HOST': env('PG_HOST'),    # Required: Database host
+            'PORT': env.int('PG_PORT'),  # Required: Database port
+        }
+    }
 
 # Application definition
 
@@ -200,7 +220,8 @@ TEMPLATES = [
     },
 ]
 
-if DEBUG:
+# Development tools based on feature flags
+if FEATURE_FLAGS['BROWSER_RELOAD']:
     INSTALLED_APPS.append("django_browser_reload")
     MIDDLEWARE.append("django_browser_reload.middleware.BrowserReloadMiddleware")
 
@@ -288,7 +309,7 @@ ACCOUNT_PASSWORD_MIN_LENGTH = 8
 # from an environment variable.
 
 # SMTP BACKEND CONFIGURATION (used by Post Office)
-if env('USE_INBUCKET'):
+if FEATURE_FLAGS['USE_INBUCKET']:
     # DEVELOPMENT EMAIL SETTINGS (using Inbucket)
     SMTP_EMAIL_HOST = env('EMAIL_HOST')
     SMTP_EMAIL_PORT = env('INBUCKET_SMTP_PORT')
@@ -331,7 +352,13 @@ POST_OFFICE = {
 
 # LOG FORWARDING CONFIGURATION
 LOKI_URL = env('LOKI_URL') if env('LOKI_URL') else None
-LOKI_ENABLED = env('LOKI_ENABLED')
+# LOKI_ENABLED - now using FEATURE_FLAGS['LOKI_ENABLED']
+
+# GOOGLE CLOUD LOGGING CONFIGURATION
+# USE_GOOGLE_CLOUD_LOGGING - now using FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']
+GOOGLE_CLOUD_LOGGING_PROJECT_ID = env('GOOGLE_CLOUD_LOGGING_PROJECT_ID') if env('GOOGLE_CLOUD_LOGGING_PROJECT_ID') else None
+GOOGLE_CLOUD_LOGGING_RESOURCE_TYPE = env('GOOGLE_CLOUD_LOGGING_RESOURCE_TYPE')
+GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH = env('GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH') if env('GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH') else None
 
 # LOGGING CONFIGURATION
 LOGGING = {
@@ -421,7 +448,7 @@ LOGGING = {
 }
 
 # Add Loki handler if enabled
-if LOKI_ENABLED and LOKI_URL:
+if FEATURE_FLAGS['LOKI_ENABLED'] and LOKI_URL:
     try:
         import logging_loki
         
@@ -442,13 +469,73 @@ if LOKI_ENABLED and LOKI_URL:
     except ImportError:
         pass  # Gracefully handle missing python-logging-loki dependency
 
-# Configure logging for containerized environments
-# Remove file handlers if Loki is enabled (containerized deployment)
-if LOKI_ENABLED and LOKI_URL:
-    # Replace file handlers with console-only + loki for containerized deployment
-    LOGGING['loggers']['django']['handlers'] = ['console', 'loki']
-    LOGGING['loggers']['webapp']['handlers'] = ['console', 'loki'] 
-    LOGGING['loggers']['performance']['handlers'] = ['loki']
+# Add Google Cloud Logging handler if enabled
+if FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING'] and GOOGLE_CLOUD_LOGGING_PROJECT_ID:
+    try:
+        import google.cloud.logging
+        from google.cloud.logging_v2.handlers import CloudLoggingHandler
+        
+        # Set up credentials if path provided
+        if GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH and os.path.exists(GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH):
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH
+        
+        # Create client and handler
+        client = google.cloud.logging.Client(project=GOOGLE_CLOUD_LOGGING_PROJECT_ID)
+        
+        # Add Google Cloud Logging handler to LOGGING config
+        LOGGING['handlers']['google_cloud'] = {
+            'class': 'google.cloud.logging_v2.handlers.CloudLoggingHandler',
+            'client': client,
+            'name': 'beryl3-webapp',
+            'resource_type': GOOGLE_CLOUD_LOGGING_RESOURCE_TYPE,
+        }
+        
+        # Add structured formatter for Google Cloud Logging
+        LOGGING['formatters']['google_cloud'] = {
+            'class': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(user)s %(path)s %(message)s',
+        }
+        
+        # Use the structured formatter for Google Cloud handler
+        LOGGING['handlers']['google_cloud']['formatter'] = 'google_cloud'
+        LOGGING['handlers']['google_cloud']['filters'] = ['user_info']
+        
+        # Add Google Cloud handler to existing loggers
+        LOGGING['loggers']['django']['handlers'].append('google_cloud')
+        LOGGING['loggers']['webapp']['handlers'].append('google_cloud')
+        LOGGING['loggers']['performance']['handlers'].append('google_cloud')
+        
+    except ImportError:
+        pass  # Gracefully handle missing google-cloud-logging dependency
+    except Exception as e:
+        # Log the error but don't break the application
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to setup Google Cloud Logging: {e}")
+
+# Configure logging for containerized environments  
+# Remove file handlers for cloud logging (containerized deployment)
+if FEATURE_FLAGS['LOKI_ENABLED'] and LOKI_URL or FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']:
+    # Build handler list for containerized deployment
+    cloud_handlers = ['console']
+    
+    if FEATURE_FLAGS['LOKI_ENABLED'] and LOKI_URL:
+        cloud_handlers.append('loki')
+        
+    if FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING'] and GOOGLE_CLOUD_LOGGING_PROJECT_ID:
+        cloud_handlers.append('google_cloud')
+    
+    # Replace file handlers with cloud handlers
+    LOGGING['loggers']['django']['handlers'] = cloud_handlers
+    LOGGING['loggers']['webapp']['handlers'] = cloud_handlers
+    
+    # Performance logs go to cloud handlers only (no console spam)
+    performance_handlers = []
+    if FEATURE_FLAGS['LOKI_ENABLED'] and LOKI_URL:
+        performance_handlers.append('loki')
+    if FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING'] and GOOGLE_CLOUD_LOGGING_PROJECT_ID:
+        performance_handlers.append('google_cloud')
+    
+    LOGGING['loggers']['performance']['handlers'] = performance_handlers if performance_handlers else ['console']
     
     # Remove file handlers from handlers config to prevent initialization errors
     if 'file' in LOGGING['handlers']:
@@ -462,7 +549,7 @@ if LOKI_ENABLED and LOKI_URL:
 # Configurable storage backend (local filesystem or Google Cloud Storage)
 
 # Google Cloud Storage Configuration
-USE_GCS_STORAGE = env('USE_GCS_STORAGE')
+# USE_GCS_STORAGE - now using FEATURE_FLAGS['USE_GCS_STORAGE']
 GCS_BUCKET_NAME = env('GCS_BUCKET_NAME')
 GCS_PROJECT_ID = env('GCS_PROJECT_ID')
 GCS_CREDENTIALS_PATH = env('GCS_CREDENTIALS_PATH')
@@ -480,7 +567,7 @@ if DEBUG:
     STATIC_URL = '/static/'
     MEDIA_URL = '/media/'
     
-    if USE_GCS_STORAGE:
+    if FEATURE_FLAGS['USE_GCS_STORAGE']:
         # Development with GCS media but local static files
         MEDIA_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/{GCS_LOCATION}/'
         STORAGES = {
@@ -516,7 +603,7 @@ if DEBUG:
         }
 else:
     # PRODUCTION MODE - Check USE_GCS_STORAGE setting
-    if USE_GCS_STORAGE:
+    if FEATURE_FLAGS['USE_GCS_STORAGE']:
         # Both media and static files on GCS
         MEDIA_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/{GCS_LOCATION}/'
         STATIC_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/static/'
@@ -577,4 +664,4 @@ EXTERNAL_RESEND_URL = env('EXTERNAL_RESEND_URL') if env('EXTERNAL_RESEND_URL') e
 SITE_DOMAIN = env('SITE_DOMAIN', default='beryl3.localdomain')
 
 # Application Activity Logging Configuration
-APPLICATION_ACTIVITY_LOGGING = env('APPLICATION_ACTIVITY_LOGGING')
+# APPLICATION_ACTIVITY_LOGGING - now using FEATURE_FLAGS['APPLICATION_ACTIVITY_LOGGING']
