@@ -24,7 +24,7 @@
 
 13. ✅ **COMPLETED** - Breadcrund should not be displayed at Home '/' page.
 
-14. On the Home page, when user is logged in they should see a link to their dashboard, collections and favourites instead the hero section "Ready to organize..."
+14. ✅ **COMPLETED** - On the Home page, when user is logged in they should see a link to their dashboard, collections and favourites instead the hero section "Ready to organize..."
 
 15. The callout actions in 'What you can do with Beryl3', should use different colors for icon and title, as some of the grays used there are barelly visible.
 

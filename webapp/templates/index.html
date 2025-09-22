@@ -20,10 +20,32 @@
         <div class="divider"></div>
 
         <!-- Call to Action -->
+        {% if user.is_authenticated %}
+        <section class="py-16 text-center">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-3xl font-bold mb-6 text-primary">Welcome back, {{ user.email }}!</h2>
+                <p class="text-lg text-base-content mb-8">Quick access to your collections and favorite items.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
+                        {% lucide 'layout-dashboard' size='20' class='mr-2' %}
+                        Dashboard
+                    </a>
+                    <a href="{% url 'collection_list' %}" class="btn btn-outline btn-lg">
+                        {% lucide 'folder-open' size='20' class='mr-2' %}
+                        Your Collections
+                    </a>
+                    <a href="{% url 'favorites_list' %}" class="btn btn-outline btn-lg">
+                        {% lucide 'heart' size='20' class='mr-2' %}
+                        Favorites
+                    </a>
+                </div>
+            </div>
+        </section>
+        {% else %}
         <section class="py-16 text-center">
             <div class="max-w-2xl mx-auto">
                 <h2 class="text-3xl font-bold mb-6 text-primary">Ready to organize your collections?</h2>
-                <p class="text-lg text-base-content/80 mb-8">Start tracking your items, create wish lists, and share your collections with the world.</p>
+                <p class="text-lg text-base-content mb-8">Start tracking your items, create wish lists, and share your collections with the world.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="{% url 'account_signup' %}" class="btn btn-primary btn-lg">
                         {% lucide 'user-plus' size='20' class='mr-2' %}
@@ -36,6 +58,7 @@
                 </div>
             </div>
         </section>
+        {% endif %}
 
         <div class="divider"></div>
 
