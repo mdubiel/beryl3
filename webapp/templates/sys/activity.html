@@ -86,7 +86,7 @@
         <div class="terminal-text">
             <span class="terminal-accent">{{ total_count }}</span> activity entries found
             {% if action_filter or user_filter or date_from or date_to %}
-                <span class="text-sm opacity-70">(filtered)</span>
+                <span class="text-sm text-neutral">(filtered)</span>
             {% endif %}
         </div>
         <a href="{% url 'sys_activity' %}" class="btn btn-outline  text-blue-500 btn-sm">

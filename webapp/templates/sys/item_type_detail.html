@@ -31,7 +31,7 @@
                         {% endif %}
                         <div>
                             <div class="text-lg font-semibold terminal-text">{{ item_type.display_name }}</div>
-                            <div class="text-sm terminal-text opacity-70">ID: {{ item_type.id }}</div>
+                            <div class="text-sm terminal-text text-neutral">ID: {{ item_type.id }}</div>
                         </div>
                     </div>
                     {% if item_type.description %}
@@ -47,11 +47,11 @@
                     <div class="grid grid-cols-2 gap-4 mt-4">
                         <div class="text-center">
                             <div class="text-2xl font-bold terminal-accent">{{ attributes.count }}</div>
-                            <div class="text-xs terminal-text opacity-70">Attributes Defined</div>
+                            <div class="text-xs terminal-text text-neutral">Attributes Defined</div>
                         </div>
                         <div class="text-center">
                             <div class="text-2xl font-bold terminal-accent">{{ item_count }}</div>
-                            <div class="text-xs terminal-text opacity-70">Items Using Type</div>
+                            <div class="text-xs terminal-text text-neutral">Items Using Type</div>
                         </div>
                     </div>
                 </div>
@@ -94,14 +94,14 @@
                                 <div>
                                     <div class="font-semibold terminal-text">{{ attribute.display_name }}</div>
                                     {% if attribute.help_text %}
-                                        <div class="text-sm opacity-70 mt-1">{{ attribute.help_text|truncatechars:40 }}</div>
+                                        <div class="text-sm text-neutral mt-1">{{ attribute.help_text|truncatechars:40 }}</div>
                                     {% endif %}
                                 </div>
                             </td>
                             <td>
                                 <div class="badge badge-outline badge-sm">{{ attribute.get_attribute_type_display }}</div>
                                 {% if attribute.attribute_type == 'CHOICE' and attribute.choices %}
-                                    <div class="text-xs opacity-70 mt-1">{{ attribute.choices|length }} choices</div>
+                                    <div class="text-xs text-neutral mt-1">{{ attribute.choices|length }} choices</div>
                                 {% endif %}
                             </td>
                             <td>

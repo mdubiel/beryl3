@@ -102,12 +102,12 @@
                 {% endif %}
                 
                 {# Row 3: Description #}
-                <p class="text-sm text-base-content text-opacity-60">{{ collection.description|default:"*The description appears to have wandered off somewhere, probably to have a cup of tea*"|truncatechars:200 }}</p>
+                <p class="text-sm text-base-content text-neutral">{{ collection.description|default:"*The description appears to have wandered off somewhere, probably to have a cup of tea*"|truncatechars:200 }}</p>
                 
             </div>
             
             {# Bottom section: Items count and updated time #}
-            <div class="text-xs opacity-70">
+            <div class="text-xs text-neutral">
                 {{ collection.item_count }} item{{ collection.item_count|pluralize }} • Updated {{ collection.updated|timesince }} ago
             </div>
             

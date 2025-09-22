@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.suggestions && response.suggestions.length > 0) {
                 html += `
                     <div class="text-sm">
-                        <span class="text-base-content opacity-70">Suggestions: </span>
+                        <span class="text-base-content text-neutral">Suggestions: </span>
                         ${response.suggestions.map(icon => `
                             <button type="button" 
                                     class="btn btn-xs btn-outline mr-1 mb-1 suggestion-btn"

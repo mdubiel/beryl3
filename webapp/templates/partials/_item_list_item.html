@@ -183,7 +183,7 @@
             </div>
             
             {# Row 3: Description #}
-            <p class="text-sm text-base-content text-opacity-60">{{ item.description|default:"*No description provided*" }}</p>
+            <p class="text-sm text-base-content text-neutral">{{ item.description|default:"*No description provided*" }}</p>
             
             {# Row 4: Attributes display #}
             {% if item.item_type %}
@@ -198,7 +198,7 @@
             <div class="mt-4">
                 <div class="flex flex-wrap gap-1 justify-start">
                     {% for image in item.images.all %}
-                    <div class="avatar cursor-pointer hover:opacity-80 transition-opacity" onclick="showImageGallery({{ forloop.counter0 }}, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{{ img.media_file.file_url }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
+                    <div class="avatar cursor-pointer hover:opacity-75 transition-opacity" onclick="showImageGallery({{ forloop.counter0 }}, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{{ img.media_file.file_url }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
                         <div class="w-12 h-12 rounded">
                             <img src="{{ image.media_file.file_url }}" alt="{{ item.name }} - Image {{ forloop.counter }}" class="object-cover" />
                         </div>

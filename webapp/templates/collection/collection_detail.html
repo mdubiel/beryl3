@@ -123,12 +123,12 @@
             {% endif %}
             </div>
             
-            <p class="text-base-content text-opacity-70">{{ collection.description|default:"No description provided." }}</p>
+            <p class="text-base-content text-neutral">{{ collection.description|default:"No description provided." }}</p>
             
             {# Collection Images Gallery - Smaller Size #}
             {% if collection.images.all %}
             <div class="mt-6">
-                <h3 class="text-sm font-semibold mb-3 text-base-content text-opacity-60">Collection Images</h3>
+                <h3 class="text-sm font-semibold mb-3 text-base-content text-neutral">Collection Images</h3>
                 <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
                     {% for image in collection.images.all %}
                     <div class="aspect-square bg-base-200 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
@@ -181,7 +181,7 @@
             {% include "partials/_item_list_item.html" with item=item %}
         {% empty %}
             <div class="card bg-base-100 shadow-sm p-8 text-center">
-                <p class="text-base-content text-opacity-60">This collection has no items yet.</p>
+                <p class="text-base-content text-neutral">This collection has no items yet.</p>
             </div>
         {% endfor %}
     </div>
@@ -445,7 +445,7 @@ function displayCollections(collections) {
             <div class="flex justify-between items-center">
                 <div>
                     <h4 class="font-semibold">${collection.name}</h4>
-                    <p class="text-sm opacity-70">${collection.item_count} items</p>
+                    <p class="text-sm text-neutral">${collection.item_count} items</p>
                 </div>
                 <div class="text-right">
                     <button class="btn btn-primary btn-sm">

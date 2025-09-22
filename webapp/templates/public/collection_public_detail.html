@@ -25,7 +25,7 @@
             <div class="text-center lg:text-left">
                 <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
                 <div class="flex items-center justify-center lg:justify-start gap-2 mt-2">
-                    {% lucide 'user' size=16 class='opacity-70' %}
+                    {% lucide 'user' size=16 class='text-neutral' %}
                     <p class="text-lg opacity-80">
                         Owned by {{ collection.created_by.username }}
                     </p>
@@ -84,7 +84,7 @@
                             {% lucide 'package' size=14 class='mr-1' %}
                             Generic
                         {% endif %}
-                        <span class="ml-1 text-xs opacity-70">({{ item_type_group.list|length }})</span>
+                        <span class="ml-1 text-xs text-neutral">({{ item_type_group.list|length }})</span>
                     </div>
                 {% endfor %}
             </div>
@@ -103,7 +103,7 @@
         <div class="text-center py-12">
             <div class="max-w-md mx-auto">
                 {% lucide 'package-x' size=48 class='mx-auto text-base-content/40 mb-4' %}
-                <p class="text-lg opacity-70">This collection is currently empty.</p>
+                <p class="text-lg text-neutral">This collection is currently empty.</p>
                 <p class="text-sm opacity-60 mt-2">Check back later for new items!</p>
             </div>
         </div>

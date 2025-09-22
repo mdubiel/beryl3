@@ -33,7 +33,7 @@
             
             {# Description #}
             {% if item.description %}
-                <p class="text-sm opacity-70 mb-3">{{ item.description }}</p>
+                <p class="text-sm text-neutral mb-3">{{ item.description }}</p>
             {% endif %}
             
             {# Status badge #}
@@ -98,7 +98,7 @@
                                 <div class="form-control">
                                     <input type="email" name="email" placeholder="your.email@example.com" class="input input-bordered input-sm" required>
                                 </div>
-                                <p class="text-xs opacity-70 mt-1">We'll send you a confirmation email with a cancellation link.</p>
+                                <p class="text-xs text-neutral mt-1">We'll send you a confirmation email with a cancellation link.</p>
                                 <button type="submit" class="btn btn-success btn-sm mt-2">
                                     {% lucide 'check' size=14 class='mr-1' %}
                                     Confirm

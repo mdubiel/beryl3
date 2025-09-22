@@ -89,9 +89,9 @@
             <a href="{% url 'item_detail' item.hash %}">
                 <figure class="h-20 rounded-t-2xl overflow-hidden">
                     {% if item.default_image %}
-                        <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-90 transition-opacity" />
+                        <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
                     {% elif item.images.all.0 %}
-                        <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-90 transition-opacity" />
+                        <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center hover:bg-base-300/80 transition-colors">
                             {% lucide 'image' size=24 class='text-base-content/40' %}
@@ -109,8 +109,8 @@
     </div>
     
     {% else %}
-    <div class="text-center py-8 opacity-60">
-        <div class="text-lg mb-2">{% lucide 'heart' size=48 class='mx-auto mb-4 opacity-30' %}</div>
+    <div class="text-center py-8 text-base-content">
+        <div class="text-lg mb-2">{% lucide 'heart' size=48 class='mx-auto mb-4 text-neutral' %}</div>
         <p>No favorite items yet. Star items to see them here!</p>
     </div>
     {% endif %}
@@ -149,7 +149,7 @@
                     <h2 class="card-title">
                         <a href="{% url 'collection_detail' list.hash %}" class="link link-hover">{{ list.name }}</a>
                     </h2>
-                    <p class="text-sm text-base-content text-opacity-60">
+                    <p class="text-sm text-base-content text-neutral">
                         {{ list.item_count }} item{{ list.item_count|pluralize }} 
                         • 
                         {% if list.visibility != 'PRIVATE' %}

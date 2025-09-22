@@ -49,7 +49,7 @@
                                     <div>
                                         <a href="{% url 'sys_item_type_detail' item_type.id %}" class="font-semibold terminal-text hover:text-blue-500 transition-colors">{{ item_type.display_name }}</a>
                                         {% if item_type.description %}
-                                            <div class="text-sm opacity-70 mt-1">{{ item_type.description|truncatechars:50 }}</div>
+                                            <div class="text-sm text-neutral mt-1">{{ item_type.description|truncatechars:50 }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
