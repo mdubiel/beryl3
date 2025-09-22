@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         # Drop the ApplicationActivity table since we're replacing it with standard logging
         migrations.RunSQL(
-            sql="DROP TABLE IF EXISTS web_applicationactivity CASCADE;",
+            sql="DROP TABLE IF EXISTS web_applicationactivity;",
             reverse_sql="-- Cannot reverse this migration - ApplicationActivity table structure would need to be recreated manually",
         ),
     ]

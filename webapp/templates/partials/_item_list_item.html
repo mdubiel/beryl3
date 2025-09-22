@@ -11,7 +11,7 @@
             <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover" />
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                {% lucide 'image' size=48 class='text-gray-400' %}
+                {% lucide 'image' size=48 class='text-base-content/40' %}
             </div>
         {% endif %}
     </figure>
@@ -37,7 +37,7 @@
                         {% if item.is_favorite %}
                             {% lucide 'star' size=20 class='text-warning fill-current' %}
                         {% else %}
-                            {% lucide 'star' size=20 class='text-gray-400 hover:text-warning' %}
+                            {% lucide 'star' size=20 class='text-base-content/40 hover:text-warning' %}
                         {% endif %}
                     </button>
                     {% endif %}

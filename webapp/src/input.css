@@ -14,34 +14,52 @@
   default: true;
   prefersdark: false;
   color-scheme: "light";
-  --color-base-100: oklch(96% 0.005 247.858);
-  --color-base-200: oklch(92% 0.008 247.858);
-  --color-base-300: oklch(85% 0.015 247.858);
-  --color-base-content: oklch(25% 0.025 257.281);
-  --color-primary: oklch(65% 0.15 260);
-  --color-primary-content: oklch(98% 0.003 247.858);
-  --color-secondary: oklch(72% 0.12 320);
-  --color-secondary-content: oklch(98% 0.003 247.858);
-  --color-accent: oklch(75% 0.18 85);
-  --color-accent-content: oklch(25% 0.025 257.281);
-  --color-neutral: oklch(35% 0.035 257.281);
-  --color-neutral-content: oklch(95% 0.005 247.858);
-  --color-info: oklch(68% 0.16 240);
-  --color-info-content: oklch(98% 0.003 247.858);
-  --color-success: oklch(65% 0.14 145);
-  --color-success-content: oklch(98% 0.003 247.858);
-  --color-warning: oklch(75% 0.16 65);
-  --color-warning-content: oklch(25% 0.025 257.281);
-  --color-error: oklch(68% 0.15 15);
-  --color-error-content: oklch(98% 0.003 247.858);
+  /* Primary colors - Facebook blue palette */
+  --color-primary: #3B5998;
+  --color-primary-focus: #2B4370;
+  --color-primary-content: #FFFFFF;
+  /* Secondary colors - Light grays */
+  --color-secondary: #E9ECEF;
+  --color-secondary-focus: #DEE2E6;
+  --color-secondary-content: #495057;
+  /* Accent colors */
+  --color-accent: #E9ECEF;
+  --color-accent-focus: #DEE2E6;
+  --color-accent-content: #495057;
+  /* Neutral colors */
+  --color-neutral: #495057;
+  --color-neutral-focus: #343A40;
+  --color-neutral-content: #F8F9FA;
+  /* Base colors - Light theme */
+  --color-base-100: #F8F9FA;
+  --color-base-200: #E9ECEF;
+  --color-base-300: #DEE2E6;
+  --color-base-content: #495057;
+  /* Status colors */
+  --color-info: #60A5FA;
+  --color-info-content: #FFFFFF;
+  --color-success: #76C7AD;
+  --color-success-content: #FFFFFF;
+  --color-warning: #FAD7A0;
+  --color-warning-content: #495057;
+  --color-error: #F4948E;
+  --color-error-content: #FFFFFF;
+  /* Border radius and animations */
   --radius-selector: 0.5rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.75rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
   --size-selector: 0.1875rem;
   --size-field: 0.25rem;
   --border: 1px;
   --depth: 1;
   --noise: 0;
+  /* Custom animations and scaling */
+  --animation-btn: 0.25s;
+  --animation-input: 0.2s;
+  --btn-focus-scale: 0.95;
+  --border-btn: 1px;
+  --tab-border: 1px;
+  --tab-radius: 0.5rem;
 }
 
 /* Bridge DaisyUI theme variables to utility classes */

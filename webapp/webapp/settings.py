@@ -82,7 +82,7 @@ else:
 
 # CRITICAL SETTINGS - NO DEFAULTS, WILL RAISE ERROR IF MISSING
 SECRET_KEY = env('SECRET_KEY')  # Required: Django secret key for cryptographic signing
-DEBUG = env('DEBUG')
+DEBUG = env.bool('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')  # Required: Specific domains for production
 
 # =====================================
@@ -261,7 +261,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = env('STATIC_URL')
 
 # Location of static files _before_ collectstatic
 # it is projectfolder/local/static (not in "plate" directory)
@@ -272,7 +272,7 @@ STATICFILES_DIRS = (
 # collectstatic copy all static files into this directory
 # Local development: filesystem path
 # Production: will be overridden by GCS storage backend
-STATIC_ROOT = BASE_DIR / "tmp" / "static"
+STATIC_ROOT = BASE_DIR / "local_cdn" / "static"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
