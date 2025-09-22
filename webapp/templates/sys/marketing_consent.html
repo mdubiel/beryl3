@@ -146,22 +146,40 @@
     </div>
 
     <!-- Bulk Actions -->
-    {% if resend_configured and not_synced_count > 0 %}
+    {% if resend_configured %}
     <div class="terminal-bg">
         <div class="p-6">
             <h3 class="terminal-accent text-lg font-bold mb-4">
                 <span class="terminal-text">></span> BULK ACTIONS
             </h3>
-            <div class="flex items-center gap-4">
-                <form method="post" action="{% url 'sys_marketing_consent_bulk_sync' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-warning">
-                        {% lucide 'refresh-cw' size=16 class='mr-2' %}
-                        Sync All Users with Resend ({{ not_synced_count }} pending)
-                    </button>
-                </form>
-                <div class="text-sm terminal-text">
-                    This will sync all users whose local preferences don't match their Resend status
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% if not_synced_count > 0 %}
+                <div class="flex flex-col gap-2">
+                    <form method="post" action="{% url 'sys_marketing_consent_bulk_sync' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning w-full">
+                            {% lucide 'refresh-cw' size=16 class='mr-2' %}
+                            Sync All Users ({{ not_synced_count }} pending)
+                        </button>
+                    </form>
+                    <div class="text-xs terminal-text opacity-70">
+                        Sync users whose local preferences don't match Resend status
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="flex flex-col gap-2">
+                    <form method="post" action="{% url 'sys_marketing_consent_bulk_remove_opted_out' %}" 
+                          onsubmit="return confirm('Remove all opted-out users from Resend audience? This action cannot be undone.')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-error w-full">
+                            {% lucide 'user-x' size=16 class='mr-2' %}
+                            Remove All Opted-Out Users
+                        </button>
+                    </form>
+                    <div class="text-xs terminal-text opacity-70">
+                        Force remove opted-out users from Resend audience
+                    </div>
                 </div>
             </div>
         </div>
@@ -234,13 +252,26 @@
                         <td class="terminal-text text-sm">{{ profile.created|date:"M j, Y" }}</td>
                         <td>
                             {% if resend_configured %}
-                            <form method="post" action="{% url 'sys_marketing_consent_sync_user' profile.user.id %}" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline">
-                                    {% lucide 'refresh-cw' size=14 class='mr-1' %}
-                                    Sync
-                                </button>
-                            </form>
+                            <div class="flex gap-1">
+                                <form method="post" action="{% url 'sys_marketing_consent_sync_user' profile.user.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-xs btn-outline" title="Sync with Resend">
+                                        {% lucide 'refresh-cw' size=12 class='mr-1' %}
+                                        Sync
+                                    </button>
+                                </form>
+                                {% if profile.resend_audience_id %}
+                                <form method="post" action="{% url 'sys_marketing_consent_remove_user' profile.user.id %}" 
+                                      class="inline" 
+                                      onsubmit="return confirm('Force remove {{ profile.user.email }} from Resend audience? This will also opt them out.')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-xs btn-error" title="Force remove from Resend">
+                                        {% lucide 'user-x' size=12 class='mr-1' %}
+                                        Remove
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
                             {% else %}
                             <span class="text-xs terminal-text opacity-50">API Not Configured</span>
                             {% endif %}
@@ -313,6 +344,15 @@
                         <li>• <strong>Not Synced:</strong> Local preference differs from Resend</li>
                         <li>• Sync happens automatically on preference changes</li>
                         <li>• Manual sync available for troubleshooting</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Removal Actions</h4>
+                    <ul class="text-sm terminal-text space-y-1">
+                        <li>• <strong>Remove:</strong> Force remove user from Resend audience</li>
+                        <li>• Automatically opts user out of marketing emails</li>
+                        <li>• Useful for GDPR compliance and data cleanup</li>
+                        <li>• Bulk removal available for all opted-out users</li>
                     </ul>
                 </div>
             </div>

@@ -2338,3 +2338,92 @@ def sys_marketing_consent_bulk_sync(request):
     return redirect('sys_marketing_consent')
 
 
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_marketing_consent_remove_user(request, user_id):
+    """Forcibly remove a user from Resend audience regardless of their preference"""
+    user = get_object_or_404(User, id=user_id)
+    
+    try:
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        
+        # Import the service
+        from web.services.resend_service import ResendService
+        resend_service = ResendService()
+        
+        # Force remove from Resend audience
+        success = resend_service.unsubscribe_from_audience(user.email)
+        
+        if success:
+            # Update profile to reflect removal
+            profile.resend_audience_id = None
+            profile.receive_marketing_emails = False  # Force opt-out
+            profile.marketing_email_unsubscribed_at = timezone.now()
+            profile.save()
+            
+            logger.warning("Admin user '%s' [%s] forcibly removed user '%s' [%s] from Resend audience", 
+                          request.user.username, request.user.id, user.email, user.id)
+            messages.success(request, f"Successfully removed {user.email} from Resend audience and updated preferences")
+        else:
+            messages.error(request, f"Failed to remove {user.email} from Resend audience")
+                
+    except Exception as e:
+        logger.error("Marketing consent removal failed for user %s: %s", user.email, str(e))
+        messages.error(request, f"Removal failed for {user.email}: {str(e)}")
+    
+    return redirect('sys_marketing_consent')
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_marketing_consent_bulk_remove_opted_out(request):
+    """Bulk remove all opted-out users from Resend audience"""
+    try:
+        from web.services.resend_service import ResendService
+        resend_service = ResendService()
+        
+        # Get opted-out users who are still in Resend audience
+        profiles_to_remove = UserProfile.objects.select_related('user').filter(
+            receive_marketing_emails=False,
+            resend_audience_id__isnull=False
+        )
+        
+        total_count = profiles_to_remove.count()
+        if total_count == 0:
+            messages.info(request, "No opted-out users found in Resend audience")
+            return redirect('sys_marketing_consent')
+        
+        success_count = 0
+        error_count = 0
+        
+        for profile in profiles_to_remove:
+            try:
+                # Remove from Resend audience
+                success = resend_service.unsubscribe_from_audience(profile.user.email)
+                if success:
+                    profile.resend_audience_id = None
+                    profile.marketing_email_unsubscribed_at = timezone.now()
+                    profile.save()
+                    success_count += 1
+                else:
+                    error_count += 1
+                        
+            except Exception as e:
+                logger.error("Bulk removal failed for user %s: %s", profile.user.email, str(e))
+                error_count += 1
+        
+        logger.info("Admin user '%s' [%s] performed bulk removal of opted-out users: %d success, %d errors", 
+                   request.user.username, request.user.id, success_count, error_count)
+        
+        if error_count == 0:
+            messages.success(request, f"Successfully removed {success_count} opted-out users from Resend audience")
+        else:
+            messages.warning(request, f"Removed {success_count} users successfully, {error_count} failed")
+            
+    except Exception as e:
+        logger.error("Bulk removal of opted-out users failed: %s", str(e))
+        messages.error(request, f"Bulk removal failed: {str(e)}")
+    
+    return redirect('sys_marketing_consent')
+
+
