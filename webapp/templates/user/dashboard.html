@@ -279,20 +279,51 @@
 {# End Main #}
 
 
-{# Sharing tip - Compact call to action #}
-<div class="alert alert-info mt-12">
-    <div class="flex items-center gap-3">
-        {% lucide 'share-2' size=24 class='text-info' %}
-        <div class="flex-1">
-            <h3 class="font-bold">Make your collections shareable</h3>
-            <div class="text-sm">Turn collections into public wishlists so friends and family know exactly what you're looking for.</div>
+{# Collection tips - Compact call to actions #}
+<div class="space-y-4 mt-12">
+    {# Favorites tip #}
+    <div class="alert alert-success">
+        <div class="flex items-center gap-3">
+            {% lucide 'heart' size=24 class='text-success' %}
+            <div class="flex-1">
+                <h3 class="font-bold">Star your favorite items</h3>
+                <div class="text-sm">Mark items you love most to find them quickly and showcase your top picks to others.</div>
+            </div>
+            <a href="{% url 'favorites_list' %}" class="btn btn-sm btn-outline">
+                {% lucide 'star' size=16 class='mr-2' %} View Favorites
+            </a>
         </div>
-        <a href="{% url 'collection_list' %}" class="btn btn-sm btn-outline">
-            {% lucide 'eye' size=16 class='mr-2' %} Manage Visibility
-        </a>
+    </div>
+
+    {# Organization tip #}
+    <div class="alert alert-warning">
+        <div class="flex items-center gap-3">
+            {% lucide 'tags' size=24 class='text-warning' %}
+            <div class="flex-1">
+                <h3 class="font-bold">Organize with custom attributes</h3>
+                <div class="text-sm">Add custom fields like "condition", "price", or "location" to track exactly what matters to you.</div>
+            </div>
+            <a href="{% url 'collection_list' %}" class="btn btn-sm btn-outline">
+                {% lucide 'plus' size=16 class='mr-2' %} Add Details
+            </a>
+        </div>
+    </div>
+
+    {# Sharing tip #}
+    <div class="alert alert-info">
+        <div class="flex items-center gap-3">
+            {% lucide 'share-2' size=24 class='text-info' %}
+            <div class="flex-1">
+                <h3 class="font-bold">Make your collections shareable</h3>
+                <div class="text-sm">Turn collections into public wishlists so friends and family know exactly what you're looking for.</div>
+            </div>
+            <a href="{% url 'collection_list' %}" class="btn btn-sm btn-outline">
+                {% lucide 'eye' size=16 class='mr-2' %} Manage Visibility
+            </a>
+        </div>
     </div>
 </div>
-{# End sharing tip #}
+{# End collection tips #}
 
 
 {% endblock %}
