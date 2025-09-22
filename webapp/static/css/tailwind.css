@@ -4574,6 +4574,9 @@
   .text-info {
     color: var(--color-info);
   }
+  .text-info-content {
+    color: var(--color-info-content);
+  }
   .text-neutral {
     color: var(--color-neutral);
   }
@@ -4607,8 +4610,14 @@
   .text-success {
     color: var(--color-success);
   }
+  .text-success-content {
+    color: var(--color-success-content);
+  }
   .text-warning {
     color: var(--color-warning);
+  }
+  .text-warning-content {
+    color: var(--color-warning-content);
   }
   .text-white {
     color: var(--color-white);
