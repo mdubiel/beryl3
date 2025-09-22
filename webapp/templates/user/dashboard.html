@@ -94,7 +94,7 @@
                         <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center hover:bg-base-300/80 transition-colors">
-                            {% lucide 'image' size=24 class='text-neutral' %}
+                            {% lucide 'image' size=64 class='text-base-content/60' class='text-base-content/60' %}
                         </div>
                     {% endif %}
                 </figure>
@@ -141,7 +141,7 @@
                         <img src="{{ list.images.all.0.media_file.file_url }}" alt="{{ list.name }}" class="w-full h-full object-cover" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                            {% lucide 'image' size=48 class='text-neutral' %}
+                            {% lucide 'image' size=64 class='text-base-content/60' class='text-base-content/60' %}
                         </div>
                     {% endif %}
                 </figure>
@@ -168,7 +168,7 @@
             <div class="card lg:card-side bg-base-100 shadow-sm">
                 <figure class="lg:w-1/4 w-full h-48 lg:h-auto">
                     <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                        {% lucide 'circle-plus' size=48 class='text-neutral' %}
+                        {% lucide 'circle-plus' size=48 class='text-base-content/60' %}
                     </div>
                 </figure>
                 <div class="card-body lg:w-3/4">
@@ -202,7 +202,7 @@
                                     <img src="{{ collection.images.all.0.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
                                 {% else %}
                                     <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                                        {% lucide 'image' size=32 class='text-neutral' %}
+                                        {% lucide 'image' size=64 class='text-base-content/60' class='text-base-content/60' %}
                                     </div>
                                 {% endif %}
                             </div>
@@ -279,20 +279,20 @@
 {# End Main #}
 
 
-{# Call to action #}
-<div class="hero min-h-[300px] overflow-hidden mt-12" style="background-image: url(https://picsum.photos/seed/cta/1200/400);">
-    <div class="hero-overlay bg-opacity-60"></div>
-    <div class="hero-content text-center text-neutral-content">
-      <div class="max-w-md">
-        <h1 class="mb-5 text-5xl font-bold">Share Your Passion</h1>
-        <p class="mb-5">Turn your collection into a shareable wishlist. Let friends and family know exactly what you're looking for and make gift-giving easy.</p>
-        <a href="{% url 'collection_create' %}" class="btn btn-secondary btn-sm">
-            {% lucide 'plus' size=16 class='mr-2' %} Get Started
+{# Sharing tip - Compact call to action #}
+<div class="alert alert-info mt-12">
+    <div class="flex items-center gap-3">
+        {% lucide 'share-2' size=24 class='text-info' %}
+        <div class="flex-1">
+            <h3 class="font-bold">Make your collections shareable</h3>
+            <div class="text-sm">Turn collections into public wishlists so friends and family know exactly what you're looking for.</div>
+        </div>
+        <a href="{% url 'collection_list' %}" class="btn btn-sm btn-outline">
+            {% lucide 'eye' size=16 class='mr-2' %} Manage Visibility
         </a>
-      </div>
     </div>
 </div>
-{# Call to action #}
+{# End sharing tip #}
 
 
 {% endblock %}

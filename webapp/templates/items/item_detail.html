@@ -159,7 +159,7 @@
                  onclick="showImageGallery(0, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{{ img.media_file.file_url }}'{% if not forloop.last %},{% endif %}{% endfor %}])" />
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center rounded-t-lg">
-                {% lucide 'image' size=64 class='text-neutral' %}
+                {% lucide 'image' size=64 class='text-base-content/60' class='text-base-content/60' %}
             </div>
         {% endif %}
     </figure>
