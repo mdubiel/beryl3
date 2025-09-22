@@ -159,7 +159,7 @@
                  onclick="showImageGallery(0, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{{ img.media_file.file_url }}'{% if not forloop.last %},{% endif %}{% endfor %}])" />
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center rounded-t-lg">
-                {% lucide 'image' size=64 class='text-base-content/40' %}
+                {% lucide 'image' size=64 class='text-neutral' %}
             </div>
         {% endif %}
     </figure>
@@ -195,7 +195,7 @@
                     {% if item.is_favorite %}
                         {% lucide 'star' size=24 class='text-warning fill-current' %}
                     {% else %}
-                        {% lucide 'star' size=24 class='text-base-content/40 hover:text-warning' %}
+                        {% lucide 'star' size=24 class='text-neutral hover:text-warning' %}
                     {% endif %}
                 </button>
                 {% endif %}

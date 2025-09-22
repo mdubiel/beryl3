@@ -94,7 +94,7 @@
                         <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center hover:bg-base-300/80 transition-colors">
-                            {% lucide 'image' size=24 class='text-base-content/40' %}
+                            {% lucide 'image' size=24 class='text-neutral' %}
                         </div>
                     {% endif %}
                 </figure>
@@ -141,7 +141,7 @@
                         <img src="{{ list.images.all.0.media_file.file_url }}" alt="{{ list.name }}" class="w-full h-full object-cover" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                            {% lucide 'image' size=48 class='text-base-content/40' %}
+                            {% lucide 'image' size=48 class='text-neutral' %}
                         </div>
                     {% endif %}
                 </figure>
@@ -168,7 +168,7 @@
             <div class="card lg:card-side bg-base-100 shadow-sm">
                 <figure class="lg:w-1/4 w-full h-48 lg:h-auto">
                     <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                        {% lucide 'circle-plus' size=48 class='text-base-content/40' %}
+                        {% lucide 'circle-plus' size=48 class='text-neutral' %}
                     </div>
                 </figure>
                 <div class="card-body lg:w-3/4">
@@ -202,7 +202,7 @@
                                     <img src="{{ collection.images.all.0.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
                                 {% else %}
                                     <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                                        {% lucide 'image' size=32 class='text-base-content/40' %}
+                                        {% lucide 'image' size=32 class='text-neutral' %}
                                     </div>
                                 {% endif %}
                             </div>
