@@ -23,7 +23,7 @@
         {% if user.is_authenticated %}
         <section class="py-16 text-center">
             <div class="max-w-2xl mx-auto">
-                <h2 class="text-3xl font-bold mb-6 text-primary">Welcome back, {{ user.email }}!</h2>
+                <h2 class="text-3xl font-bold mb-6 text-primary">Welcome back, {{ user.display_name }}!</h2>
                 <p class="text-lg text-base-content mb-8">Quick access to your collections and favorite items.</p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">

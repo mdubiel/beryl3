@@ -31,7 +31,7 @@
             <!-- User Info -->
             <div class="p-4 border-b border-gray-600">
                 <div class="text-sm terminal-text">
-                    <div><span class="terminal-accent">USER:</span> {{ user.email }}</div>
+                    <div><span class="terminal-accent">USER:</span> {{ user.display_name }}</div>
                     <div><span class="terminal-accent">PERMS:</span> {% if user.groups.all %}{% for group in user.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}NONE{% endif %}</div>
                     <div><span class="terminal-accent">TIME:</span> <span id="current-time"></span></div>
                 </div>

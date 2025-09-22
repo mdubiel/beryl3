@@ -176,12 +176,12 @@
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
                         <div class="w-8 h-8 rounded-full border border-neutral">
-                            <img src="{{ user_avatar_url }}" alt="{{ user.email }}" class="object-cover rounded-full" />
+                            <img src="{{ user_avatar_url }}" alt="{{ user.display_name }}" class="object-cover rounded-full" />
                         </div>
                     </div>
                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
                         <li class="menu-title">
-                            <span>{{ user.email }}</span>
+                            <span>{{ user.display_name }}</span>
                         </li>
                         <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
                         <li><a href="{% url 'collection_list' %}">Your collections</a></li>
