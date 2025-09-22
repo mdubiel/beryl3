@@ -82,6 +82,10 @@
                     {% lucide 'send' size=14 class='inline mr-2' %} Email Queue
                 </a>
                 
+                <a href="{% url 'sys_marketing_consent' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'marketing_consent' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'mail-open' size=14 class='inline mr-2' %} Marketing Consent
+                </a>
+                
                 <a href="{% url 'sys_media_browser' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'media' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'image' size=14 class='inline mr-2' %} Media Browser
                 </a>

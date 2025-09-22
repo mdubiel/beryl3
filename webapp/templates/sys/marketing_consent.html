@@ -1,0 +1,322 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Marketing Consent Management - Beryl Admin{% endblock %}
+
+{% block page_title %}Marketing Consent Management{% endblock %}
+{% block page_description %}Manage user email marketing preferences and Resend audience synchronization{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Statistics Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="terminal-bg">
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="terminal-accent text-sm font-medium">Total Users</p>
+                        <p class="text-2xl font-bold terminal-text">{{ total_profiles|default:0 }}</p>
+                    </div>
+                    {% lucide 'users' size=32 class='terminal-accent' %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="terminal-bg">
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="terminal-accent text-sm font-medium">Opted In</p>
+                        <p class="text-2xl font-bold text-success">{{ opted_in_count|default:0 }}</p>
+                        <p class="text-xs terminal-text">{{ opt_in_percentage }}% of users</p>
+                    </div>
+                    {% lucide 'mail' size=32 class='text-success' %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="terminal-bg">
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="terminal-accent text-sm font-medium">Opted Out</p>
+                        <p class="text-2xl font-bold text-warning">{{ opted_out_count|default:0 }}</p>
+                        <p class="text-xs terminal-text">{{ opted_out_count|floatformat:1 }}% default</p>
+                    </div>
+                    {% lucide 'mail-x' size=32 class='text-warning' %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="terminal-bg">
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="terminal-accent text-sm font-medium">Synced w/ Resend</p>
+                        <p class="text-2xl font-bold text-info">{{ synced_count|default:0 }}</p>
+                        <p class="text-xs terminal-text">{{ sync_percentage }}% synced</p>
+                    </div>
+                    {% lucide 'refresh-cw' size=32 class='text-info' %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resend Configuration Status -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> RESEND API STATUS
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-center gap-3">
+                    {% if resend_configured %}
+                        {% lucide 'check-circle' size=20 class='text-success' %}
+                        <span class="text-success font-medium">API Key Configured</span>
+                    {% else %}
+                        {% lucide 'x-circle' size=20 class='text-error' %}
+                        <span class="text-error font-medium">API Key Missing</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="terminal-text">Audience ID:</span>
+                    <code class="terminal-accent">{{ resend_audience_id|default:"Not configured" }}</code>
+                </div>
+            </div>
+            
+            {% if not resend_configured %}
+            <div class="alert alert-warning mt-4">
+                <div class="flex items-center gap-3">
+                    {% lucide 'alert-triangle' size=20 %}
+                    <div>
+                        <p class="font-medium">Resend API not configured</p>
+                        <p class="text-sm">Marketing email features will be disabled until RESEND_API_KEY is set</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> FILTERS & SEARCH
+            </h3>
+            <form method="get">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="search" class="block text-sm font-medium terminal-text mb-1">Search Users</label>
+                        <input type="text" 
+                               id="search"
+                               name="search" 
+                               value="{{ search }}" 
+                               placeholder="Email, name..." 
+                               class="input input-bordered w-full">
+                    </div>
+                    
+                    <div>
+                        <label for="consent" class="block text-sm font-medium terminal-text mb-1">Marketing Consent</label>
+                        <select id="consent" name="consent" class="select select-bordered w-full">
+                            <option value="">All Users</option>
+                            <option value="opted_in" {% if consent_filter == 'opted_in' %}selected{% endif %}>Opted In</option>
+                            <option value="opted_out" {% if consent_filter == 'opted_out' %}selected{% endif %}>Opted Out</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="resend_status" class="block text-sm font-medium terminal-text mb-1">Resend Status</label>
+                        <select id="resend_status" name="resend_status" class="select select-bordered w-full">
+                            <option value="">All Users</option>
+                            <option value="synced" {% if resend_status_filter == 'synced' %}selected{% endif %}>Synced</option>
+                            <option value="not_synced" {% if resend_status_filter == 'not_synced' %}selected{% endif %}>Not Synced</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button type="submit" class="btn btn-primary w-full">
+                            {% lucide 'search' size=16 class='mr-2' %}
+                            FILTER
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    {% if resend_configured and not_synced_count > 0 %}
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> BULK ACTIONS
+            </h3>
+            <div class="flex items-center gap-4">
+                <form method="post" action="{% url 'sys_marketing_consent_bulk_sync' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">
+                        {% lucide 'refresh-cw' size=16 class='mr-2' %}
+                        Sync All Users with Resend ({{ not_synced_count }} pending)
+                    </button>
+                </form>
+                <div class="text-sm terminal-text">
+                    This will sync all users whose local preferences don't match their Resend status
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Users Table -->
+    <div class="terminal-bg">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr class="terminal-accent">
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Marketing Consent</th>
+                        <th>Resend Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="avatar">
+                                    <div class="mask mask-squircle w-8 h-8 terminal-bg">
+                                        <span class="text-xs terminal-accent">{{ profile.user.first_name|first|default:profile.user.email|first|upper }}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="font-bold terminal-text">{{ profile.user.display_name }}</div>
+                                    <div class="text-xs terminal-text opacity-70">
+                                        {% if profile.user.is_active %}
+                                            <span class="badge badge-success badge-xs">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-error badge-xs">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="terminal-text">{{ profile.user.email }}</td>
+                        <td>
+                            {% if profile.receive_marketing_emails %}
+                                <div class="flex items-center gap-2">
+                                    {% lucide 'check-circle' size=16 class='text-success' %}
+                                    <span class="text-success font-medium">Opted In</span>
+                                </div>
+                            {% else %}
+                                <div class="flex items-center gap-2">
+                                    {% lucide 'x-circle' size=16 class='text-warning' %}
+                                    <span class="text-warning font-medium">Opted Out</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if profile.resend_audience_id %}
+                                <div class="flex items-center gap-2">
+                                    {% lucide 'check-circle' size=16 class='text-info' %}
+                                    <span class="text-info font-medium">Synced</span>
+                                </div>
+                            {% else %}
+                                <div class="flex items-center gap-2">
+                                    {% lucide 'alert-circle' size=16 class='text-warning' %}
+                                    <span class="text-warning font-medium">Not Synced</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="terminal-text text-sm">{{ profile.created|date:"M j, Y" }}</td>
+                        <td>
+                            {% if resend_configured %}
+                            <form method="post" action="{% url 'sys_marketing_consent_sync_user' profile.user.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline">
+                                    {% lucide 'refresh-cw' size=14 class='mr-1' %}
+                                    Sync
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-xs terminal-text opacity-50">API Not Configured</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center terminal-text py-8">
+                            {% lucide 'users' size=32 class='mx-auto mb-2 opacity-50' %}
+                            <p>No users found matching your filters</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex justify-center">
+        <div class="join">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if consent_filter %}&consent={{ consent_filter }}{% endif %}{% if resend_status_filter %}&resend_status={{ resend_status_filter }}{% endif %}" 
+                   class="join-item btn btn-outline">
+                    {% lucide 'chevrons-left' size=16 %}
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if consent_filter %}&consent={{ consent_filter }}{% endif %}{% if resend_status_filter %}&resend_status={{ resend_status_filter }}{% endif %}" 
+                   class="join-item btn btn-outline">
+                    {% lucide 'chevron-left' size=16 %}
+                </a>
+            {% endif %}
+            
+            <button class="join-item btn btn-active">{{ page_obj.number }}</button>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if consent_filter %}&consent={{ consent_filter }}{% endif %}{% if resend_status_filter %}&resend_status={{ resend_status_filter }}{% endif %}" 
+                   class="join-item btn btn-outline">
+                    {% lucide 'chevron-right' size=16 %}
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if consent_filter %}&consent={{ consent_filter }}{% endif %}{% if resend_status_filter %}&resend_status={{ resend_status_filter }}{% endif %}" 
+                   class="join-item btn btn-outline">
+                    {% lucide 'chevrons-right' size=16 %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Help Section -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> HELP & INFORMATION
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Marketing Consent</h4>
+                    <ul class="text-sm terminal-text space-y-1">
+                        <li>• <strong>Opted In:</strong> User consented to receive marketing emails</li>
+                        <li>• <strong>Opted Out:</strong> User declined marketing emails (default)</li>
+                        <li>• Consent is collected during user registration</li>
+                        <li>• Users can unsubscribe via secure token links</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Resend Synchronization</h4>
+                    <ul class="text-sm terminal-text space-y-1">
+                        <li>• <strong>Synced:</strong> User preference matches Resend audience</li>
+                        <li>• <strong>Not Synced:</strong> Local preference differs from Resend</li>
+                        <li>• Sync happens automatically on preference changes</li>
+                        <li>• Manual sync available for troubleshooting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

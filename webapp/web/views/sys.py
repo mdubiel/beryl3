@@ -31,6 +31,7 @@ from django.conf import settings
 
 from web.decorators import log_execution_time
 from web.models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, MediaFile
+from web.models_user_profile import UserProfile
 from core.lucide import LucideIcons
 
 logger = logging.getLogger('webapp')
@@ -2156,5 +2157,184 @@ def sys_email_queue_cleanup(request):
         messages.error(request, f'Email cleanup failed: {str(e)}')
     
     return redirect('sys_email_queue')
+
+
+@application_admin_required
+@log_execution_time
+def sys_marketing_consent(request):
+    """Marketing email consent management interface"""
+    logger.info("System marketing consent management accessed by admin user '%s' [%s]", 
+               request.user.username, request.user.id)
+    
+    # Get filter parameters
+    search = request.GET.get('search', '').strip()
+    consent_filter = request.GET.get('consent', '')
+    resend_status_filter = request.GET.get('resend_status', '')
+    
+    # Build queryset
+    profiles = UserProfile.objects.select_related('user').order_by('-created')
+    
+    if search:
+        profiles = profiles.filter(
+            Q(user__email__icontains=search) |
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search)
+        )
+    
+    if consent_filter == 'opted_in':
+        profiles = profiles.filter(receive_marketing_emails=True)
+    elif consent_filter == 'opted_out':
+        profiles = profiles.filter(receive_marketing_emails=False)
+    
+    if resend_status_filter == 'synced':
+        profiles = profiles.filter(resend_audience_id__isnull=False)
+    elif resend_status_filter == 'not_synced':
+        profiles = profiles.filter(resend_audience_id__isnull=True)
+    
+    # Pagination
+    paginator = Paginator(profiles, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics
+    total_profiles = UserProfile.objects.count()
+    opted_in_count = UserProfile.objects.filter(receive_marketing_emails=True).count()
+    opted_out_count = UserProfile.objects.filter(receive_marketing_emails=False).count()
+    synced_count = UserProfile.objects.filter(resend_audience_id__isnull=False).count()
+    
+    # Check Resend API status
+    resend_configured = bool(getattr(settings, 'RESEND_API_KEY', ''))
+    resend_audience_id = getattr(settings, 'RESEND_MARKETING_AUDIENCE_ID', '')
+    
+    context = {
+        'page_obj': page_obj,
+        'search': search,
+        'consent_filter': consent_filter,
+        'resend_status_filter': resend_status_filter,
+        'total_profiles': total_profiles,
+        'opted_in_count': opted_in_count,
+        'opted_out_count': opted_out_count,
+        'synced_count': synced_count,
+        'not_synced_count': total_profiles - synced_count,
+        'resend_configured': resend_configured,
+        'resend_audience_id': resend_audience_id,
+        'opt_in_percentage': round((opted_in_count / total_profiles * 100) if total_profiles > 0 else 0, 1),
+        'sync_percentage': round((synced_count / total_profiles * 100) if total_profiles > 0 else 0, 1),
+    }
+    
+    return render(request, 'sys/marketing_consent.html', context)
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_marketing_consent_sync_user(request, user_id):
+    """Manually sync a specific user's marketing consent with Resend"""
+    user = get_object_or_404(User, id=user_id)
+    
+    try:
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        
+        # Import the service
+        from web.services.resend_service import ResendService
+        resend_service = ResendService()
+        
+        if profile.receive_marketing_emails:
+            # Subscribe to audience
+            success = resend_service.subscribe_to_audience(
+                email=user.email,
+                first_name=user.first_name or "",
+                last_name=user.last_name or ""
+            )
+            if success:
+                profile.resend_audience_id = getattr(settings, 'RESEND_MARKETING_AUDIENCE_ID', '')
+                profile.save()
+                logger.info("Admin user '%s' [%s] manually synced user '%s' [%s] to Resend audience", 
+                           request.user.username, request.user.id, user.email, user.id)
+                messages.success(request, f"Successfully subscribed {user.email} to marketing emails")
+            else:
+                messages.error(request, f"Failed to subscribe {user.email} to marketing emails")
+        else:
+            # Unsubscribe from audience
+            success = resend_service.unsubscribe_from_audience(user.email)
+            if success:
+                profile.resend_audience_id = None
+                profile.save()
+                logger.info("Admin user '%s' [%s] manually unsubscribed user '%s' [%s] from Resend audience", 
+                           request.user.username, request.user.id, user.email, user.id)
+                messages.success(request, f"Successfully unsubscribed {user.email} from marketing emails")
+            else:
+                messages.error(request, f"Failed to unsubscribe {user.email} from marketing emails")
+                
+    except Exception as e:
+        logger.error("Marketing consent sync failed for user %s: %s", user.email, str(e))
+        messages.error(request, f"Sync failed for {user.email}: {str(e)}")
+    
+    return redirect('sys_marketing_consent')
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_marketing_consent_bulk_sync(request):
+    """Bulk sync all users' marketing consent with Resend"""
+    try:
+        from web.services.resend_service import ResendService
+        resend_service = ResendService()
+        
+        # Get users that need syncing
+        profiles_to_sync = UserProfile.objects.select_related('user').filter(
+            Q(receive_marketing_emails=True, resend_audience_id__isnull=True) |
+            Q(receive_marketing_emails=False, resend_audience_id__isnull=False)
+        )
+        
+        total_count = profiles_to_sync.count()
+        if total_count == 0:
+            messages.info(request, "All users are already synced with Resend")
+            return redirect('sys_marketing_consent')
+        
+        success_count = 0
+        error_count = 0
+        
+        for profile in profiles_to_sync:
+            try:
+                if profile.receive_marketing_emails:
+                    # Subscribe to audience
+                    success = resend_service.subscribe_to_audience(
+                        email=profile.user.email,
+                        first_name=profile.user.first_name or "",
+                        last_name=profile.user.last_name or ""
+                    )
+                    if success:
+                        profile.resend_audience_id = getattr(settings, 'RESEND_MARKETING_AUDIENCE_ID', '')
+                        profile.save()
+                        success_count += 1
+                    else:
+                        error_count += 1
+                else:
+                    # Unsubscribe from audience
+                    success = resend_service.unsubscribe_from_audience(profile.user.email)
+                    if success:
+                        profile.resend_audience_id = None
+                        profile.save()
+                        success_count += 1
+                    else:
+                        error_count += 1
+                        
+            except Exception as e:
+                logger.error("Bulk sync failed for user %s: %s", profile.user.email, str(e))
+                error_count += 1
+        
+        logger.info("Admin user '%s' [%s] performed bulk sync: %d success, %d errors", 
+                   request.user.username, request.user.id, success_count, error_count)
+        
+        if error_count == 0:
+            messages.success(request, f"Successfully synced {success_count} users with Resend")
+        else:
+            messages.warning(request, f"Synced {success_count} users successfully, {error_count} failed")
+            
+    except Exception as e:
+        logger.error("Bulk marketing consent sync failed: %s", str(e))
+        messages.error(request, f"Bulk sync failed: {str(e)}")
+    
+    return redirect('sys_marketing_consent')
 
 
