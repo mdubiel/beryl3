@@ -1105,3 +1105,7 @@ class CollectionItemImage(BerylModel):
     def can_add_image(cls, item):
         """Check if item can accept another image (max 3)"""
         return cls.objects.filter(item=item).count() < 3
+
+
+# Import user profile models
+from .models_user_profile import UserProfile

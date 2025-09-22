@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Unsubscribe Error{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-16">
+    <div class="text-center mb-8">
+        {% lucide 'alert-circle' size=64 class='mx-auto text-error mb-4' %}
+        <h1 class="text-3xl font-bold mb-4 text-error">Unsubscribe Error</h1>
+        <p class="text-lg text-base-content/80">
+            We encountered a problem processing your request.
+        </p>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body text-center">
+            <div class="alert alert-error mb-6">
+                <div class="flex items-center gap-3">
+                    {% lucide 'x-circle' size=20 %}
+                    <div>
+                        <p class="font-medium">{{ error|default:"An unexpected error occurred" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-base-content/80">
+                    This could happen if:
+                </p>
+                
+                <ul class="text-left text-sm text-base-content/70 space-y-2 max-w-md mx-auto">
+                    <li>• The unsubscribe link has expired</li>
+                    <li>• The link has already been used</li>
+                    <li>• There was a temporary system issue</li>
+                </ul>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                    <a href="{% url 'index' %}" class="btn btn-primary">
+                        {% lucide 'home' size=16 class='mr-2' %}
+                        Return to Homepage
+                    </a>
+                    <a href="mailto:support@{{ request.get_host }}" class="btn btn-outline">
+                        {% lucide 'mail' size=16 class='mr-2' %}
+                        Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-8 text-sm text-base-content/60">
+        <p>Need help? Our support team is here to assist you with any email preference changes.</p>
+    </div>
+</div>
+{% endblock %}

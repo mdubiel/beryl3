@@ -41,6 +41,22 @@
                 <div class="text-error text-sm mt-1">{{ form.password2.errors.as_text }}</div>
             {% endif %}
 
+            {# Marketing Email Preference #}
+            {% if form.receive_marketing_emails %}
+            <div class="form-control mt-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    {% render_field form.receive_marketing_emails %}
+                    <span class="label-text">{{ form.receive_marketing_emails.label }}</span>
+                </label>
+                {% if form.receive_marketing_emails.help_text %}
+                    <div class="text-sm text-base-content/70 mt-1 ml-8">{{ form.receive_marketing_emails.help_text }}</div>
+                {% endif %}
+                {% if form.receive_marketing_emails.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.receive_marketing_emails.errors.as_text }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <button type="submit" class="btn btn-primary mt-4 w-full">{% trans "Sign Up" %}</button>
         </fieldset>
     </form>

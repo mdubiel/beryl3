@@ -1,2 +1,1 @@
-# Import user extensions to add display_name method
-from . import user_extensions
+# User extensions are loaded in apps.py ready() method to avoid circular imports

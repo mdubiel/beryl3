@@ -50,6 +50,10 @@ env = environ.Env(
     EXTERNAL_GRAFANA_URL=(str, ''),
     EXTERNAL_RESEND_URL=(str, ''),
     
+    # Resend API configuration for marketing emails
+    RESEND_API_KEY=(str, ''),
+    RESEND_MARKETING_AUDIENCE_ID=(str, '01f8fa37-6d40-4f54-b59e-f8fc465898e2'),
+    
     # Application features
     # APPLICATION_ACTIVITY_LOGGING - moved to FEATURE_FLAGS system
     
@@ -302,6 +306,11 @@ ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
 
 # While you're here, it's a good idea to set a minimum password length
 ACCOUNT_PASSWORD_MIN_LENGTH = 8
+
+# Custom forms
+ACCOUNT_FORMS = {
+    'signup': 'web.allauth_forms.CustomSignupForm',
+}
 
 # EMAIL CONFIGURATION
 # Check for the development flag in your environment variables.
@@ -659,6 +668,10 @@ EXTERNAL_SENTRY_URL = env('EXTERNAL_SENTRY_URL') if env('EXTERNAL_SENTRY_URL') e
 EXTERNAL_LOKI_URL = env('EXTERNAL_LOKI_URL') if env('EXTERNAL_LOKI_URL') else None
 EXTERNAL_GRAFANA_URL = env('EXTERNAL_GRAFANA_URL') if env('EXTERNAL_GRAFANA_URL') else None
 EXTERNAL_RESEND_URL = env('EXTERNAL_RESEND_URL') if env('EXTERNAL_RESEND_URL') else None
+
+# Resend API Configuration for Marketing Emails
+RESEND_API_KEY = env('RESEND_API_KEY', default='')
+RESEND_MARKETING_AUDIENCE_ID = env('RESEND_MARKETING_AUDIENCE_ID', default='01f8fa37-6d40-4f54-b59e-f8fc465898e2')
 
 # Site Domain Configuration
 SITE_DOMAIN = env('SITE_DOMAIN', default='beryl3.localdomain')

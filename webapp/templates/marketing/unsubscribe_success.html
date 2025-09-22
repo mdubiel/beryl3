@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Successfully Unsubscribed{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-16">
+    <div class="text-center mb-8">
+        {% lucide 'check-circle' size=64 class='mx-auto text-success mb-4' %}
+        <h1 class="text-3xl font-bold mb-4 text-success">Successfully Unsubscribed</h1>
+        <p class="text-lg text-base-content/80">
+            You have been unsubscribed from our marketing emails.
+        </p>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body text-center">
+            <div class="space-y-4">
+                <p class="text-base-content/90">
+                    <strong>{{ user.email }}</strong> has been removed from our marketing email list.
+                </p>
+                
+                <div class="alert alert-info">
+                    <div class="flex items-center gap-3">
+                        {% lucide 'info' size=20 %}
+                        <div class="text-left">
+                            <p class="font-medium">What this means:</p>
+                            <ul class="text-sm mt-2 space-y-1">
+                                <li>• No more promotional emails</li>
+                                <li>• No more product update notifications</li>
+                                <li>• No more special offers or newsletters</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <div class="flex items-center gap-3">
+                        {% lucide 'shield-check' size=20 %}
+                        <div class="text-left">
+                            <p class="font-medium">You will still receive:</p>
+                            <ul class="text-sm mt-2 space-y-1">
+                                <li>• Account security notifications</li>
+                                <li>• Password reset emails</li>
+                                <li>• Important service updates</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center mt-6">
+                    <a href="{% url 'index' %}" class="btn btn-primary">
+                        {% lucide 'home' size=16 class='mr-2' %}
+                        Return to Homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-8 text-sm text-base-content/60">
+        <p>Changed your mind? <a href="{% url 'account_signup' %}" class="link">You can always re-subscribe later</a></p>
+    </div>
+</div>
+{% endblock %}

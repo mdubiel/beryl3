@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Unsubscribe from Marketing Emails{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-16">
+    <div class="text-center mb-8">
+        {% lucide 'mail-x' size=64 class='mx-auto text-warning mb-4' %}
+        <h1 class="text-3xl font-bold mb-4">Unsubscribe from Marketing Emails</h1>
+        <p class="text-lg text-base-content/80">
+            We're sorry to see you go, {{ user.display_name }}!
+        </p>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="text-center mb-6">
+                <p class="text-base-content/90 mb-4">
+                    You are about to unsubscribe the email address <strong>{{ user.email }}</strong> 
+                    from our marketing communications.
+                </p>
+                <p class="text-base-content/70 text-sm">
+                    You will no longer receive promotional emails, product updates, or special offers. 
+                    You will still receive important account-related emails.
+                </p>
+            </div>
+
+            <form method="post" class="space-y-4">
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button type="submit" class="btn btn-warning">
+                        {% lucide 'mail-x' size=16 class='mr-2' %}
+                        Yes, Unsubscribe Me
+                    </button>
+                    <a href="{% url 'index' %}" class="btn btn-outline">
+                        {% lucide 'arrow-left' size=16 class='mr-2' %}
+                        Cancel
+                    </a>
+                </div>
+            </form>
+
+            <div class="divider"></div>
+
+            <div class="text-center text-sm text-base-content/60">
+                <p>Having trouble? <a href="mailto:support@{{ request.get_host }}" class="link">Contact our support team</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
