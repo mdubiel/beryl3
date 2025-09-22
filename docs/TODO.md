@@ -17,3 +17,15 @@
 9. ✅ **COMPLETED** - In SYS, /sys/dashboard, the section 'SYSTEM INFO' is showing invalid information about database.
 
 10. ✅ **COMPLETED** - In makefile, when listing status of services from command `staging-status` list all services with the appropiate status is is UP, DOWN, ERROR or whatever other state it is.
+
+11. ✅ **COMPLETED** - Chip and icon for text change is barelly visible, it should be rather darker. Ensure both chips (text change and user avatar are aligned). Make the border of both close to black, always use semantic color definitions. and the text with one of highlight colors. Background should blend with main background.
+
+12. ✅ **COMPLETED** - Icons used in 'unknown image' are using classes with divided value, do not use that at all. Remove all /10, /20 /30 and similar rntirelly from the application as it looks bad. use semantic definitions for it.
+
+13. ✅ **COMPLETED** - Breadcrund should not be displayed at Home '/' page.
+
+14. On the Home page, when user is logged in they should see a link to their dashboard, collections and favourites instead the hero section "Ready to organize..."
+
+15. The callout actions in 'What you can do with Beryl3', should use different colors for icon and title, as some of the grays used there are barelly visible.
+
+16. Revisit task 12. I was talking mostly about skipped element: - Image upload placeholders (`text-base-content/40` for image icons) - that looks terrible bad, and has to be modified.

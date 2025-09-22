@@ -213,6 +213,7 @@
 
         {# Main content area #}
         <div class="bg-base-100 relative">
+            {% if request.resolver_match.url_name != 'index' %}
             <div class="text-sm breadcrumbs px-4 pt-4">
                 <ul>
                     {# Breadcrumbs #}
@@ -229,6 +230,7 @@
                     {% endblock breadcrumbs %}
                 </ul>
             </div>
+            {% endif %}
             
             <main class="py-12">
                 {% block content %}
