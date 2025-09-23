@@ -867,7 +867,7 @@ class RecentActivity(BerylModel):
         RecentActivity.objects.create(
             created_by=collection_owner,
             message=f"Someone cancelled their reservation for **{item_name}**",
-            icon="x-circle"
+            icon="circle-x"
         )
 
 

@@ -1,6 +1,6 @@
 {% load lucide %}
 {% comment %}
-Lucide Icon Input Component with Autocomplete and HTMX Validation
+Simplified Lucide Icon Input Component
 
 Usage:
 {% include 'components/lucide_icon_input.html' with field_name='icon' field_value=item_type.icon field_id='icon_input' %}
@@ -39,22 +39,17 @@ Parameters:
                 {% endif %}
             </div>
         </div>
-        
-        <!-- Autocomplete dropdown -->
-        <div id="{{ field_id|default:field_name }}_autocomplete" class="absolute z-50 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
-            <!-- Autocomplete suggestions will be populated here -->
-        </div>
     </div>
     
     <!-- Validation feedback area -->
     <div id="{{ field_id|default:field_name }}_validation" class="mt-2">
-        <!-- HTMX validation responses will be loaded here -->
+        <!-- Client-side validation feedback will appear here -->
     </div>
     
     <label class="label">
         <span class="label-text-alt">
             <a href="https://lucide.dev/icons/" target="_blank" class="link terminal-accent">Browse available icons</a>
-            • Start typing for suggestions
+            • Enter icon name manually
         </span>
     </label>
 </div>
@@ -62,102 +57,136 @@ Parameters:
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('{{ field_id|default:field_name }}');
-    const autocompleteDiv = document.getElementById('{{ field_id|default:field_name }}_autocomplete');
     const previewDiv = document.getElementById('{{ field_id|default:field_name }}_preview');
+    const validationDiv = document.getElementById('{{ field_id|default:field_name }}_validation');
     
-    let autocompleteTimeout;
     let validationTimeout;
     
-    // Handle both autocomplete and validation
+    // Common Lucide icons for suggestions
+    const commonIcons = [
+        'book', 'user', 'settings', 'home', 'star', 'heart', 'plus', 'minus', 'edit', 'trash',
+        'search', 'filter', 'download', 'upload', 'share', 'link', 'tag', 'folder', 'file',
+        'image', 'video', 'music', 'mail', 'phone', 'message-circle', 'bell', 'clock',
+        'calendar', 'map-pin', 'camera', 'mic', 'volume-2', 'wifi', 'battery', 'bluetooth'
+    ];
+    
+    // Handle input validation
     input.addEventListener('input', function() {
-        const query = this.value.trim();
+        const iconName = this.value.trim();
         
-        clearTimeout(autocompleteTimeout);
         clearTimeout(validationTimeout);
         
-        // Handle autocomplete (for dropdown)
-        if (query.length >= 2) {
-            autocompleteTimeout = setTimeout(() => {
-                fetch(`{% url 'sys_lucide_icon_search' %}?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.icons && data.icons.length > 0) {
-                            showAutocomplete(data.icons);
-                        } else {
-                            autocompleteDiv.classList.add('hidden');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Autocomplete error:', error);
-                        autocompleteDiv.classList.add('hidden');
-                    });
+        if (iconName) {
+            validationTimeout = setTimeout(() => {
+                validateIcon(iconName);
             }, 300);
         } else {
-            autocompleteDiv.classList.add('hidden');
+            clearValidation();
         }
-        
-        // Handle validation
-        validationTimeout = setTimeout(() => {
-            validateIcon(query);
-        }, 300);
     });
     
     function validateIcon(iconName) {
-        fetch(`{% url 'sys_validate_lucide_icon' %}?icon=${encodeURIComponent(iconName)}`)
-            .then(response => response.json())
-            .then(data => {
-                updateValidationUI(data, iconName);
-            })
-            .catch(error => {
-                console.error('Validation error:', error);
-            });
+        // Try to create the icon element to test if it exists
+        const testElement = document.createElement('i');
+        testElement.setAttribute('data-lucide', iconName);
+        testElement.style.display = 'none';
+        document.body.appendChild(testElement);
+        
+        // Attempt to initialize the icon
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+            
+            // Check if icon was successfully created
+            setTimeout(() => {
+                const hasIcon = testElement.querySelector('svg') !== null;
+                document.body.removeChild(testElement);
+                
+                if (hasIcon) {
+                    showValidIcon(iconName);
+                } else {
+                    showInvalidIcon(iconName);
+                }
+            }, 100);
+        } else {
+            // Fallback: just show preview without validation
+            updateIconPreview(iconName);
+            document.body.removeChild(testElement);
+        }
     }
     
-    // Handle click outside to close autocomplete
-    document.addEventListener('click', function(event) {
-        if (!input.contains(event.target) && !autocompleteDiv.contains(event.target)) {
-            autocompleteDiv.classList.add('hidden');
-        }
-    });
-    
-    // Handle ESC key to close autocomplete
-    input.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            autocompleteDiv.classList.add('hidden');
-        }
-    });
-    
-    function showAutocomplete(icons) {
-        const html = icons.map(icon => `
-            <div class="px-4 py-2 hover:bg-base-200 cursor-pointer flex items-center gap-2 autocomplete-item"
-                 data-icon="${icon}">
-                <i data-lucide="${icon}" class="w-4 h-4"></i>
-                <span class="font-mono text-sm">${icon}</span>
+    function showValidIcon(iconName) {
+        input.classList.remove('input-error');
+        input.classList.add('input-success');
+        
+        validationDiv.innerHTML = `
+            <div class="text-success text-sm flex items-center gap-1">
+                {% lucide 'circle-check' size=16 %}
+                <span>Valid icon name</span>
             </div>
-        `).join('');
+        `;
         
-        autocompleteDiv.innerHTML = html;
-        autocompleteDiv.classList.remove('hidden');
+        updateIconPreview(iconName);
         
-        // Re-initialize Lucide icons for the new elements
+        // Re-initialize Lucide icons
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }
+    }
+    
+    function showInvalidIcon(iconName) {
+        input.classList.remove('input-success');
+        input.classList.add('input-error');
         
-        // Add click handlers to autocomplete items
-        autocompleteDiv.querySelectorAll('.autocomplete-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const iconName = this.dataset.icon;
-                input.value = iconName;
-                autocompleteDiv.classList.add('hidden');
-                
-                // Trigger validation
+        // Find suggestions
+        const suggestions = commonIcons.filter(icon => 
+            icon.includes(iconName.toLowerCase()) || 
+            iconName.toLowerCase().includes(icon)
+        ).slice(0, 5);
+        
+        let html = `
+            <div class="text-error text-sm flex items-center gap-1 mb-2">
+                {% lucide 'circle-alert' size=16 %}
+                <span>Icon '${iconName}' not found</span>
+            </div>
+        `;
+        
+        if (suggestions.length > 0) {
+            html += `
+                <div class="text-sm">
+                    <span class="text-base-content">Suggestions: </span>
+                    ${suggestions.map(icon => `
+                        <button type="button" 
+                                class="btn btn-xs btn-outline mr-1 mb-1 suggestion-btn"
+                                data-icon="${icon}">
+                            ${icon}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        validationDiv.innerHTML = html;
+        previewDiv.innerHTML = '';
+        
+        // Add click handlers to suggestion buttons
+        validationDiv.querySelectorAll('.suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const suggestedIcon = this.dataset.icon;
+                input.value = suggestedIcon;
                 input.dispatchEvent(new Event('input'));
-                
-                // Update preview
-                updateIconPreview(iconName);
             });
         });
+        
+        // Re-initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+    
+    function clearValidation() {
+        input.classList.remove('input-error', 'input-success');
+        validationDiv.innerHTML = '';
+        previewDiv.innerHTML = '';
     }
     
     function updateIconPreview(iconName) {
@@ -171,74 +200,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function updateValidationUI(response, iconName) {
-        const validationDiv = document.getElementById('{{ field_id|default:field_name }}_validation');
-        
-        if (response.valid) {
-            // Valid icon
-            input.classList.remove('input-error');
-            input.classList.add('input-success');
-            validationDiv.innerHTML = `
-                <div class="text-success text-sm flex items-center gap-1">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i>
-                    Valid icon name
-                </div>
-            `;
-            
-            // Update preview
-            updateIconPreview(iconName);
-        } else {
-            // Invalid icon
-            input.classList.remove('input-success');
-            input.classList.add('input-error');
-            
-            let html = `
-                <div class="text-error text-sm flex items-center gap-1 mb-2">
-                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
-                    ${response.message}
-                </div>
-            `;
-            
-            // Show suggestions if available
-            if (response.suggestions && response.suggestions.length > 0) {
-                html += `
-                    <div class="text-sm">
-                        <span class="text-base-content text-neutral">Suggestions: </span>
-                        ${response.suggestions.map(icon => `
-                            <button type="button" 
-                                    class="btn btn-xs btn-outline mr-1 mb-1 suggestion-btn"
-                                    data-icon="${icon}">
-                                ${icon}
-                            </button>
-                        `).join('')}
-                    </div>
-                `;
-            }
-            
-            validationDiv.innerHTML = html;
-            previewDiv.innerHTML = '';
-            
-            // Add click handlers to suggestion buttons
-            validationDiv.querySelectorAll('.suggestion-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const iconName = this.dataset.icon;
-                    input.value = iconName;
-                    input.dispatchEvent(new Event('input'));
-                });
-            });
-        }
-        
-        // Re-initialize Lucide icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    }
-    
     // Initialize preview if there's an initial value
     if (input.value.trim()) {
-        updateIconPreview(input.value.trim());
         validateIcon(input.value.trim());
     }
 });
-
 </script>

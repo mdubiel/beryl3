@@ -8,6 +8,7 @@
 from django.contrib import admin
 
 from .models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, CollectionItemLink, MediaFile, CollectionImage, CollectionItemImage
+from .models_user_profile import UserProfile
 
 # Let's create a base class for our models to inherit from.
 # This avoids repeating common settings for all our models.
@@ -406,3 +407,49 @@ class CollectionItemImageAdmin(BerylModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    """
+    Custom Admin configuration for the UserProfile model.
+    """
+    list_display = ('user', 'nickname', 'use_nickname', 'receive_marketing_emails', 'sync_status_display', 'resend_last_checked_at', 'created_at')
+    list_filter = ('receive_marketing_emails', 'use_nickname', 'resend_sync_status', 'resend_is_subscribed', 'marketing_email_subscribed_at', 'marketing_email_unsubscribed_at', 'created_at')
+    search_fields = ('user__email', 'user__first_name', 'user__last_name', 'nickname')
+    readonly_fields = ('created_at', 'updated_at', 'marketing_email_subscribed_at', 'marketing_email_unsubscribed_at', 'unsubscribe_token', 'resend_last_checked_at', 'resend_sync_status', 'resend_is_subscribed')
+    fieldsets = (
+        (None, {
+            'fields': ('user',)
+        }),
+        ('Personal Information', {
+            'fields': ('nickname', 'use_nickname')
+        }),
+        ('Email Preferences', {
+            'fields': ('receive_marketing_emails', 'marketing_email_subscribed_at', 'marketing_email_unsubscribed_at', 'unsubscribe_token')
+        }),
+        ('Resend Sync Status', {
+            'fields': ('resend_sync_status', 'resend_is_subscribed', 'resend_last_checked_at', 'resend_audience_id'),
+            'classes': ('collapse',)
+        }),
+        ('Audit Information', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def sync_status_display(self, obj):
+        """
+        Display sync status with color coding
+        """
+        status, color = obj.get_sync_status_display()
+        colors = {
+            'success': '#22c55e',  # green
+            'error': '#ef4444',    # red
+            'warning': '#f59e0b'   # yellow
+        }
+        color_code = colors.get(color, '#6b7280')  # default gray
+        return f'<span style="color: {color_code}; font-weight: bold;">● {status}</span>'
+    
+    sync_status_display.short_description = 'Sync Status'
+    sync_status_display.allow_tags = True

@@ -53,6 +53,7 @@ env = environ.Env(
     # Resend API configuration for marketing emails
     RESEND_API_KEY=(str, ''),
     RESEND_MARKETING_AUDIENCE_ID=(str, '01f8fa37-6d40-4f54-b59e-f8fc465898e2'),
+    MARKETING_EMAIL_DEFAULT_OPT_IN=(bool, True),
     
     # Application features
     # APPLICATION_ACTIVITY_LOGGING - moved to FEATURE_FLAGS system
@@ -672,6 +673,8 @@ EXTERNAL_RESEND_URL = env('EXTERNAL_RESEND_URL') if env('EXTERNAL_RESEND_URL') e
 # Resend API Configuration for Marketing Emails
 RESEND_API_KEY = env('RESEND_API_KEY', default='')
 RESEND_MARKETING_AUDIENCE_ID = env('RESEND_MARKETING_AUDIENCE_ID', default='01f8fa37-6d40-4f54-b59e-f8fc465898e2')
+MARKETING_EMAIL_DEFAULT_OPT_IN = env.bool('MARKETING_EMAIL_DEFAULT_OPT_IN', default=True)
+RESEND_SYNC_TIMEOUT_MINUTES = env.int('RESEND_SYNC_TIMEOUT_MINUTES', default=15)
 
 # Site Domain Configuration
 SITE_DOMAIN = env('SITE_DOMAIN', default='beryl3.localdomain')

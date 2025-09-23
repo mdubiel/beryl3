@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django import forms
+from django.conf import settings
 from allauth.account.forms import SignupForm
 
 
@@ -8,9 +9,14 @@ class CustomSignupForm(SignupForm):
     """
     Custom signup form that includes marketing email preference
     """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Set initial value based on environment configuration
+        self.fields['receive_marketing_emails'].initial = getattr(settings, 'MARKETING_EMAIL_DEFAULT_OPT_IN', True)
+    
     receive_marketing_emails = forms.BooleanField(
         required=False,
-        initial=False,  # Opt-out by default as requested
         label='Marketing Emails',
         help_text='I would like to receive promotional emails and product updates',
         widget=forms.CheckboxInput(attrs={

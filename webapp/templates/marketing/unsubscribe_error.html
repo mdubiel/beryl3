@@ -7,7 +7,7 @@
 {% block content %}
 <div class="max-w-2xl mx-auto py-16">
     <div class="text-center mb-8">
-        {% lucide 'alert-circle' size=64 class='mx-auto text-error mb-4' %}
+        {% lucide 'circle-alert' size=64 class='mx-auto text-error mb-4' %}
         <h1 class="text-3xl font-bold mb-4 text-error">Unsubscribe Error</h1>
         <p class="text-lg text-base-content/80">
             We encountered a problem processing your request.
@@ -18,7 +18,7 @@
         <div class="card-body text-center">
             <div class="alert alert-error mb-6">
                 <div class="flex items-center gap-3">
-                    {% lucide 'x-circle' size=20 %}
+                    {% lucide 'circle-x' size=20 %}
                     <div>
                         <p class="font-medium">{{ error|default:"An unexpected error occurred" }}</p>
                     </div>

@@ -22,6 +22,20 @@ class UserProfile(models.Model):
         help_text="If checked, you will receive marketing emails from us"
     )
     
+    # Display name preferences
+    nickname = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Nickname",
+        help_text="Optional nickname to display instead of your first name"
+    )
+    use_nickname = models.BooleanField(
+        default=False,
+        verbose_name="Use Nickname for Display",
+        help_text="If checked, your nickname will be used instead of your first name"
+    )
+    
     # Marketing email tracking
     resend_audience_id = models.CharField(
         max_length=100, 
@@ -48,6 +62,31 @@ class UserProfile(models.Model):
         null=True,
         verbose_name="Unsubscribe Token",
         help_text="Secure token for unsubscribe links"
+    )
+    
+    # Resend sync status tracking
+    resend_sync_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('unknown', 'Unknown'),
+            ('synced', 'Synced'),
+            ('out_of_sync', 'Out of Sync'),
+            ('error', 'Error'),
+        ],
+        default='unknown',
+        verbose_name="Resend Sync Status",
+        help_text="Current synchronization status with Resend audience"
+    )
+    resend_last_checked_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Last Resend Check",
+        help_text="When we last checked the status with Resend"
+    )
+    resend_is_subscribed = models.BooleanField(
+        default=False,
+        verbose_name="Actually Subscribed in Resend",
+        help_text="Whether the email is actually in the Resend audience (last known status)"
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -84,6 +123,43 @@ class UserProfile(models.Model):
         relative_url = reverse("marketing_unsubscribe", kwargs={"token": self.unsubscribe_token})
         protocol = 'https' if getattr(settings, 'SECURE_SSL_REDIRECT', False) else 'http'
         return f"{protocol}://{current_site.domain}{relative_url}"
+    
+    def get_sync_status_display(self):
+        """
+        Get a user-friendly display of sync status with color coding
+        
+        Returns:
+            tuple: (status_text, color_class)
+        """
+        from django.conf import settings
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Check if we have sync status information
+        if self.resend_sync_status == 'unknown' or not self.resend_last_checked_at:
+            return ("Never checked", "warning")
+        
+        # Check if sync is stale (older than configured timeout)
+        timeout_minutes = getattr(settings, 'RESEND_SYNC_TIMEOUT_MINUTES', 15)
+        timeout = timedelta(minutes=timeout_minutes)
+        is_stale = timezone.now() - self.resend_last_checked_at > timeout
+        
+        if is_stale:
+            return ("Sync timeout", "warning")
+        
+        # Determine status based on sync state
+        if self.resend_sync_status == 'error':
+            return ("Error", "error")
+        elif self.resend_sync_status == 'out_of_sync':
+            return ("Out of sync", "error")
+        elif self.resend_sync_status == 'synced':
+            # Both opted in and subscribed, or both opted out and not subscribed
+            if self.receive_marketing_emails == self.resend_is_subscribed:
+                return ("Synced", "success")
+            else:
+                return ("Out of sync", "error")
+        
+        return ("Unknown", "warning")
     
     def save(self, *args, **kwargs):
         """

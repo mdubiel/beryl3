@@ -187,7 +187,20 @@ def sync_user_marketing_subscription(user):
     
     profile = user.profile
     should_be_subscribed = profile.receive_marketing_emails
+    
+    # Check current status in Resend
     is_currently_subscribed = resend_service.is_email_in_audience(user.email)
+    now = timezone.now()
+    
+    # Update profile with current status from Resend
+    profile.resend_is_subscribed = is_currently_subscribed
+    profile.resend_last_checked_at = now
+    
+    # Determine sync status
+    if should_be_subscribed == is_currently_subscribed:
+        profile.resend_sync_status = 'synced'
+    else:
+        profile.resend_sync_status = 'out_of_sync'
     
     if should_be_subscribed and not is_currently_subscribed:
         # Subscribe user
@@ -198,19 +211,36 @@ def sync_user_marketing_subscription(user):
         )
         
         if success:
-            profile.marketing_email_subscribed_at = timezone.now()
+            profile.marketing_email_subscribed_at = now
             profile.marketing_email_unsubscribed_at = None
-            profile.save(update_fields=['marketing_email_subscribed_at', 'marketing_email_unsubscribed_at'])
+            profile.resend_is_subscribed = True
+            profile.resend_sync_status = 'synced'
             logger.info(f"Subscribed user {user.email} to marketing emails")
+        else:
+            profile.resend_sync_status = 'error'
+            logger.error(f"Failed to subscribe user {user.email} to marketing emails")
         
     elif not should_be_subscribed and is_currently_subscribed:
         # Unsubscribe user
         success = resend_service.unsubscribe_from_audience(user.email)
         
         if success:
-            profile.marketing_email_unsubscribed_at = timezone.now()
-            profile.save(update_fields=['marketing_email_unsubscribed_at'])
+            profile.marketing_email_unsubscribed_at = now
+            profile.resend_is_subscribed = False
+            profile.resend_sync_status = 'synced'
             logger.info(f"Unsubscribed user {user.email} from marketing emails")
+        else:
+            profile.resend_sync_status = 'error'
+            logger.error(f"Failed to unsubscribe user {user.email} from marketing emails")
+    
+    # Save the updated profile
+    profile.save(update_fields=[
+        'marketing_email_subscribed_at', 
+        'marketing_email_unsubscribed_at',
+        'resend_is_subscribed',
+        'resend_last_checked_at',
+        'resend_sync_status'
+    ])
 
 
 def handle_marketing_unsubscribe(token: str) -> bool:

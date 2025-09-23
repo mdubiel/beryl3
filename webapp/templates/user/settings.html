@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load static %}
+{% load lucide %}
+
+{% block title %}Account Settings{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <a href="{% url 'dashboard' %}">
+            {% lucide 'layout-dashboard' size=16 %}
+            Dashboard
+        </a>
+    </li>
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'settings' size=16 %}
+            Account Settings
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="flex justify-center">
+    <form method="post" class="w-full">
+        {% csrf_token %}
+
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full max-w-2xl mx-auto border p-6">
+            <legend class="fieldset-legend">Account Settings</legend>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-error my-2"><span>{{ form.non_field_errors.as_text }}</span></div>
+            {% endif %}
+
+            <label class="label" for="first_name">First Name</label>
+            <input type="text" 
+                   id="first_name"
+                   name="first_name" 
+                   value="{{ user.first_name }}" 
+                   placeholder="Enter your first name"
+                   class="input input-bordered w-full">
+            <p class="text-xs text-base-content/70 mt-1 pl-1">Your legal first name</p>
+
+            <label class="label mt-4" for="last_name">Last Name</label>
+            <input type="text" 
+                   id="last_name"
+                   name="last_name" 
+                   value="{{ user.last_name }}" 
+                   placeholder="Enter your last name"
+                   class="input input-bordered w-full">
+            <p class="text-xs text-base-content/70 mt-1 pl-1">Optional but helpful for identification</p>
+
+            <label class="label mt-4" for="nickname">Nickname</label>
+            <input type="text" 
+                   id="nickname"
+                   name="nickname" 
+                   value="{{ profile.nickname|default:'' }}" 
+                   placeholder="Enter a nickname"
+                   class="input input-bordered w-full">
+            <p class="text-xs text-base-content/70 mt-1 pl-1">Optional nickname to display instead of your first name</p>
+
+            <div class="form-control mt-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" 
+                           name="use_nickname" 
+                           class="checkbox checkbox-primary"
+                           {% if profile.use_nickname %}checked{% endif %}>
+                    <span class="label-text">Use nickname for display</span>
+                </label>
+                <p class="text-xs text-base-content/70 mt-1 pl-8">If checked, your nickname will be shown instead of your first name</p>
+            </div>
+
+            <label class="label mt-4">Email Address</label>
+            <input type="email" 
+                   value="{{ user.email }}" 
+                   disabled
+                   class="input input-bordered w-full input-disabled">
+            <p class="text-xs text-base-content/70 mt-1 pl-1">Email cannot be changed from this page. <a href="{% url 'account_email' %}" class="link">Manage email addresses</a></p>
+
+            <div class="form-control mt-6">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" 
+                           name="receive_marketing_emails" 
+                           class="checkbox checkbox-primary"
+                           {% if profile.receive_marketing_emails %}checked{% endif %}>
+                    <span class="label-text">Receive marketing emails</span>
+                </label>
+                <p class="text-xs text-base-content/70 mt-1 pl-8">Get updates about new features, tips, and special offers</p>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <div class="flex items-start gap-3">
+                    {% lucide 'info' size=20 %}
+                    <div class="text-sm">
+                        <p class="font-medium">About marketing emails:</p>
+                        <ul class="mt-2 space-y-1">
+                            <li>• You'll receive product updates and useful tips</li>
+                            <li>• You can unsubscribe at any time from any email</li>
+                            <li>• We never share your email with third parties</li>
+                            <li>• Important account notifications are always sent regardless of this setting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider my-6">Current Status</div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-base-100 p-4 rounded-lg border">
+                    <div class="text-sm font-medium text-base-content/70 mb-1">Display Name</div>
+                    <div class="text-lg font-semibold">{{ user.display_name }}</div>
+                    <div class="text-xs text-base-content/60 mt-1">How you appear to others</div>
+                </div>
+                
+                <div class="bg-base-100 p-4 rounded-lg border">
+                    <div class="text-sm font-medium text-base-content/70 mb-1">Marketing Emails</div>
+                    <div class="text-lg font-semibold flex items-center gap-2">
+                        {% if profile.receive_marketing_emails %}
+                            {% lucide 'circle-check' size=20 class='text-success' %}
+                            <span class="text-success">Enabled</span>
+                        {% else %}
+                            {% lucide 'circle-x' size=20 class='text-warning' %}
+                            <span class="text-warning">Disabled</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-xs text-base-content/60 mt-1">Current preference</div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-6 gap-4">
+                <button type="submit" class="btn btn-primary flex-grow">
+                    {% lucide 'save' size=16 class='mr-2' %}
+                    Save Settings
+                </button>
+            </div>
+
+        </fieldset>
+    </form>
+</div>
+{% endblock %}

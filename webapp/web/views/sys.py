@@ -32,7 +32,6 @@ from django.conf import settings
 from web.decorators import log_execution_time
 from web.models import Collection, CollectionItem, RecentActivity, ItemType, ItemAttribute, LinkPattern, MediaFile
 from web.models_user_profile import UserProfile
-from core.lucide import LucideIcons
 
 logger = logging.getLogger('webapp')
 User = get_user_model()
@@ -965,12 +964,6 @@ def sys_item_type_create(request):
             messages.error(request, 'Display name is required')
             return redirect('sys_item_types')
             
-        # Validate icon name if provided
-        if icon:
-            is_valid, error_message = LucideIcons.validate(icon)
-            if not is_valid:
-                messages.error(request, error_message)
-                return redirect('sys_item_types')
             
         item_type = ItemType.objects.create(
             display_name=display_name,
@@ -1006,12 +999,6 @@ def sys_item_type_update(request, item_type_id):
             messages.error(request, 'Display name is required')
             return redirect('sys_item_types')
             
-        # Validate icon name if provided
-        if icon:
-            is_valid, error_message = LucideIcons.validate(icon)
-            if not is_valid:
-                messages.error(request, error_message)
-                return redirect('sys_item_types')
             
         item_type.display_name = display_name
         item_type.description = description or None
@@ -1229,51 +1216,6 @@ def sys_item_attribute_delete(request, attribute_id):
         return redirect('sys_item_type_detail', item_type_id=item_type_id)
 
 
-@application_admin_required
-@require_http_methods(["GET"])
-def sys_validate_lucide_icon(request):
-    """Endpoint to validate Lucide icon names and provide suggestions"""
-    icon_name = request.GET.get('icon', '').strip()
-    
-    if not icon_name:
-        return JsonResponse({
-            'valid': True,
-            'message': '',
-            'suggestions': []
-        })
-    
-    is_valid, error_message = LucideIcons.validate(icon_name)
-    
-    response_data = {
-        'valid': is_valid,
-        'message': error_message or '',
-        'suggestions': []
-    }
-    
-    # If invalid, provide suggestions
-    if not is_valid:
-        suggestions = LucideIcons.get_suggestions(icon_name, limit=5)
-        response_data['suggestions'] = suggestions
-    
-    return JsonResponse(response_data)
-
-
-@application_admin_required
-@require_http_methods(["GET"])
-def sys_lucide_icon_search(request):
-    """HTMX endpoint to search for Lucide icons for autocomplete"""
-    query = request.GET.get('q', '').strip()
-    
-    if not query or len(query) < 2:
-        return JsonResponse({'icons': []})
-    
-    # Search for matching icons
-    matching_icons = LucideIcons.search_icons(query)
-    
-    # Limit results for performance
-    limited_results = matching_icons[:20]
-    
-    return JsonResponse({'icons': limited_results})
 
 
 @application_admin_required
@@ -1344,9 +1286,6 @@ def sys_link_pattern_create(request):
                 'form_data': request.POST
             })
         
-        # Validate icon if provided
-        if icon and not LucideIcons.is_valid(icon):
-            messages.error(request, f'Icon "{icon}" is not a valid Lucide icon.')
             return render(request, 'sys/link_pattern_form.html', {
                 'mode': 'create',
                 'form_data': request.POST
@@ -1395,9 +1334,6 @@ def sys_link_pattern_update(request, link_pattern_id):
                 'form_data': request.POST
             })
         
-        # Validate icon if provided
-        if icon and not LucideIcons.is_valid(icon):
-            messages.error(request, f'Icon "{icon}" is not a valid Lucide icon.')
             return render(request, 'sys/link_pattern_form.html', {
                 'mode': 'update',
                 'link_pattern': link_pattern,
@@ -2172,7 +2108,7 @@ def sys_marketing_consent(request):
     resend_status_filter = request.GET.get('resend_status', '')
     
     # Build queryset
-    profiles = UserProfile.objects.select_related('user').order_by('-created')
+    profiles = UserProfile.objects.select_related('user').order_by('-created_at')
     
     if search:
         profiles = profiles.filter(
@@ -2423,6 +2359,41 @@ def sys_marketing_consent_bulk_remove_opted_out(request):
     except Exception as e:
         logger.error("Bulk removal of opted-out users failed: %s", str(e))
         messages.error(request, f"Bulk removal failed: {str(e)}")
+    
+    return redirect('sys_marketing_consent')
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_marketing_consent_full_sync(request):
+    """Run full Resend audience sync using management command"""
+    try:
+        from django.core.management import call_command
+        from io import StringIO
+        
+        # Capture command output
+        out = StringIO()
+        
+        # Run the management command
+        call_command('sync_resend_audience', '--batch-size=100', stdout=out)
+        
+        output = out.getvalue()
+        
+        # Parse output for summary
+        lines = output.strip().split('\n')
+        summary_line = lines[-1] if lines else ""
+        
+        logger.info("Admin user '%s' [%s] ran full Resend sync", 
+                   request.user.username, request.user.id)
+        
+        if "Sync completed" in summary_line:
+            messages.success(request, f"Full sync completed successfully. {summary_line}")
+        else:
+            messages.info(request, "Sync job started. Check logs for details.")
+            
+    except Exception as e:
+        logger.error("Full Resend sync failed: %s", str(e))
+        messages.error(request, f"Full sync failed: {str(e)}")
     
     return redirect('sys_marketing_consent')
 

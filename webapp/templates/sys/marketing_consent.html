@@ -71,23 +71,32 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex items-center gap-3">
                     {% if resend_configured %}
-                        {% lucide 'check-circle' size=20 class='text-success' %}
+                        {% lucide 'circle-check' size=20 class='text-success' %}
                         <span class="text-success font-medium">API Key Configured</span>
                     {% else %}
-                        {% lucide 'x-circle' size=20 class='text-error' %}
+                        {% lucide 'circle-x' size=20 class='text-error' %}
                         <span class="text-error font-medium">API Key Missing</span>
                     {% endif %}
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="terminal-text">Audience ID:</span>
-                    <code class="terminal-accent">{{ resend_audience_id|default:"Not configured" }}</code>
+                    {% if resend_audience_id %}
+                        <a href="https://resend.com/audiences/{{ resend_audience_id }}" 
+                           target="_blank" 
+                           class="link link-primary">
+                            <code class="terminal-accent">{{ resend_audience_id }}</code>
+                            {% lucide 'external-link' size=14 class='ml-1 inline' %}
+                        </a>
+                    {% else %}
+                        <code class="terminal-accent">Not configured</code>
+                    {% endif %}
                 </div>
             </div>
             
             {% if not resend_configured %}
             <div class="alert alert-warning mt-4">
                 <div class="flex items-center gap-3">
-                    {% lucide 'alert-triangle' size=20 %}
+                    {% lucide 'triangle-alert' size=20 %}
                     <div>
                         <p class="font-medium">Resend API not configured</p>
                         <p class="text-sm">Marketing email features will be disabled until RESEND_API_KEY is set</p>
@@ -152,7 +161,19 @@
             <h3 class="terminal-accent text-lg font-bold mb-4">
                 <span class="terminal-text">></span> BULK ACTIONS
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-2">
+                    <form method="post" action="{% url 'sys_marketing_consent_full_sync' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-full">
+                            {% lucide 'refresh-cw' size=16 class='mr-2' %}
+                            Full Sync (All Users)
+                        </button>
+                    </form>
+                    <div class="text-xs terminal-text opacity-70">
+                        Run comprehensive sync using management command
+                    </div>
+                </div>
                 {% if not_synced_count > 0 %}
                 <div class="flex flex-col gap-2">
                     <form method="post" action="{% url 'sys_marketing_consent_bulk_sync' %}">
@@ -226,28 +247,36 @@
                         <td>
                             {% if profile.receive_marketing_emails %}
                                 <div class="flex items-center gap-2">
-                                    {% lucide 'check-circle' size=16 class='text-success' %}
+                                    {% lucide 'circle-check' size=16 class='text-success' %}
                                     <span class="text-success font-medium">Opted In</span>
                                 </div>
                             {% else %}
                                 <div class="flex items-center gap-2">
-                                    {% lucide 'x-circle' size=16 class='text-warning' %}
+                                    {% lucide 'circle-x' size=16 class='text-warning' %}
                                     <span class="text-warning font-medium">Opted Out</span>
                                 </div>
                             {% endif %}
                         </td>
                         <td>
-                            {% if profile.resend_audience_id %}
+                            {% with profile.get_sync_status_display as status %}
                                 <div class="flex items-center gap-2">
-                                    {% lucide 'check-circle' size=16 class='text-info' %}
-                                    <span class="text-info font-medium">Synced</span>
+                                    {% if status.1 == "success" %}
+                                        {% lucide 'circle-check' size=16 class='text-success' %}
+                                        <span class="text-success font-medium">{{ status.0 }}</span>
+                                    {% elif status.1 == "error" %}
+                                        {% lucide 'circle-x' size=16 class='text-error' %}
+                                        <span class="text-error font-medium">{{ status.0 }}</span>
+                                    {% else %}
+                                        {% lucide 'circle-alert' size=16 class='text-warning' %}
+                                        <span class="text-warning font-medium">{{ status.0 }}</span>
+                                    {% endif %}
                                 </div>
-                            {% else %}
-                                <div class="flex items-center gap-2">
-                                    {% lucide 'alert-circle' size=16 class='text-warning' %}
-                                    <span class="text-warning font-medium">Not Synced</span>
-                                </div>
-                            {% endif %}
+                                {% if profile.resend_last_checked_at %}
+                                    <div class="text-xs terminal-text opacity-70 mt-1">
+                                        Last checked: {{ profile.resend_last_checked_at|timesince }} ago
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
                         </td>
                         <td class="terminal-text text-sm">{{ profile.created|date:"M j, Y" }}</td>
                         <td>

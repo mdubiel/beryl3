@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, marketing
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, marketing, user_settings
 
 
 urlpatterns = [
@@ -48,6 +48,9 @@ urlpatterns = [
     
     # User favorites
     path('favorites/', user.favorites_view, name='favorites_list'),
+    
+    # User account settings
+    path('user/settings/', user_settings.user_settings_view, name='user_settings'),
 
     # HX actions
     path('collections/<str:hash>/update-visibility/', collection_hx.update_collection_visibility, name='collection_update_visibility'),
@@ -96,6 +99,7 @@ urlpatterns = [
     path('sys/marketing-consent/bulk-sync/', sys.sys_marketing_consent_bulk_sync, name='sys_marketing_consent_bulk_sync'),
     path('sys/marketing-consent/remove-user/<int:user_id>/', sys.sys_marketing_consent_remove_user, name='sys_marketing_consent_remove_user'),
     path('sys/marketing-consent/bulk-remove-opted-out/', sys.sys_marketing_consent_bulk_remove_opted_out, name='sys_marketing_consent_bulk_remove_opted_out'),
+    path('sys/marketing-consent/full-sync/', sys.sys_marketing_consent_full_sync, name='sys_marketing_consent_full_sync'),
     path('sys/settings/', sys.sys_settings, name='sys_settings'),
     path('sys/media/', sys.sys_media_browser, name='sys_media_browser'),
     path('sys/media/upload/', sys.sys_media_upload, name='sys_media_upload'),
@@ -131,8 +135,6 @@ urlpatterns = [
     
 
     # HTMX endpoints
-    path('sys/validate-lucide-icon/', sys.sys_validate_lucide_icon, name='sys_validate_lucide_icon'),
-    path('sys/lucide-icon-search/', sys.sys_lucide_icon_search, name='sys_lucide_icon_search'),
     
     # Marketing email management
     path('unsubscribe/<str:token>/', marketing.marketing_unsubscribe, name='marketing_unsubscribe'),
