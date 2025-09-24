@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load lucide %}
+{% load markdown_tags %}
 
 {% block title %}Dashboard{% endblock %}
 
@@ -158,7 +159,7 @@
                             {{ list.get_visibility_display }}
                         {% endif %}
                     </p>
-                    <p>{{ list.description|default:"No description available."|truncatechars:200 }}</p>
+                    <p>{{ list.description|default:"No description available."|truncatechars:200|markdown_inline }}</p>
                 </div>
             </div>
             {% endfor %}
@@ -192,7 +193,7 @@
                 
                 {# Collection thumbnails #}
                 {% for collection in thumbnail_collections %}
-                <div class="tooltip" data-tip="{{ collection.description|default:'No description'|truncatechars:100 }} • {{ collection.item_count }} items">
+                <div class="tooltip" data-tip="{{ collection.description|default:'No description'|truncatechars:100|markdown_inline|striptags }} • {{ collection.item_count }} items">
                     <a href="{% url 'collection_detail' collection.hash %}" class="block">
                         <div class="avatar w-full">
                             <div class="w-full aspect-square rounded-lg">
@@ -255,7 +256,7 @@
             <div class="timeline-end timeline-box">
                 <time class="font-mono italic text-xs" title="{{ event.created|date:'F j, Y g:i A' }}">{{ event.created|timesince }} ago</time>
                 <div class="text-sm">
-                    {{ event.message|safe }}
+                    {{ event.message|markdown_inline }}
                 </div>
             </div>
 

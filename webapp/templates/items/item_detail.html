@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load lucide %}
+{% load markdown_tags %}
 
 {% block title %}{{ item.name }}{% endblock %}
 
@@ -208,7 +209,7 @@
             </p>
             
             <div class="text-base-content text-neutral">
-                {{ item.description|default:"No description provided."|linebreaks }}
+                {{ item.description|default:"No description provided."|markdown_safe }}
             </div>
             
             {# Item Images Gallery - Smaller Size #}

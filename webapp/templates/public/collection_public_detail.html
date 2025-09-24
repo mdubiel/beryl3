@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% load lucide %}
+{% load markdown_tags %}
 
 {% block title %}{{ collection.name }}{% endblock %}
 
@@ -32,7 +33,7 @@
                 </div>
                 {% if collection.description %}
                 <p class="mt-4 max-w-2xl opacity-90">
-                    {{ collection.description|linebreaks }}
+                    {{ collection.description|markdown_safe }}
                 </p>
                 {% endif %}
                 

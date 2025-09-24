@@ -2,6 +2,7 @@
 {% load static %}
 {% load i18n %}
 {% load lucide %}
+{% load markdown_tags %}
 
 {% block title %}{{ collection.name }}{% endblock %}
 
@@ -123,7 +124,7 @@
             {% endif %}
             </div>
             
-            <p class="text-base-content text-neutral">{{ collection.description|default:"No description provided." }}</p>
+            <p class="text-base-content text-neutral">{{ collection.description|default:"No description provided."|markdown_safe }}</p>
             
             {# Collection Images Gallery - Smaller Size #}
             {% if collection.images.all %}

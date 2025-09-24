@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load lucide %}
+{% load markdown_tags %}
 
 {# Give the card a unique ID so HTMX can target it #}
 <div id="collection-row-{{ collection.hash }}" class="card lg:card-side bg-base-100 lg:min-h-48 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0">
@@ -102,7 +103,7 @@
                 {% endif %}
                 
                 {# Row 3: Description #}
-                <p class="text-sm text-base-content text-neutral">{{ collection.description|default:"*The description appears to have wandered off somewhere, probably to have a cup of tea*"|truncatechars:200 }}</p>
+                <p class="text-sm text-base-content text-neutral">{{ collection.description|default:"*The description appears to have wandered off somewhere, probably to have a cup of tea*"|truncatechars:200|markdown_inline }}</p>
                 
             </div>
             

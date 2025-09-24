@@ -1,5 +1,6 @@
 {% load lucide %}
 {% load humanize %}
+{% load markdown_tags %}
 
 <li class="flex items-center gap-4 px-2 py-4 ml-2 mr-4 border-b border-base-300 last:border-b-0">
 
@@ -8,7 +9,7 @@
     </div>
     
     <div class="flex-grow text-sm">
-        {{ event.message|safe }}
+        {{ event.message|markdown_inline }}
     </div>
 
     <div class="tooltip tooltip-left" data-tip="{{ event.created|date:'Y-m-d H:i' }}">
