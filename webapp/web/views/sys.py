@@ -2398,3 +2398,167 @@ def sys_marketing_consent_full_sync(request):
     return redirect('sys_marketing_consent')
 
 
+@application_admin_required 
+def sys_import_data(request):
+    """Data import interface for administrators"""
+    context = {
+        'users': User.objects.filter(is_active=True).order_by('email'),
+        'example_formats': {
+            'json': 'application/json',
+            'yaml': 'application/x-yaml', 
+            'yml': 'application/x-yaml'
+        }
+    }
+    
+    if request.method == 'POST':
+        try:
+            # Get uploaded file
+            import_file = request.FILES.get('import_file')
+            target_user_id = request.POST.get('target_user')
+            download_images = request.POST.get('download_images') == 'on'
+            
+            if not import_file:
+                messages.error(request, "Please select a file to import")
+                return render(request, 'sys/import_data.html', context)
+            
+            if not target_user_id:
+                messages.error(request, "Please select a target user")
+                return render(request, 'sys/import_data.html', context)
+            
+            # Get target user
+            try:
+                target_user = User.objects.get(id=target_user_id)
+            except User.DoesNotExist:
+                messages.error(request, "Selected user not found")
+                return render(request, 'sys/import_data.html', context)
+            
+            # Validate file size (limit to 10MB)
+            if import_file.size > 10 * 1024 * 1024:
+                messages.error(request, "File size too large. Maximum 10MB allowed")
+                return render(request, 'sys/import_data.html', context)
+            
+            # Get file extension
+            file_name = import_file.name.lower()
+            if file_name.endswith('.json'):
+                file_extension = 'json'
+            elif file_name.endswith('.yaml') or file_name.endswith('.yml'):
+                file_extension = 'yaml'
+            else:
+                messages.error(request, "Unsupported file format. Use JSON or YAML files")
+                return render(request, 'sys/import_data.html', context)
+            
+            # Read file content
+            file_content = import_file.read().decode('utf-8')
+            
+            # Validate the import file
+            from web.import_validator import ImportValidator
+            validator = ImportValidator()
+            data, errors = validator.validate_import_file(file_content, file_extension)
+            
+            if errors:
+                error_report = validator.generate_validation_report(errors)
+                context['validation_errors'] = errors
+                context['error_report'] = error_report
+                messages.error(request, f"Import validation failed with {len(errors)} error(s)")
+                return render(request, 'sys/import_data.html', context)
+            
+            # Store validated data in session for confirmation
+            request.session['import_data'] = {
+                'data': data,
+                'target_user_id': target_user_id,
+                'download_images': download_images,
+                'file_name': import_file.name
+            }
+            
+            # Show preview/confirmation page
+            context.update({
+                'import_data': data,
+                'target_user': target_user,
+                'download_images': download_images,
+                'file_name': import_file.name,
+                'ready_for_import': True
+            })
+            
+            messages.info(request, "Import file validated successfully. Review the data below and confirm to proceed.")
+            return render(request, 'sys/import_data.html', context)
+            
+        except Exception as e:
+            logger.error("Import validation error for user %s: %s", request.user.username, str(e))
+            messages.error(request, f"Import validation failed: {str(e)}")
+            return render(request, 'sys/import_data.html', context)
+    
+    return render(request, 'sys/import_data.html', context)
+
+
+@application_admin_required
+@require_http_methods(["POST"])
+def sys_import_data_confirm(request):
+    """Process the confirmed import"""
+    # Get import data from session
+    import_session_data = request.session.get('import_data')
+    if not import_session_data:
+        messages.error(request, "Import session expired. Please upload the file again.")
+        return redirect('sys_import_data')
+    
+    try:
+        from web.import_processor import ImportProcessor
+        
+        data = import_session_data['data']
+        target_user_id = import_session_data['target_user_id']
+        download_images = import_session_data['download_images']
+        file_name = import_session_data['file_name']
+        
+        # Get target user
+        target_user = User.objects.get(id=target_user_id)
+        
+        # Process the import
+        processor = ImportProcessor()
+        result = processor.process_import(
+            data=data,
+            target_user=target_user,
+            download_images=download_images,
+            admin_user=request.user
+        )
+        
+        # Clear session data
+        del request.session['import_data']
+        
+        # Log the import
+        logger.info("Admin user '%s' [%s] imported data from '%s' for user '%s' [%s]: %d collections, %d items, %d errors", 
+                   request.user.username, request.user.id, file_name,
+                   target_user.username, target_user.id,
+                   result['collections_created'], result['items_created'], len(result['errors']))
+        
+        if result['errors']:
+            messages.warning(request, f"Import completed with warnings. Created {result['collections_created']} collections and {result['items_created']} items. {len(result['errors'])} errors occurred.")
+        else:
+            messages.success(request, f"Import completed successfully! Created {result['collections_created']} collections and {result['items_created']} items.")
+        
+        # Store detailed results for display
+        request.session['import_result'] = result
+        return redirect('sys_import_result')
+        
+    except Exception as e:
+        logger.error("Import processing error for user %s: %s", request.user.username, str(e))
+        messages.error(request, f"Import processing failed: {str(e)}")
+        return redirect('sys_import_data')
+
+
+@application_admin_required
+def sys_import_result(request):
+    """Display import results"""
+    result = request.session.get('import_result')
+    if not result:
+        messages.info(request, "No import results to display.")
+        return redirect('sys_import_data')
+    
+    context = {
+        'result': result
+    }
+    
+    # Clear the result from session after displaying
+    del request.session['import_result']
+    
+    return render(request, 'sys/import_result.html', context)
+
+

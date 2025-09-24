@@ -90,6 +90,10 @@
                     {% lucide 'image' size=14 class='inline mr-2' %} Media Browser
                 </a>
                 
+                <a href="{% url 'sys_import_data' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'import' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'upload' size=14 class='inline mr-2' %} Data Import
+                </a>
+                
                 <a href="{% url 'sys_settings' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'settings' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'settings' size=14 class='inline mr-2' %} Settings
                 </a>

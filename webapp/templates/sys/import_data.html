@@ -1,0 +1,295 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+{% load markdown_tags %}
+
+{% block title %}Data Import - Beryl System Management{% endblock %}
+
+{% block page_title %}Data Import{% endblock %}
+{% block page_description %}Import collections, items, and metadata from JSON/YAML files{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    {% if not ready_for_import %}
+    <!-- Import Form -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> UPLOAD IMPORT FILE
+            </h3>
+            
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <!-- File Upload -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Import File</span>
+                        <span class="label-text-alt terminal-accent">JSON or YAML format</span>
+                    </label>
+                    <input type="file" name="import_file" accept=".json,.yaml,.yml" 
+                           class="file-input file-input-bordered w-full" required>
+                    <div class="label">
+                        <span class="label-text-alt">Maximum file size: 10MB</span>
+                    </div>
+                </div>
+                
+                <!-- Target User Selection -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Target User</span>
+                        <span class="label-text-alt terminal-accent">User to import data for</span>
+                    </label>
+                    <select name="target_user" class="select select-bordered w-full" required>
+                        <option value="">Select a user...</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.get_display_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Options -->
+                <div class="form-control">
+                    <label class="cursor-pointer label justify-start gap-3">
+                        <input type="checkbox" name="download_images" class="checkbox checkbox-primary">
+                        <div>
+                            <div class="label-text terminal-text">Download Web Images</div>
+                            <div class="label-text-alt">Download and store images from URLs in the import file</div>
+                        </div>
+                    </label>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        {% lucide 'upload' size=16 class='mr-2' %} Upload & Validate
+                    </button>
+                    <a href="{% url 'sys_dashboard' %}" class="btn btn-ghost">
+                        {% lucide 'arrow-left' size=16 class='mr-2' %} Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Format Information -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> IMPORT FORMAT INFORMATION
+            </h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Supported Formats</h4>
+                    <ul class="list-disc list-inside space-y-1 text-sm terminal-text">
+                        <li><span class="terminal-accent">.json</span> - JSON format</li>
+                        <li><span class="terminal-accent">.yaml</span> - YAML format</li>
+                        <li><span class="terminal-accent">.yml</span> - YAML format (alternative extension)</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Import Structure</h4>
+                    <ul class="list-disc list-inside space-y-1 text-sm terminal-text">
+                        <li>Collections with metadata and visibility settings</li>
+                        <li>Collection items with attributes, status, and links</li>
+                        <li>Item type definitions (optional)</li>
+                        <li>Images for collections and items (with optional web download)</li>
+                        <li>Links with automatic pattern matching</li>
+                        <li>Complete metadata preservation</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold terminal-text mb-2">Example Structure</h4>
+                    <pre class="bg-base-300 p-3 rounded text-xs overflow-x-auto"><code>{
+  "version": "1.0",
+  "metadata": {
+    "title": "My Collection Import",
+    "description": "Import of personal collections"
+  },
+  "options": {
+    "download_images": true,
+    "default_visibility": "PRIVATE"
+  },
+  "collections": [
+    {
+      "name": "My Vinyl Collection",
+      "description": "Personal vinyl records",
+      "visibility": "UNLISTED",
+      "items": [
+        {
+          "name": "Abbey Road",
+          "description": "Classic Beatles album",
+          "status": "IN_COLLECTION",
+          "item_type": "vinyl_record",
+          "attributes": {
+            "artist": "The Beatles",
+            "year": "1969"
+          },
+          "links": [
+            {
+              "url": "https://www.discogs.com/...",
+              "display_name": "Discogs Page"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Preview/Confirmation Section -->
+    <div class="terminal-bg border-2 border-primary">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> IMPORT PREVIEW & CONFIRMATION
+            </h3>
+            
+            <div class="alert alert-info mb-6">
+                <div class="flex items-center gap-2">
+                    {% lucide 'info' size=16 %}
+                    <span class="terminal-text">
+                        Import file validation successful! Review the data below and confirm to proceed with import.
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Import Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="stat border border-primary">
+                    <div class="stat-title">Target User</div>
+                    <div class="stat-value text-sm">{{ target_user.get_display_name }}</div>
+                    <div class="stat-desc">{{ target_user.email }}</div>
+                </div>
+                <div class="stat border border-primary">
+                    <div class="stat-title">Collections</div>
+                    <div class="stat-value text-primary">{{ import_data.collections|length }}</div>
+                    <div class="stat-desc">To be created</div>
+                </div>
+                <div class="stat border border-primary">
+                    <div class="stat-title">Total Items</div>
+                    <div class="stat-value text-primary">
+                        {% widthratio import_data.collections|length 1 1 as total_items %}
+                        {% for collection in import_data.collections %}
+                            {% for item in collection.items %}{% add:total_items 1 as total_items %}{% endfor %}
+                        {% endfor %}
+                        {{ total_items|default:0 }}
+                    </div>
+                    <div class="stat-desc">Across all collections</div>
+                </div>
+                <div class="stat border border-primary">
+                    <div class="stat-title">Download Images</div>
+                    <div class="stat-value text-sm">{{ download_images|yesno:"YES,NO" }}</div>
+                    <div class="stat-desc">From web URLs</div>
+                </div>
+            </div>
+            
+            <!-- Import Metadata -->
+            {% if import_data.metadata %}
+            <div class="mb-6">
+                <h4 class="font-bold terminal-accent mb-2">Import Metadata</h4>
+                <div class="bg-base-300 p-3 rounded space-y-1 text-sm">
+                    {% if import_data.metadata.title %}
+                    <div><span class="terminal-accent">Title:</span> {{ import_data.metadata.title }}</div>
+                    {% endif %}
+                    {% if import_data.metadata.description %}
+                    <div><span class="terminal-accent">Description:</span> {{ import_data.metadata.description }}</div>
+                    {% endif %}
+                    {% if import_data.metadata.source %}
+                    <div><span class="terminal-accent">Source:</span> {{ import_data.metadata.source }}</div>
+                    {% endif %}
+                    {% if import_data.metadata.created_by %}
+                    <div><span class="terminal-accent">Created By:</span> {{ import_data.metadata.created_by }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Collections Preview -->
+            <div class="mb-6">
+                <h4 class="font-bold terminal-accent mb-3">Collections to be Created</h4>
+                <div class="space-y-3">
+                    {% for collection in import_data.collections %}
+                    <div class="border border-base-300 rounded p-3">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h5 class="font-bold terminal-text">{{ collection.name }}</h5>
+                                {% if collection.description %}
+                                <p class="text-sm terminal-text opacity-80 mt-1">{{ collection.description|truncatechars:100|markdown_inline }}</p>
+                                {% endif %}
+                                <div class="flex gap-4 mt-2 text-xs">
+                                    <span class="terminal-accent">Visibility: {{ collection.visibility }}</span>
+                                    <span class="terminal-accent">Items: {{ collection.items|length }}</span>
+                                    {% if collection.images %}
+                                    <span class="terminal-accent">Images: {{ collection.images|length }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Item Preview -->
+                        {% if collection.items %}
+                        <div class="mt-3 pl-4 border-l-2 border-base-300">
+                            <div class="text-xs terminal-accent mb-2">Sample Items:</div>
+                            {% for item in collection.items|slice:":3" %}
+                            <div class="text-sm terminal-text">
+                                <span class="font-medium">{{ item.name }}</span>
+                                {% if item.status != "IN_COLLECTION" %} - <span class="terminal-accent">{{ item.status }}</span>{% endif %}
+                                {% if item.item_type %} ({{ item.item_type }}){% endif %}
+                            </div>
+                            {% endfor %}
+                            {% if collection.items|length > 3 %}
+                            <div class="text-xs terminal-accent mt-1">... and {{ collection.items|length|add:"-3" }} more items</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Confirmation Buttons -->
+            <div class="flex gap-2">
+                <form method="post" action="{% url 'sys_import_data_confirm' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        {% lucide 'check' size=16 class='mr-2' %} Confirm Import
+                    </button>
+                </form>
+                <a href="{% url 'sys_import_data' %}" class="btn btn-ghost">
+                    {% lucide 'x' size=16 class='mr-2' %} Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Validation Errors -->
+    {% if validation_errors %}
+    <div class="terminal-bg border-2 border-error">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> VALIDATION ERRORS
+            </h3>
+            
+            <div class="alert alert-error mb-4">
+                <div class="flex items-center gap-2">
+                    {% lucide 'x-circle' size=16 %}
+                    <span class="terminal-text">Import validation failed with {{ validation_errors|length }} error(s)</span>
+                </div>
+            </div>
+            
+            <pre class="bg-error bg-opacity-10 p-4 rounded text-sm overflow-x-auto">{{ error_report }}</pre>
+        </div>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}
