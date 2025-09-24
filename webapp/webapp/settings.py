@@ -76,7 +76,7 @@ if os.path.exists(env_file_path):
     env.read_env(env_file_path)
 else:
     # Environment variables are provided directly (e.g., via Docker env_file)
-    logging.debug("[ENV DEBUG] No .env file found, using system environment variables")
+    pass
 
 
 # CRITICAL SETTINGS - NO DEFAULTS, WILL RAISE ERROR IF MISSING
@@ -125,15 +125,8 @@ LOKI_ENABLED = FEATURE_FLAGS['LOKI_ENABLED']
 USE_GOOGLE_CLOUD_LOGGING = FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']
 APPLICATION_ACTIVITY_LOGGING = FEATURE_FLAGS['APPLICATION_ACTIVITY_LOGGING']
 
-# Debug logging for CSRF_TRUSTED_ORIGINS
-csrf_env_value = os.environ.get('CSRF_TRUSTED_ORIGINS', 'NOT_SET')
-logging.debug(f"[CSRF DEBUG] Environment variable CSRF_TRUSTED_ORIGINS: {csrf_env_value}")
-
-parsed_csrf_origins = env.list('CSRF_TRUSTED_ORIGINS', default=[])
-logging.debug(f"[CSRF DEBUG] Parsed CSRF_TRUSTED_ORIGINS: {parsed_csrf_origins}")
-
-CSRF_TRUSTED_ORIGINS = parsed_csrf_origins
-logging.debug(f"[CSRF DEBUG] Final CSRF_TRUSTED_ORIGINS setting: {CSRF_TRUSTED_ORIGINS}")
+# CSRF configuration
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 
 # Database configuration - determined by DB_ENGINE setting
 db_engine = env('DB_ENGINE', default='django.db.backends.sqlite3')
@@ -385,6 +378,10 @@ LOGGING = {
             "format": "{levelname} {message}",
             "style": "{",
         },
+        "minimal": {
+            "format": "{message}",
+            "style": "{",
+        },
         "json": {
             "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
@@ -398,8 +395,9 @@ LOGGING = {
     # Define where your logs will go.
     "handlers": {
         "console": {
-            "class": "logging.StreamHandler",
+            "class": "logging.StreamHandler", 
             "formatter": "simple",
+            "level": "WARNING",  # Only show warnings and errors in console
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
@@ -426,7 +424,7 @@ LOGGING = {
     },
     # ROOT LOGGER
     "root": {
-        "level": "DEBUG",
+        "level": "INFO",
         "handlers": ["console"],
     },
     # LOGGERS
@@ -434,7 +432,7 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console", "file"],
-            "level": "DEBUG" if DEBUG else "INFO",
+            "level": "INFO",
             "propagate": True,
         },
         "performance": {
@@ -445,8 +443,18 @@ LOGGING = {
         },
         "webapp": {
             "handlers": ["console", "webapp_json_file"],
-            "level": "DEBUG", # Capture all log levels
+            "level": "INFO",
             "propagate": False,
+        },
+        # Suppress verbose markdown extension loading messages
+        "markdown.extensions": {
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Suppress template variable resolution debug messages
+        "django.template": {
+            "level": "INFO",
+            "propagate": True,
         },
     },
 }
