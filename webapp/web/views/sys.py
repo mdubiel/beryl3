@@ -2470,13 +2470,17 @@ def sys_import_data(request):
                 'file_name': import_file.name
             }
             
+            # Calculate total items for display
+            total_items = sum(len(collection.get('items', [])) for collection in data.get('collections', []))
+            
             # Show preview/confirmation page
             context.update({
                 'import_data': data,
                 'target_user': target_user,
                 'download_images': download_images,
                 'file_name': import_file.name,
-                'ready_for_import': True
+                'ready_for_import': True,
+                'total_items': total_items
             })
             
             messages.info(request, "Import file validated successfully. Review the data below and confirm to proceed.")

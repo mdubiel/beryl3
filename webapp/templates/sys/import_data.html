@@ -175,13 +175,7 @@
                 </div>
                 <div class="stat border border-primary">
                     <div class="stat-title">Total Items</div>
-                    <div class="stat-value text-primary">
-                        {% widthratio import_data.collections|length 1 1 as total_items %}
-                        {% for collection in import_data.collections %}
-                            {% for item in collection.items %}{% add:total_items 1 as total_items %}{% endfor %}
-                        {% endfor %}
-                        {{ total_items|default:0 }}
-                    </div>
+                    <div class="stat-value text-primary">{{ total_items|default:0 }}</div>
                     <div class="stat-desc">Across all collections</div>
                 </div>
                 <div class="stat border border-primary">
