@@ -80,13 +80,10 @@ class EnvironmentComparison:
             'SITE_NAME': 'Environment-specific site names',
             
             # Monitoring differences
-            'SENTRY_DSN': 'Environment-specific Sentry projects',
-            'SENTRY_ENVIRONMENT': 'Environment-specific Sentry tags',
             
             # External URLs
             'EXTERNAL_DB_URL': 'Environment-specific database admin URLs',
             'EXTERNAL_MONITORING_URL': 'Environment-specific monitoring URLs',
-            'EXTERNAL_SENTRY_URL': 'Environment-specific Sentry URLs',
             
             # Static/Media URLs
             'STATIC_URL': 'Environment-specific static file URLs',
@@ -97,8 +94,6 @@ class EnvironmentComparison:
             'POST_OFFICE_BATCH_TIMEOUT': 'Environment-specific timeout settings',
             'POST_OFFICE_MAX_RETRIES': 'Environment-specific retry policies',
             'POST_OFFICE_RETRY_INTERVAL': 'Environment-specific retry intervals',
-            'SENTRY_TRACES_SAMPLE_RATE': 'Environment-specific sampling rates',
-            'SENTRY_PROFILES_SAMPLE_RATE': 'Environment-specific profiling rates',
         }
         
         # Variables that should typically be identical between environments

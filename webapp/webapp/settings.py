@@ -45,7 +45,6 @@ env = environ.Env(
     EXTERNAL_DB_URL=(str, ''),
     EXTERNAL_INBUCKET_URL=(str, ''),
     EXTERNAL_MONITORING_URL=(str, ''),
-    EXTERNAL_SENTRY_URL=(str, ''),
     EXTERNAL_LOKI_URL=(str, ''),
     EXTERNAL_GRAFANA_URL=(str, ''),
     EXTERNAL_RESEND_URL=(str, ''),
@@ -58,11 +57,6 @@ env = environ.Env(
     # Application features
     # APPLICATION_ACTIVITY_LOGGING - moved to FEATURE_FLAGS system
     
-    # Sentry configuration (optional)
-    SENTRY_DSN=(str, ''),
-    SENTRY_ENVIRONMENT=(str, 'development'),
-    SENTRY_TRACES_SAMPLE_RATE=(float, 0.1),
-    SENTRY_PROFILES_SAMPLE_RATE=(float, 0.1),
     
     # Log forwarding configuration (optional)
     LOKI_URL=(str, ''),
@@ -466,7 +460,7 @@ if FEATURE_FLAGS['LOKI_ENABLED'] and LOKI_URL:
         LOGGING['handlers']['loki'] = {
             'class': 'logging_loki.LokiHandler',
             'url': f"{LOKI_URL}/loki/api/v1/push",
-            'tags': {"application": "beryl3", "environment": env('SENTRY_ENVIRONMENT', default='development')},
+            'tags': {"application": "beryl3", "environment": env('ENVIRONMENT', default='development')},
             'version': "1",
             'formatter': 'json',
         }
@@ -665,7 +659,6 @@ else:
 EXTERNAL_DB_URL = env('EXTERNAL_DB_URL') if env('EXTERNAL_DB_URL') else None
 EXTERNAL_INBUCKET_URL = env('EXTERNAL_INBUCKET_URL') if env('EXTERNAL_INBUCKET_URL') else None
 EXTERNAL_MONITORING_URL = env('EXTERNAL_MONITORING_URL') if env('EXTERNAL_MONITORING_URL') else None
-EXTERNAL_SENTRY_URL = env('EXTERNAL_SENTRY_URL') if env('EXTERNAL_SENTRY_URL') else None
 EXTERNAL_LOKI_URL = env('EXTERNAL_LOKI_URL') if env('EXTERNAL_LOKI_URL') else None
 EXTERNAL_GRAFANA_URL = env('EXTERNAL_GRAFANA_URL') if env('EXTERNAL_GRAFANA_URL') else None
 EXTERNAL_RESEND_URL = env('EXTERNAL_RESEND_URL') if env('EXTERNAL_RESEND_URL') else None
