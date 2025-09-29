@@ -80,8 +80,8 @@ import environ
 # Import base settings from webapp.settings
 from webapp.settings import *
 
-# Build paths
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Build paths - Django Europe project directory
+BASE_DIR = Path('/home/mdubiel/beryl3-preprod')
 
 # Initialize environment variables
 env = environ.Env(
