@@ -28,4 +28,123 @@
 
 15. ✅ **COMPLETED** - The callout actions in 'What you can do with Beryl3', should use different colors for icon and title, as some of the grays used there are barelly visible.
 
-16. Revisit task 12. I was talking mostly about skipped element: - Image upload placeholders (`text-base-content/40` for image icons) - that looks terrible bad, and has to be modified.
+16. ✅ **COMPLETED** - Revisit task 12. I was talking mostly about skipped element: - Image upload placeholders (`text-base-content/40` for image icons) - that looks terrible bad, and has to be modified.
+
+17. ✅ **COMPLETED** - Revise Task 16. This is now better, but can you use one of gray colors instead of black?
+
+18. ✅ **COMPLETED** - Revise task 15, the cards 'Track everything' and 'share collections' are in very light gray color, and are not well visible.
+
+19. ✅ **COMPLETED** - On /dashboard/ I have this 'share you passion'. I do not really like this section. Shall we get id of it or modify somehow?
+
+20. ✅ **COMPLETED** - Revise 18. Now the cards Guest Reservations and Flexible Structure are in the same light gray. I have a proposal. Take the color of 'Organize collections', then take a color of 'Track everything', define a gradient colors between them (remember to be desaturated), and define new 4 colors in scheme. Then use these 4 colors in addtion to style these 6 cards.
+
+21. ✅ **COMPLETED** - I like to idea of 'Make your collections shareable' on dashboard. Can you add two more of this kind?
+
+22. ✅ **COMPLETED** - I like how this end up in task 20. However, for second row, can you do the same, but take different base colors?
+
+23. ✅ **COMPLETED** - Revise task 17, it is again using the class `text-base-content/40` what is wrong.
+
+24. ✅ **COMPLETED** - In user context menu (which is displayed after user clicks on user chip in right top corner). It shows the user email instead of username. Also, the same applies to "Welcome Back, user@...". I want it to show user first name. Make a method, which will return the user first name, or his email if first name is unavailable and use that wherever username is supposed to be displayed. Use model class method not template tag.
+
+25. ✅ **COMPLETED** - I need to consider a subscription to email list. This is a bit more complex task. I'm going to use Resend at this moment, and want to have users subscribed to Audiences. I need to add new flag on User profile 'receive marketing emails'. If this one is checked I need that user email (promary only) to be added to Resend audiences so I can send marketing email later. This should be done on the registration, and on every change of this property. I also need a separate 'unsubscribe' link which will unsubscribe all user emails from that (so mark all emails as 'receive marketing emails' false when user unsubscribe). For this unsubscribe you need to design secure flow which do not require user logging in.
+
+26. ✅ **COMPLETED** - To continue on task 26. I need in /sys/ a separate table view with all emails saying: user, consent to receive marketing email, email and is this email present in Audiences. If user do not consent and email is in Audiences mark it.
+
+27. ✅ **COMPLETED** - To follow on task 27. If email is marked, make a link to action to quickly remove that user email from Audiences in Resend.
+
+28. ✅ **COMPLETED** - Add a new view to configure user account settings. Now it should contain a number of settings: First name, family name and email marketing consent. It should be available under /user/settings and availeble under 'account settings' from drop down chip user menu.
+
+29. ✅ **COMPLETED** - This is data task. I need you to research what are the most common types of collection items, have a look what we already have in database and try to find another type of items, I need at least 40 item types. For each item type propose attributes for them, as it is now. Sync that data with population scripts, so I can easy integrate this with other environments. Inject this data to DEV environment. Make a plan first, I'll review and approve
+
+30. ✅ **COMPLETED** - This is data task. Research typical internet platforms, where you can link items with the attributes created in task 29. This is to popoulate Link Patterns. Limit to 100 patterns. Sync that data with population scripts, so I can easy integrate this with other environments. Inject this data to DEV environment. Make a plan first, I'll review and approve
+
+31. ✅ **COMPLETED** - System is complaining about No module named 'core.lucide' (at least her: /collections/new/). Validate the entire code, and fix this issue.
+
+32. ✅ **COMPLETED** - Design import feautre, import file should be in JSON/YAML format and should include everything from Colletcion, Item, Links and attributes. Include as much meta data as possible. This import should be available only from SYS (so, only application admin can do that) and need to specify user  to where to import to. Include optional image import (download from WEB). 
+
+33. Implement nudity detection in the images. Implement feautre flag how to thread this detection. This flag should have the following levels: "flag only", "delete", "soft ban", "hard ban". The levels will do the following:
+ - in the flag only the image is flagged (need new field in model) and reported in the SYS dashboard. It does not modify user.
+ - Delete will immadiatelly remove image from the system, and inform user about detection of unapropiate image content. Also, make this logged correctly.
+ - Soft ban will do the same as the previous step, but increse the counter of misuse (need this new field for user). When counter reaches the number (configurable by another feautre flag) user is disallowed to login again permanently, and manual administrator intervention is needed to unblock it.
+ - Hard ban will do the same but will ban user after first attemt.
+I like to see misuse counter in /sys/users and the state of ban. To not implement 'unban feautre now'. Integrate banning with django-allauth.
+Also, make the notice on all user image upload forms, that upload of image is a subject of validation actions and point to (regulamin aplikacji) which we will write later on.
+I also want to have a batch action from SYS level on the /sys/media/nudes/ to batch process all images (in batches) to verify they do not break rules. make a table with the fields: user, item, image, findings and last check. 
+The image verification status can be loaded into the image model itself, as we already have comprehersive model for image processing. Also, make these verification also part of this model do not create additional helpers, all should be placed in model (we follow the concept of big models, small views).
+
+34. These are fixes to previous point. When image is approved it should be never validated again (until I unapprove). Ensure, that when I do batch analysis the image will be not flagged. Well it can be flagged, but is is now approved, so restrictions do not apply. When you display the image, it has to be implemented globally verify the status of this verification. if it is approved or not flagged return regular image url as it is not, it apply also to images. for user content, when the image is flagged return url to 'error image'. The same applies to thumbnails. For SYS content moderation normal URL but blured, as it is now implemented.
+Modifications in the view: /sys/content-moderation/
+ - keep Moderation Overview
+ - keep Moderation actions
+ - remove content status and recent violations
+ - keep recent flagged content, but change blur to blur-sm and link user to /admin/ user page. Remove review button and replace it with 'Approve' and 'Delete'.
+Modifications in the view: /sys/content-moderation/flagged/
+ - keep the filter on top
+ - instead of grid, show the table similar to the one on /sys/content-moderation/ but include these information:
+   - Image (twice bigger then on /sys/content-moderation/), blured as it is now
+   - Flagged datetime
+   - It's score total
+   - badges with the detection classes and their individual scores (rounded to 2 places), do not show information about boxbox - it should be like: ( Female breast exposed: 0,87 ) ( Face female: 0,85 ) - where () represents badge.
+   - buttons: Approve to let this image go, and mark it as Approved; Delete - to delete it permanently; Ban user - to immadiatelly ban the user in django-allauth.
+Also, let's update slighty /sys/media/ browser view:
+- keep the filter
+- table:
+ - add image thumbnail as first column
+ - merge type (collection or item) with the name, keep the information if file is Downloaded or Uploaded with the icon, add that icon description to the legend.
+ - in the name field show with small font file name, with clickable link which will open the image in new window, and if GCS is used link (icon) to the GCS location
+ - item / collection (trimmed to 15 chars and linked to that object) and its hash below
+ - keep size
+ - remove Storage column, move that information as an icon, next to file name
+ - Change modified date to created (the moment when image was uploaded to the system)
+ - Owner should be displayed as user prefered name and linked to its admin profile
+ - Add content with the content management status (total score)
+ - Keep status, however I do not know what that means
+ - Keep actions
+
+
+34. Add a checkbox for user marketing consent when registering. It has to be disable by default.
+
+35. ✅ **COMPLETED** - UI fixes on /sys/
+These changes will be later replicated to other views, so we need to make them correclty and with best practices.
+ - First element (below header, header stays as it is) should be located action buttons. For dashboard view move the buttons from "Quick Actions": Manage Users, Item Types, Link Patterns, View Metrics, System Settings, Media browser. Remove other buttons and "Quick Actions" section entirelly.
+ - Each section has to be build in the way that <h3> is no "> header text" but "Icon Header Text". Make icon in the same color as header. Keep same styling for hader text.
+ - The sections should not have this additional container with border and gap-6, that consumes space.
+ - On dashboard remove "Recent System Activity" section
+ - remove gradient and shadow from the elements, keep buttons styling as it is (I like the style with slighty thicker border on bottom for buttons)
+
+#34. Styling of SYS
+#
+#35. Messages not showing on user space, and in sys should be a banner
+#
+#36. Public collection view should display preferred user name (nickname, or First name as it is in the dashboard and other spaces)
+#
+#37.The icon 'minus-circle' does not exist.
+
+# Reporting:
+# - number of media files without association to item or collection (preauthorized likt to job to purge that)
+# - 
+
+Metrics:
+ Users:
+ - Total users
+ - Active (24h, 7d, 30d)
+ - New (24h, 7d, 30d)
+ - Collections
+ - Items
+ - Item type distribution
+ - Collection Visibility (Private/Public/Unlisted)
+ - Item Status (In collection, lent out, ordered, previously owned, reserved, wanted)
+ - Item Types and attributes
+ - Link patterns (matching and not matching)
+ - Media storage
+ - total files
+ - Storage used
+ - Recent Uploads (24h, 7d, 30d)
+ - file integrity
+ - Total emails
+ - Pending
+ - Sent
+ - Failed
+ - Marketing consent (opt-in, opt-out)
+ - Synced with resend
+ - Content moderation: flagged, pending review, user violations, banned users

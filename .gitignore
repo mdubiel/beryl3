@@ -12,3 +12,8 @@ webapp/src/beryl3_webapp.egg-info/SOURCES.txt
 webapp/src/beryl3_webapp.egg-info/top_level.txt
 webapp/src/beryl3_webapp.egg-info/requires.txt
 webapp/src/beryl3_webapp.egg-info/PKG-INFO
+tmp/data-2/komiksy_thorgal_import.json
+.gitignore
+tmp/data-2/książki_import.json
+.gitignore
+tmp/
