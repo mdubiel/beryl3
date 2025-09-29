@@ -13,8 +13,8 @@ class Migration(migrations.Migration):
         # ApplicationActivity table was already dropped in migration 0018
         # This migration just removes the model definition from Django's state
         migrations.RunSQL(
-            sql="-- Table already dropped in previous migration",
-            reverse_sql="-- Cannot reverse - table was already dropped",
+            sql="SELECT 1 -- Table already dropped in previous migration",
+            reverse_sql="SELECT 1 -- Cannot reverse - table was already dropped",
             state_operations=[
                 migrations.DeleteModel(
                     name="ApplicationActivity",

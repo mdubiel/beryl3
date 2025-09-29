@@ -390,13 +390,13 @@ def _load_logging_config():
     # Determine which logging configuration to use
     if DEBUG:
         # Development environment - console logging
-        config_module = 'logging_configs.development'
+        config_module = 'webapp.logging_configs.development'
     elif FEATURE_FLAGS['LOKI_ENABLED'] or FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']:
         # Cloud logging environment - will be enhanced with cloud handlers later
-        config_module = 'logging_configs.preprod'
+        config_module = 'webapp.logging_configs.preprod'
     else:
         # File-based logging environment (preprod, staging)
-        config_module = 'logging_configs.preprod'
+        config_module = 'webapp.logging_configs.preprod'
     
     try:
         # Import the appropriate configuration module
