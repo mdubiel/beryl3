@@ -64,6 +64,23 @@
                 Upload New Image
             </h2>
             
+            <!-- Content Policy Notice -->
+            {% if settings.CONTENT_MODERATION_ENABLED %}
+            <div class="alert alert-info">
+                <div class="flex items-start gap-3">
+                    {% lucide 'info' size=20 %}
+                    <div>
+                        <p class="font-medium">Content Policy Notice</p>
+                        <p class="text-sm mt-1">
+                            All uploaded images are automatically scanned for inappropriate content. 
+                            Images that violate our content policy will be removed and may result in account restrictions. 
+                            Please review our <a href="#" class="link">terms of service</a> for more information.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             <form method="post" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
                 

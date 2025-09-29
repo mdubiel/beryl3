@@ -1,15 +1,37 @@
 {% extends "base_sys.html" %}
 {% load lucide %}
 
-{% block title %}Email Queue - Admin{% endblock title %}
+{% block title %}Email Queue - Beryl Admin{% endblock title %}
 
 {% block page_title %}Email Queue Management{% endblock %}
 {% block page_description %}Monitor and manage the email delivery queue{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 gap-8">
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Dashboard
+            </a>
+            <a href="{% url 'sys_users' %}" class="btn btn-primary">
+                {% lucide 'users' size=16 class='mr-2' %}
+                Manage Users
+            </a>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
     
-    <!-- Queue Statistics -->
+        {# Email Queue Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'send' size=18 class='text-primary mr-2' %}
+            EMAIL QUEUE STATISTICS
+        </h3>
+        
+        <!-- Queue Statistics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4">
@@ -222,6 +244,8 @@
             </div>
             {% endif %}
         </div>
+        
     </div>
+    {# / sections container #}
 </div>
 {% endblock content %}

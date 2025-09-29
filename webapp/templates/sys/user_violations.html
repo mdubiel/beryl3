@@ -1,0 +1,340 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}User Violations - Content Moderation{% endblock %}
+
+{% block page_title %}User Violations{% endblock %}
+{% block page_description %}Manage users with content policy violations and bans{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filter Controls -->
+    <div class="terminal-bg">
+        <div class="p-4">
+            <form method="get" class="flex flex-wrap gap-4 items-end">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Status Filter</span>
+                    </label>
+                    <select name="status" class="select select-bordered select-sm">
+                        <option value="">All Users</option>
+                        <option value="violations" {% if request.GET.status == 'violations' %}selected{% endif %}>With Violations</option>
+                        <option value="banned" {% if request.GET.status == 'banned' %}selected{% endif %}>Banned Users</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Users</option>
+                    </select>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Violation Count</span>
+                    </label>
+                    <select name="violation_count" class="select select-bordered select-sm">
+                        <option value="">Any Count</option>
+                        <option value="1+" {% if request.GET.violation_count == '1+' %}selected{% endif %}>1+ Violations</option>
+                        <option value="3+" {% if request.GET.violation_count == '3+' %}selected{% endif %}>3+ Violations</option>
+                        <option value="5+" {% if request.GET.violation_count == '5+' %}selected{% endif %}>5+ Violations</option>
+                    </select>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Sort By</span>
+                    </label>
+                    <select name="sort" class="select select-bordered select-sm">
+                        <option value="-content_moderation_violations" {% if request.GET.sort == '-content_moderation_violations' %}selected{% endif %}>Most Violations</option>
+                        <option value="-last_violation_at" {% if request.GET.sort == '-last_violation_at' %}selected{% endif %}>Recent Violations</option>
+                        <option value="-content_banned_at" {% if request.GET.sort == '-content_banned_at' %}selected{% endif %}>Recently Banned</option>
+                        <option value="email" {% if request.GET.sort == 'email' %}selected{% endif %}>Email (A-Z)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-sm">
+                    {% lucide 'filter' size=14 class='mr-1' %} Filter
+                </button>
+                
+                <a href="{% url 'sys_user_violations' %}" class="btn btn-outline btn-sm">
+                    {% lucide 'x' size=14 class='mr-1' %} Clear
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="stat terminal-bg border border-primary shadow-sm">
+            <div class="stat-figure text-primary">
+                {% lucide 'users' size=24 %}
+            </div>
+            <div class="stat-title">Total Users with Violations</div>
+            <div class="stat-value">{{ total_users_with_violations|default:0 }}</div>
+        </div>
+        
+        <div class="stat terminal-bg border border-primary shadow-sm">
+            <div class="stat-figure text-error">
+                {% lucide 'user-x' size=24 %}
+            </div>
+            <div class="stat-title">Banned Users</div>
+            <div class="stat-value">{{ total_banned_users|default:0 }}</div>
+        </div>
+        
+        <div class="stat terminal-bg border border-primary shadow-sm">
+            <div class="stat-figure text-warning">
+                {% lucide 'triangle-alert' size=24 %}
+            </div>
+            <div class="stat-title">High Risk Users</div>
+            <div class="stat-value">{{ high_risk_users|default:0 }}</div>
+            <div class="stat-desc">3+ violations</div>
+        </div>
+        
+        <div class="stat terminal-bg border border-primary shadow-sm">
+            <div class="stat-figure text-info">
+                {% lucide 'clock' size=24 %}
+            </div>
+            <div class="stat-title">Recent Violations</div>
+            <div class="stat-value">{{ recent_violations|default:0 }}</div>
+            <div class="stat-desc">Last 7 days</div>
+        </div>
+    </div>
+
+    <!-- User List -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="terminal-accent text-lg font-bold">
+                    <span class="terminal-text">></span> USER VIOLATIONS ({{ users.count|default:0 }} users)
+                </h4>
+                
+                <div class="flex gap-2">
+                    <button class="btn btn-sm btn-primary" onclick="exportViolations()">
+                        {% lucide 'download' size=14 class='mr-1' %} Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Violations</th>
+                            <th>Last Violation</th>
+                            <th>Status</th>
+                            <th>Ban Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in users %}
+                        <tr class="{% if profile.is_content_banned %}bg-error bg-opacity-10{% elif profile.content_moderation_violations >= 3 %}bg-warning bg-opacity-10{% endif %}">
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <div class="avatar placeholder">
+                                        <div class="bg-neutral-focus text-neutral-content rounded-full w-8">
+                                            <span class="text-xs">{{ profile.user.display_name|first|upper }}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium terminal-text">{{ profile.user.display_name|truncatechars:20 }}</div>
+                                        <div class="text-xs terminal-text opacity-60">ID: {{ profile.user.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="terminal-text">{{ profile.user.email|truncatechars:25 }}</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <span class="badge {% if profile.content_moderation_violations == 0 %}badge-success{% elif profile.content_moderation_violations < 3 %}badge-warning{% else %}badge-error{% endif %}">
+                                        {{ profile.content_moderation_violations }}
+                                    </span>
+                                    {% if profile.content_moderation_violations >= 3 %}
+                                        {% lucide 'triangle-alert' size=14 class='text-warning' %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if profile.last_violation_at %}
+                                    {{ profile.last_violation_at|date:"M d, Y H:i" }}
+                                {% else %}
+                                    <span class="terminal-text opacity-60">Never</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if profile.is_content_banned %}
+                                    <span class="badge badge-error">
+                                        {% lucide 'user-x' size=12 class='mr-1' %} Banned
+                                    </span>
+                                {% elif not profile.user.is_active %}
+                                    <span class="badge badge-neutral">
+                                        {% lucide 'user-minus' size=12 class='mr-1' %} Inactive
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-success">
+                                        {% lucide 'user-check' size=12 class='mr-1' %} Active
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if profile.content_ban_reason %}
+                                    <div class="tooltip" data-tip="{{ profile.content_ban_reason }}">
+                                        <span class="terminal-text text-xs cursor-pointer">{{ profile.content_ban_reason|truncatechars:30 }}</span>
+                                    </div>
+                                {% else %}
+                                    <span class="terminal-text opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="dropdown dropdown-end">
+                                    <label tabindex="0" class="btn btn-ghost btn-xs">
+                                        {% lucide 'more-horizontal' size=14 %}
+                                    </label>
+                                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                                        <li><a href="{% url 'sys_user_detail' profile.user.id %}">
+                                            {% lucide 'eye' size=14 class='mr-2' %} View Details
+                                        </a></li>
+                                        
+                                        {% if profile.is_content_banned %}
+                                            <li><a href="#" onclick="unbanUser({{ profile.user.id }})">
+                                                {% lucide 'user-check' size=14 class='mr-2' %} Unban User
+                                            </a></li>
+                                        {% else %}
+                                            <li><a href="#" onclick="banUser({{ profile.user.id }})">
+                                                {% lucide 'user-x' size=14 class='mr-2' %} Ban User
+                                            </a></li>
+                                        {% endif %}
+                                        
+                                        <li><a href="#" onclick="resetViolations({{ profile.user.id }})">
+                                            {% lucide 'refresh-ccw' size=14 class='mr-2' %} Reset Violations
+                                        </a></li>
+                                        
+                                        <li><a href="{% url 'sys_user_content' profile.user.id %}">
+                                            {% lucide 'image' size=14 class='mr-2' %} View Content
+                                        </a></li>
+                                        
+                                        <li><a href="#" onclick="addNote({{ profile.user.id }})">
+                                            {% lucide 'file-text' size=14 class='mr-2' %} Add Note
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-12">
+                                <div class="terminal-text opacity-60">
+                                    <div class="mb-4">
+                                        {% lucide 'users' size=48 class='mx-auto opacity-30' %}
+                                    </div>
+                                    <p class="text-lg mb-2">// No users found with violations</p>
+                                    <p class="text-sm">Try adjusting your filters or check back later.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="flex justify-center">
+        <div class="btn-group">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-sm">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-sm">Previous</a>
+            {% endif %}
+            
+            <span class="btn btn-sm btn-active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-sm">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="btn btn-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function banUser(userId) {
+    const reason = prompt('Enter ban reason:');
+    if (reason) {
+        fetch(`/sys/users/${userId}/ban/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ reason: reason })
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error banning user');
+            }
+        });
+    }
+}
+
+function unbanUser(userId) {
+    if (confirm('Are you sure you want to unban this user?')) {
+        fetch(`/sys/users/${userId}/unban/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error unbanning user');
+            }
+        });
+    }
+}
+
+function resetViolations(userId) {
+    if (confirm('Are you sure you want to reset this user\'s violation count? This action cannot be undone.')) {
+        fetch(`/sys/users/${userId}/reset-violations/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error resetting violations');
+            }
+        });
+    }
+}
+
+function addNote(userId) {
+    const note = prompt('Add a note about this user:');
+    if (note) {
+        fetch(`/sys/users/${userId}/add-note/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({ note: note })
+        }).then(response => {
+            if (response.ok) {
+                alert('Note added successfully');
+            } else {
+                alert('Error adding note');
+            }
+        });
+    }
+}
+
+function exportViolations() {
+    window.location.href = '/sys/content-moderation/export-violations/';
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

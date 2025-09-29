@@ -7,13 +7,32 @@
 {% block page_description %}Manage user accounts and permissions{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Search and Filters -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h3 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> FILTERS & SEARCH
-            </h3>
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'admin:auth_user_add' %}" target="_blank" class="btn btn-primary">
+                {% lucide 'plus' size=16 class='mr-2' %}
+                Add New User
+            </a>
+            <a href="{% url 'sys_marketing_consent' %}" class="btn btn-primary">
+                {% lucide 'mail-open' size=16 class='mr-2' %}
+                Marketing Consent
+            </a>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
+    
+        {# Search and Filters Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'search' size=18 class='text-primary mr-2' %}
+            FILTERS & SEARCH
+        </h3>
+
+        {# Search and Filters section #}
+        <div class="flex flex-wrap gap-4">
             <form method="get">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
@@ -56,259 +75,266 @@
                 </div>
             </form>
         </div>
-    </div>
+        {# / Search and Filters section #}
 
-    <!-- Action Result Container -->
-    <div id="action-result" class="mb-4"></div>
+        {# Divider #}
+        <div class="divider divider-info"></div>
 
-    <!-- Results Summary -->
-    <div class="flex justify-between items-center">
-        <div class="terminal-text">
-            <span class="terminal-accent">{{ total_count }}</span> users found
-            {% if search or group_filter or active_filter %}
-                <span class="text-sm text-neutral">
-                    (filtered{% if search %} by "{{ search }}"{% endif %}{% if group_filter %} in {{ group_filter }}{% endif %}{% if active_filter %} {{ active_filter }}{% endif %})
-                </span>
-            {% endif %}
+        {# Users List Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'users' size=18 class='text-primary mr-2' %}
+            USER LIST
+        </h3>
+        
+        {# Action Result Container #}
+        <div id="action-result" class="mb-4"></div>
+
+        {# Results Summary #}
+        <div class="flex justify-between items-center mb-4">
+            <div class="terminal-text">
+                <span class="terminal-accent">{{ total_count }}</span> users found
+                {% if search or group_filter or active_filter %}
+                    <span class="text-sm text-neutral">
+                        (filtered{% if search %} by "{{ search }}"{% endif %}{% if group_filter %} in {{ group_filter }}{% endif %}{% if active_filter %} {{ active_filter }}{% endif %})
+                    </span>
+                {% endif %}
+            </div>
         </div>
-        <a href="{% url 'admin:auth_user_add' %}" target="_blank" class="btn btn-primary btn-sm">
-            {% lucide 'plus' size=14 class='mr-1' %}
-            Add User
-        </a>
-    </div>
+        {# / Results Summary #}
 
-    <!-- Users Table -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>USER</th>
-                            <th>STATUS</th>
-                            <th>LAST LOGIN</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in page_obj %}
-                        <tr id="user-{{ user.id }}">
-                            <td>
-                                <div class="space-y-1">
-                                    <div class="flex items-center gap-2">
-                                        {% if user.is_superuser %}
-                                            {% lucide 'crown' size=14 class='text-yellow-500' title='Superuser' %}
-                                        {% elif user.is_staff %}
-                                            {% lucide 'shield' size=14 class='text-blue-500' title='Staff' %}
-                                        {% else %}
-                                            {% lucide 'user' size=14 class='text-gray-500' title='Regular User' %}
-                                        {% endif %}
-                                        <a href="{% url 'sys_user_profile' user.id %}" 
-                                           class="font-semibold text-base terminal-text hover:text-blue-500 transition-colors">
-                                            {% if user.first_name or user.last_name %}
-                                                {{ user.first_name }} {{ user.last_name }}
+        {# Users table #}
+        <div class="overflow-x-auto">
+            <table class="table">
+                        <thead>
+                            <tr>
+                                <th>USER</th>
+                                <th>STATUS</th>
+                                <th>LAST LOGIN</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in page_obj %}
+                            <tr id="user-{{ user.id }}">
+                                <td>
+                                    <div class="space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            {% if user.is_superuser %}
+                                                {% lucide 'crown' size=14 class='text-yellow-500' title='Superuser' %}
+                                            {% elif user.is_staff %}
+                                                {% lucide 'shield' size=14 class='text-blue-500' title='Staff' %}
                                             {% else %}
-                                                <span class="font-normal italic opacity-60">No name</span>
+                                                {% lucide 'user' size=14 class='text-gray-500' title='Regular User' %}
                                             {% endif %}
-                                        </a>
+                                            <a href="{% url 'sys_user_profile' user.id %}" 
+                                               class="font-semibold text-base terminal-text hover:text-blue-500 transition-colors">
+                                                {% if user.first_name or user.last_name %}
+                                                    {{ user.first_name }} {{ user.last_name }}
+                                                {% else %}
+                                                    <span class="font-normal italic opacity-60">No name</span>
+                                                {% endif %}
+                                            </a>
+                                            <a href="{% url 'admin:auth_user_change' user.id %}" 
+                                               target="_blank"
+                                               class="font-mono text-xs text-blue-500 hover:text-blue-600 hover:underline ml-2 transition-colors" 
+                                               title="Edit user in Django admin">
+                                                #{{ user.id }}
+                                            </a>
+                                        </div>
+                                        <div class="ml-6 space-y-1">
+                                            {% if user.email %}
+                                            <div class="flex items-center gap-2">
+                                                {% lucide 'database' size=10 class='text-purple-500' title='From User table' %}
+                                                <span class="font-mono text-xs text-gray-500 opacity-80">
+                                                    {{ user.email }}
+                                                    <span class="text-purple-500 font-medium text-xs">(user table)</span>
+                                                </span>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% for email_address in user.emailaddress_set.all %}
+                                            <div class="flex items-center gap-2">
+                                                {% if email_address.verified %}
+                                                    {% lucide 'check' size=10 class='text-green-500' title='Email Verified' %}
+                                                {% else %}
+                                                    {% lucide 'clock' size=10 class='text-yellow-500' title='Email Pending Verification' %}
+                                                {% endif %}
+                                                <span class="font-mono text-xs text-gray-500 opacity-80">
+                                                    {{ email_address.email }}
+                                                    {% if email_address.primary %}
+                                                        <span class="text-blue-500 font-medium text-xs">(primary allauth)</span>
+                                                    {% else %}
+                                                        <span class="text-gray-400 font-medium text-xs">(allauth)</span>
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            {% empty %}
+                                            {% if not user.email %}
+                                            <div class="flex items-center gap-2">
+                                                {% lucide 'x' size=10 class='text-red-500' title='No Email Address' %}
+                                                <span class="font-mono text-xs text-gray-500 opacity-80 italic">No email addresses</span>
+                                            </div>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="flex items-center justify-center">
+                                        {% if user.is_active %}
+                                            {% lucide 'check' size=16 class='text-green-500' title='Active' %}
+                                        {% else %}
+                                            {% lucide 'x' size=16 class='text-red-500' title='Inactive' %}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if user.last_login %}
+                                        <span class="text-sm">{{ user.last_login|date:"M d, Y H:i" }}</span>
+                                    {% else %}
+                                        <span class="opacity-60 text-sm">never</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="flex gap-1">
                                         <a href="{% url 'admin:auth_user_change' user.id %}" 
                                            target="_blank"
-                                           class="font-mono text-xs text-blue-500 hover:text-blue-600 hover:underline ml-2 transition-colors" 
-                                           title="Edit user in Django admin">
-                                            #{{ user.id }}
+                                           class="btn btn-xs btn-primary" 
+                                           title="Edit User">
+                                            {% lucide 'pencil' size=12 %}
                                         </a>
-                                    </div>
-                                    <div class="ml-6 space-y-1">
-                                        {% if user.email %}
-                                        <div class="flex items-center gap-2">
-                                            {% lucide 'database' size=10 class='text-purple-500' title='From User table' %}
-                                            <span class="font-mono text-xs text-gray-500 opacity-80">
-                                                {{ user.email }}
-                                                <span class="text-purple-500 font-medium text-xs">(user table)</span>
-                                            </span>
-                                        </div>
-                                        {% endif %}
-                                        
-                                        {% for email_address in user.emailaddress_set.all %}
-                                        <div class="flex items-center gap-2">
-                                            {% if email_address.verified %}
-                                                {% lucide 'check' size=10 class='text-green-500' title='Email Verified' %}
+                                        {% if user != request.user %}
+                                        <button class="btn btn-xs {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                                                hx-post="{% url 'sys_user_toggle_active' user.id %}"
+                                                hx-target="#user-{{ user.id }}"
+                                                hx-swap="outerHTML"
+                                                title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %} User">
+                                            {% if user.is_active %}
+                                                {% lucide 'user-minus' size=12 %}
                                             {% else %}
-                                                {% lucide 'clock' size=10 class='text-yellow-500' title='Email Pending Verification' %}
+                                                {% lucide 'user-plus' size=12 %}
                                             {% endif %}
-                                            <span class="font-mono text-xs text-gray-500 opacity-80">
-                                                {{ email_address.email }}
-                                                {% if email_address.primary %}
-                                                    <span class="text-blue-500 font-medium text-xs">(primary allauth)</span>
-                                                {% else %}
-                                                    <span class="text-gray-400 font-medium text-xs">(allauth)</span>
-                                                {% endif %}
-                                            </span>
-                                        </div>
-                                        {% empty %}
-                                        {% if not user.email %}
-                                        <div class="flex items-center gap-2">
-                                            {% lucide 'x' size=10 class='text-red-500' title='No Email Address' %}
-                                            <span class="font-mono text-xs text-gray-500 opacity-80 italic">No email addresses</span>
-                                        </div>
+                                        </button>
+                                        
+                                        <button class="btn btn-xs btn-info"
+                                                hx-post="{% url 'sys_user_reset_password' user.id %}"
+                                                hx-target="#action-result"
+                                                hx-swap="innerHTML"
+                                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                                hx-confirm="Send password reset email to {{ user.email }}?"
+                                                title="Reset Password">
+                                            {% lucide 'key' size=12 %}
+                                        </button>
+                                        
+                                        <button class="btn btn-xs btn-accent"
+                                                hx-post="{% url 'sys_user_unlock_account' user.id %}"
+                                                hx-target="#action-result"
+                                                hx-swap="innerHTML"
+                                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                                hx-confirm="Unlock account for {{ user.email }}?"
+                                                title="Unlock Account">
+                                            {% lucide 'lock-open' size=12 %}
+                                        </button>
                                         {% endif %}
-                                        {% endfor %}
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="flex items-center justify-center">
-                                    {% if user.is_active %}
-                                        {% lucide 'check' size=16 class='text-green-500' title='Active' %}
-                                    {% else %}
-                                        {% lucide 'x' size=16 class='text-red-500' title='Inactive' %}
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                {% if user.last_login %}
-                                    <span class="text-sm">{{ user.last_login|date:"M d, Y H:i" }}</span>
-                                {% else %}
-                                    <span class="opacity-60 text-sm">never</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="flex gap-1">
-                                    <a href="{% url 'admin:auth_user_change' user.id %}" 
-                                       target="_blank"
-                                       class="btn btn-xs btn-primary" 
-                                       title="Edit User">
-                                        {% lucide 'pencil' size=12 %}
-                                    </a>
-                                    {% if user != request.user %}
-                                    <button class="btn btn-xs {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}"
-                                            hx-post="{% url 'sys_user_toggle_active' user.id %}"
-                                            hx-target="#user-{{ user.id }}"
-                                            hx-swap="outerHTML"
-                                            title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %} User">
-                                        {% if user.is_active %}
-                                            {% lucide 'user-minus' size=12 %}
-                                        {% else %}
-                                            {% lucide 'user-plus' size=12 %}
-                                        {% endif %}
-                                    </button>
-                                    
-                                    <button class="btn btn-xs btn-info"
-                                            hx-post="{% url 'sys_user_reset_password' user.id %}"
-                                            hx-target="#action-result"
-                                            hx-swap="innerHTML"
-                                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                            hx-confirm="Send password reset email to {{ user.email }}?"
-                                            title="Reset Password">
-                                        {% lucide 'key' size=12 %}
-                                    </button>
-                                    
-                                    <button class="btn btn-xs btn-accent"
-                                            hx-post="{% url 'sys_user_unlock_account' user.id %}"
-                                            hx-target="#action-result"
-                                            hx-swap="innerHTML"
-                                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                            hx-confirm="Unlock account for {{ user.email }}?"
-                                            title="Unlock Account">
-                                        {% lucide 'lock-open' size=12 %}
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center opacity-60 py-8">
-                                // No users found
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-            <div class="flex justify-center mt-6">
-                <div class="btn-group">
-                    {% if page_obj.has_previous %}
-                        <a href="?{% if search %}search={{ search }}&{% endif %}{% if group_filter %}group={{ group_filter }}&{% endif %}{% if active_filter %}active={{ active_filter }}&{% endif %}page={{ page_obj.previous_page_number }}" 
-                           class="btn btn-sm btn-primary">
-                            {% lucide 'chevron-left' size=14 %}
-                        </a>
-                    {% endif %}
-                    
-                    <span class="btn btn-sm btn-primary btn-active">
-                        {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
-                    </span>
-                    
-                    {% if page_obj.has_next %}
-                        <a href="?{% if search %}search={{ search }}&{% endif %}{% if group_filter %}group={{ group_filter }}&{% endif %}{% if active_filter %}active={{ active_filter }}&{% endif %}page={{ page_obj.next_page_number }}" 
-                           class="btn btn-sm btn-primary">
-                            {% lucide 'chevron-right' size=14 %}
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center opacity-60 py-8">
+                                    // No users found
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+            </table>
         </div>
-    </div>
 
-    <!-- Legend -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> LEGEND
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                <div>
-                    <h5 class="terminal-accent text-xs font-medium mb-2">USER TYPES:</h5>
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            {% lucide 'crown' size=14 class='text-yellow-500' %}
-                            <span class="terminal-text">Superuser (full admin access)</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% lucide 'shield' size=14 class='text-blue-500' %}
-                            <span class="terminal-text">Staff (Django admin access)</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% lucide 'user' size=14 class='text-gray-500' %}
-                            <span class="terminal-text">Regular user</span>
-                        </div>
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="flex justify-center mt-6">
+                    <div class="btn-group">
+                        {% if page_obj.has_previous %}
+                            <a href="?{% if search %}search={{ search }}&{% endif %}{% if group_filter %}group={{ group_filter }}&{% endif %}{% if active_filter %}active={{ active_filter }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+                               class="btn btn-sm btn-primary">
+                                {% lucide 'chevron-left' size=14 %}
+                            </a>
+                        {% endif %}
+                        
+                        <span class="btn btn-sm btn-primary btn-active">
+                            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </span>
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?{% if search %}search={{ search }}&{% endif %}{% if group_filter %}group={{ group_filter }}&{% endif %}{% if active_filter %}active={{ active_filter }}&{% endif %}page={{ page_obj.next_page_number }}" 
+                               class="btn btn-sm btn-primary">
+                                {% lucide 'chevron-right' size=14 %}
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
-                <div>
-                    <h5 class="terminal-accent text-xs font-medium mb-2">STATUS INDICATORS:</h5>
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            {% lucide 'check' size=14 class='text-green-500' %}
-                            <span class="terminal-text">Active user / Email verified</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% lucide 'x' size=14 class='text-red-500' %}
-                            <span class="terminal-text">Inactive user / No emails</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% lucide 'clock' size=14 class='text-yellow-500' %}
-                            <span class="terminal-text">Email verification pending</span>
-                        </div>
+                {% endif %}
+        
+        {# /Users table #}
+
+        {# Divider #}
+        <div class="divider divider-info"></div>
+
+        <!-- User Guide -->
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'info' size=18 class='text-primary mr-2' %}
+            USER GUIDE
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-0">
+
+            <div>
+                <h5 class="terminal-accent text-xs font-medium mb-2">USER TYPES:</h5>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        {% lucide 'crown' size=14 class='text-yellow-500' %}
+                        <span class="terminal-text">Superuser (full admin access)</span>
                     </div>
-                    <div class="mt-3 space-y-1">
-                        <div class="flex items-center gap-2">
-                            {% lucide 'database' size=12 class='text-purple-500' %}
-                            <span class="text-xs terminal-text opacity-75">
-                                <span class="text-purple-500 font-medium">(user table)</span> - Email from Django User model
-                            </span>
-                        </div>
-                        <p class="text-xs terminal-text opacity-75 ml-3">
-                            <span class="text-blue-500 font-medium">(primary allauth)</span> - Primary email from django-allauth<br>
-                            <span class="text-gray-400 font-medium">(allauth)</span> - Additional emails from django-allauth
-                        </p>
+                    <div class="flex items-center gap-2">
+                        {% lucide 'shield' size=14 class='text-blue-500' %}
+                        <span class="terminal-text">Staff (Django admin access)</span>
                     </div>
+                    <div class="flex items-center gap-2">
+                        {% lucide 'user' size=14 class='text-gray-500' %}
+                        <span class="terminal-text">Regular user</span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h5 class="terminal-accent text-xs font-medium mb-2">STATUS INDICATORS:</h5>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        {% lucide 'check' size=14 class='text-green-500' %}
+                        <span class="terminal-text">Active user / Email verified</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% lucide 'x' size=14 class='text-red-500' %}
+                        <span class="terminal-text">Inactive user / No emails</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        {% lucide 'clock' size=14 class='text-yellow-500' %}
+                        <span class="terminal-text">Email verification pending</span>
+                    </div>
+                </div>
+                <div class="mt-3 space-y-1">
+                    <div class="flex items-center gap-2">
+                        {% lucide 'database' size=12 class='text-purple-500' %}
+                        <span class="text-xs terminal-text opacity-75">
+                            <span class="text-purple-500 font-medium">(user table)</span> - Email from Django User model
+                        </span>
+                    </div>
+                    <p class="text-xs terminal-text opacity-75 ml-3">
+                        <span class="text-blue-500 font-medium">(primary allauth)</span> - Primary email from django-allauth<br>
+                        <span class="text-gray-400 font-medium">(allauth)</span> - Additional emails from django-allauth
+                    </p>
                 </div>
             </div>
         </div>
-    </div>
+        
+    </div> <!-- End Main Content Section -->
 </div>
 {% endblock %}

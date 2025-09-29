@@ -1,25 +1,37 @@
 {% extends "base_sys.html" %}
 {% load lucide %}
 
-{% block title %}System Settings - Admin{% endblock title %}
+{% block title %}System Settings - Beryl Admin{% endblock title %}
 
-{% block header %}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold">System Settings</h1>
-            <p class="text-base-content/70 mt-2">
-                Comprehensive overview of all system configuration values
-            </p>
-        </div>
-        <div class="flex items-center gap-2">
-            {% lucide 'settings' size=24 class='opacity-50' %}
-            <span class="text-sm opacity-50">{{ system_info.Python_Version }} / Django</span>
-        </div>
-    </div>
-{% endblock header %}
+{% block page_title %}System Settings{% endblock %}
+{% block page_description %}Comprehensive overview of all system configuration values{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 gap-8">
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Dashboard
+            </a>
+            <a href="{% url 'sys_users' %}" class="btn btn-primary">
+                {% lucide 'users' size=16 class='mr-2' %}
+                Manage Users
+            </a>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
+    
+        {# System Settings Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'settings' size=18 class='text-primary mr-2' %}
+            SYSTEM CONFIGURATION
+        </h3>
+
+        <div class="grid grid-cols-1 gap-8">
 
     <!-- Django Core Settings -->
     <div class="card bg-base-100 shadow-sm">
@@ -506,6 +518,8 @@
                 </table>
             </div>
         </div>
+        
     </div>
+    {# / sections container #}
 </div>
 {% endblock content %}

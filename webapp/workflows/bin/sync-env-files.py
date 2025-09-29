@@ -185,7 +185,7 @@ class FixedEnvironmentSync:
 def main():
     parser = argparse.ArgumentParser(description="Fixed environment synchronization")
     parser.add_argument('environments', nargs='*', default=['qa', 'prod'], 
-                       help='Environments to sync')
+                       help='Environments to sync (local, qa, preprod, prod)')
     
     args = parser.parse_args()
     

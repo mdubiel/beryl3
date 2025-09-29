@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load lucide %}
 {% load markdown_tags %}
+{% load media_tags %}
 
 {% block title %}{{ collection.name }}{% endblock %}
 
@@ -80,15 +81,15 @@
     {# Image section using DaisyUI figure - Always on top #}
     <figure class="w-full h-64 rounded-t-lg overflow-hidden">
         {% if collection.default_image %}
-            <img src="{{ collection.default_image.media_file.file_url }}" 
+            <img src="{% media_url collection.default_image.media_file %}" 
                  alt="{{ collection.name }}" 
                  class="w-full h-full object-cover cursor-pointer"
-                 onclick="showImageModal('{{ collection.default_image.media_file.file_url }}', '{{ collection.name|escapejs }}')" />
+                 onclick="showImageModal('{% media_url collection.default_image.media_file %}', '{{ collection.name|escapejs }}')" />
         {% elif collection.images.all.0 %}
-            <img src="{{ collection.images.all.0.media_file.file_url }}" 
+            <img src="{% media_url collection.images.all.0.media_file %}" 
                  alt="{{ collection.name }}" 
                  class="w-full h-full object-cover cursor-pointer"
-                 onclick="showImageModal('{{ collection.images.all.0.media_file.file_url }}', '{{ collection.name|escapejs }}')" />
+                 onclick="showImageModal('{% media_url collection.images.all.0.media_file %}', '{{ collection.name|escapejs }}')" />
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center rounded-t-lg">
                 {% lucide 'image' size=64 class='text-neutral' %}
@@ -133,8 +134,8 @@
                 <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
                     {% for image in collection.images.all %}
                     <div class="aspect-square bg-base-200 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
-                         onclick="showImageModal('{{ image.media_file.file_url }}', '{{ collection.name|escapejs }} - Image {{ forloop.counter }}')">
-                        <img src="{{ image.media_file.file_url }}" 
+                         onclick="showImageModal('{% media_url image.media_file %}', '{{ collection.name|escapejs }} - Image {{ forloop.counter }}')">
+                        <img src="{% media_url image.media_file %}" 
                              alt="{{ collection.name }} - Image {{ forloop.counter }}" 
                              class="w-full h-full object-cover" />
                     </div>

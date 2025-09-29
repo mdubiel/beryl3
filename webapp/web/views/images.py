@@ -13,6 +13,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST, require_http_methods
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.conf import settings
 
 from ..models import Collection, CollectionItem, MediaFile, CollectionImage, CollectionItemImage
 from ..forms import ImageUploadForm
@@ -91,6 +92,7 @@ def collection_manage_images(request, hash):
         'can_add_more': can_add_more,
         'form': form,
         'max_images': 3,
+        'settings': settings,
     })
 
 
@@ -165,6 +167,7 @@ def item_manage_images(request, hash):
         'can_add_more': can_add_more,
         'form': form,
         'max_images': 3,
+        'settings': settings,
     })
 
 

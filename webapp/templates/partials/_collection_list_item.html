@@ -8,9 +8,27 @@
     {# Image section using DaisyUI figure #}
     <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch">
         {% if collection.default_image %}
-            <img src="{{ collection.default_image.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+            {% if collection.default_image.media_file.content_moderation_status == 'FLAGGED' or collection.default_image.media_file.content_moderation_status == 'REJECTED' %}
+                <div class="w-full h-full bg-error/10 border-2 border-error/20 flex flex-col items-center justify-center">
+                    <div class="text-error mb-2">
+                        {% lucide 'image-off' size=32 %}
+                    </div>
+                    <p class="text-error text-xs font-medium">Image Error</p>
+                </div>
+            {% else %}
+                <img src="{{ collection.default_image.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+            {% endif %}
         {% elif collection.images.all.0 %}
-            <img src="{{ collection.images.all.0.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+            {% if collection.images.all.0.media_file.content_moderation_status == 'FLAGGED' or collection.images.all.0.media_file.content_moderation_status == 'REJECTED' %}
+                <div class="w-full h-full bg-error/10 border-2 border-error/20 flex flex-col items-center justify-center">
+                    <div class="text-error mb-2">
+                        {% lucide 'image-off' size=32 %}
+                    </div>
+                    <p class="text-error text-xs font-medium">Image Error</p>
+                </div>
+            {% else %}
+                <img src="{{ collection.images.all.0.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+            {% endif %}
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center">
                 {% lucide 'image' size=64 class='text-neutral' %}

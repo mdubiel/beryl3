@@ -52,7 +52,7 @@ env = environ.Env(
     # Resend API configuration for marketing emails
     RESEND_API_KEY=(str, ''),
     RESEND_MARKETING_AUDIENCE_ID=(str, '01f8fa37-6d40-4f54-b59e-f8fc465898e2'),
-    MARKETING_EMAIL_DEFAULT_OPT_IN=(bool, True),
+    MARKETING_EMAIL_DEFAULT_OPT_IN=(bool, False),
     
     # Application features
     # APPLICATION_ACTIVITY_LOGGING - moved to FEATURE_FLAGS system
@@ -115,6 +115,12 @@ FEATURE_FLAGS = {
     # Activity and audit logging  
     'APPLICATION_ACTIVITY_LOGGING': _get_feature_flag('APPLICATION_ACTIVITY_LOGGING', dev_default=True, prod_default=True),
     
+    # Content moderation
+    'CONTENT_MODERATION_ENABLED': _get_feature_flag('CONTENT_MODERATION_ENABLED', dev_default=True, prod_default=True),
+    
+    # User registration control
+    'ALLOW_USER_REGISTRATION': _get_feature_flag('ALLOW_USER_REGISTRATION', dev_default=False, prod_default=False),
+    
     # Database backend: SQLite (dev) vs PostgreSQL (prod)
 }
 
@@ -124,6 +130,21 @@ USE_INBUCKET = FEATURE_FLAGS['USE_INBUCKET']
 LOKI_ENABLED = FEATURE_FLAGS['LOKI_ENABLED']
 USE_GOOGLE_CLOUD_LOGGING = FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']
 APPLICATION_ACTIVITY_LOGGING = FEATURE_FLAGS['APPLICATION_ACTIVITY_LOGGING']
+
+# Content moderation configuration
+CONTENT_MODERATION_ENABLED = FEATURE_FLAGS['CONTENT_MODERATION_ENABLED']
+
+# User registration configuration
+ALLOW_USER_REGISTRATION = FEATURE_FLAGS['ALLOW_USER_REGISTRATION']
+
+# Content moderation action levels
+CONTENT_MODERATION_ACTION = env(
+    'CONTENT_MODERATION_ACTION',
+    default='flag_only'  # Options: flag_only, delete, soft_ban, hard_ban
+)
+
+# Soft ban threshold (number of violations before account is banned)
+CONTENT_MODERATION_SOFT_BAN_THRESHOLD = env.int('CONTENT_MODERATION_SOFT_BAN_THRESHOLD', default=3)
 
 # CSRF configuration
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
@@ -299,6 +320,9 @@ ACCOUNT_PASSWORD_MIN_LENGTH = 8
 ACCOUNT_FORMS = {
     'signup': 'web.allauth_forms.CustomSignupForm',
 }
+
+# Custom account adapter for registration control
+ACCOUNT_ADAPTER = 'web.adapters.CustomAccountAdapter'
 
 # EMAIL CONFIGURATION
 # Check for the development flag in your environment variables.
@@ -674,7 +698,7 @@ EXTERNAL_RESEND_URL = env('EXTERNAL_RESEND_URL') if env('EXTERNAL_RESEND_URL') e
 # Resend API Configuration for Marketing Emails
 RESEND_API_KEY = env('RESEND_API_KEY', default='')
 RESEND_MARKETING_AUDIENCE_ID = env('RESEND_MARKETING_AUDIENCE_ID', default='01f8fa37-6d40-4f54-b59e-f8fc465898e2')
-MARKETING_EMAIL_DEFAULT_OPT_IN = env.bool('MARKETING_EMAIL_DEFAULT_OPT_IN', default=True)
+MARKETING_EMAIL_DEFAULT_OPT_IN = env.bool('MARKETING_EMAIL_DEFAULT_OPT_IN', default=False)
 RESEND_SYNC_TIMEOUT_MINUTES = env.int('RESEND_SYNC_TIMEOUT_MINUTES', default=15)
 
 # Site Domain Configuration

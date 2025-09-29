@@ -1,0 +1,22 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2"/>
+  
+  <!-- X icon -->
+  <g transform="translate(200, 150)">
+    <!-- Circle background -->
+    <circle cx="0" cy="0" r="30" fill="#ef4444" opacity="0.1"/>
+    
+    <!-- X lines -->
+    <line x1="-15" y1="-15" x2="15" y2="15" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+    <line x1="15" y1="-15" x2="-15" y2="15" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="#6b7280">
+    Content Unavailable
+  </text>
+  <text x="200" y="240" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#9ca3af">
+    Policy violation detected
+  </text>
+</svg>

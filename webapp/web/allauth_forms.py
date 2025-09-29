@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from django import forms
-from django.conf import settings
 from allauth.account.forms import SignupForm
 
 
@@ -12,8 +11,9 @@ class CustomSignupForm(SignupForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set initial value based on environment configuration
-        self.fields['receive_marketing_emails'].initial = getattr(settings, 'MARKETING_EMAIL_DEFAULT_OPT_IN', True)
+        
+        # Marketing consent must be disabled by default (GDPR compliance)
+        self.fields['receive_marketing_emails'].initial = False
     
     receive_marketing_emails = forms.BooleanField(
         required=False,
@@ -23,6 +23,22 @@ class CustomSignupForm(SignupForm):
             'class': 'checkbox checkbox-primary'
         })
     )
+    
+    accept_policies = forms.BooleanField(
+        required=True,
+        label='Terms and Policies',
+        help_text='I have read and understand the <a href="/terms/" target="_blank" class="link link-primary">Site Policies</a> and <a href="/privacy/" target="_blank" class="link link-primary">Privacy Policy</a>',
+        widget=forms.CheckboxInput(attrs={
+            'class': 'checkbox checkbox-primary'
+        })
+    )
+
+    def clean(self):
+        """
+        Validate the form
+        """
+        cleaned_data = super().clean()
+        return cleaned_data
 
     def save(self, request):
         """

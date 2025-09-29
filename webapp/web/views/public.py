@@ -11,9 +11,11 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from post_office import mail
 from django.core.validators import validate_email
 from django.db import transaction
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
@@ -31,7 +33,10 @@ def public_collection_view(request, hash):
     Displays a collection to the public if its visibility is set to
     'PUBLIC' or 'UNLISTED'.
     """
-    collection = get_object_or_404(Collection, hash=hash)
+    collection = get_object_or_404(
+        Collection.objects.select_related('created_by__profile'), 
+        hash=hash
+    )
 
     # Only allow access if the collection is not private.
     if collection.visibility == Collection.Visibility.PRIVATE:
@@ -54,12 +59,46 @@ def public_collection_view(request, hash):
                      'object_name': collection.name, 'visibility': collection.visibility, 
                      'viewer_type': 'anonymous', 'function_args': {'hash': hash, 'request_method': request.method}})
     
+    # Get items and calculate stats similar to private view
+    all_items = collection.items.select_related('item_type').prefetch_related(
+        'images__media_file', 
+        'links',
+        'default_image__media_file'
+    ).order_by('name')
+    
+    stats = all_items.aggregate(
+        total_items=Count('id'),
+        in_collection_count=Count('id', filter=Q(status=CollectionItem.Status.IN_COLLECTION)),
+        wanted_count=Count('id', filter=Q(status=CollectionItem.Status.WANTED)),
+        reserved_count=Count('id', filter=Q(status=CollectionItem.Status.RESERVED))
+    )
+    
+    # Get item type distribution for all items (not paginated)
+    item_type_distribution = all_items.values('item_type__display_name', 'item_type__icon').annotate(
+        count=Count('id')
+    ).order_by('-count')
+
+    # Pagination
+    items_per_page = 20  # Show 20 items per page
+    paginator = Paginator(all_items, items_per_page)
+    page_number = request.GET.get('page')
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.get_page(1)
+    except EmptyPage:
+        page_obj = paginator.get_page(paginator.num_pages)
+
     fake = Faker()
     dummy_name = fake.name()
 
     context = {
         "collection": collection,
-        "items": collection.items.all().order_by("name"),
+        "items": page_obj,  # Paginated items
+        "page_obj": page_obj,  # For pagination controls
+        "stats": stats,
+        "item_type_distribution": item_type_distribution,
         "dummy_name": dummy_name,
         "item_types": ItemType.objects.all(),
     }

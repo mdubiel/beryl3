@@ -7,61 +7,97 @@
 {% block page_description %}Overview of system status and key metrics{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- System Status Header -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h3 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> SYSTEM STATUS
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'users' size=18 class='text-primary' %}
-                        <div class="stat-title">Total Users</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ total_users }}</div>
-                    <div class="stat-desc">{{ active_users }} active (30d)</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'package' size=18 class='text-primary' %}
-                        <div class="stat-title">Collections</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ total_collections }}</div>
-                    <div class="stat-desc">User collections</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'archive' size=18 class='text-primary' %}
-                        <div class="stat-title">Items</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ total_items }}</div>
-                    <div class="stat-desc">Collection items</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'activity' size=18 class='text-primary' %}
-                        <div class="stat-title">Activity (24h)</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ recent_user_activity }}</div>
-                    <div class="stat-desc">Active users</div>
-                </div>
-            </div>
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+        <a href="{% url 'sys_users' %}" class="btn btn-primary">
+            {% lucide 'users' size=16 class='mr-2' %}
+            Manage Users
+        </a>
+        <a href="{% url 'sys_item_types' %}" class="btn btn-primary">
+            {% lucide 'package' size=16 class='mr-2' %}
+            Item Types
+        </a>
+        <a href="{% url 'sys_link_patterns' %}" class="btn btn-primary">
+            {% lucide 'link' size=16 class='mr-2' %}
+            Link Patterns
+        </a>
+        <a href="{% url 'sys_metrics' %}" class="btn btn-primary">
+            {% lucide 'trending-up' size=16 class='mr-2' %}
+            View Metrics
+        </a>
+        <a href="{% url 'sys_settings' %}" class="btn btn-primary">
+            {% lucide 'settings' size=16 class='mr-2' %}
+            System Settings
+        </a>
+        <a href="{% url 'sys_media_browser' %}" class="btn btn-primary">
+            {% lucide 'image' size=16 class='mr-2' %}
+            Media Browser
+        </a>
         </div>
     </div>
 
-    <!-- Charts and Analytics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {# Sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
+    
+        {# System Status Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'activity' size=18 class='text-primary mr-2' %}
+            SYSTEM STATUS
+        </h3>
+
+        {# System Status Header section #}
+        <div class="flex flex-wrap gap-4">
+            <div class="flex-1 min-w-48 bg-base-100 p-4 border">
+                <div class="flex items-center gap-3 mb-2 ">
+                    {% lucide 'users' size=20 class='text-primary' %}
+                    <span class="text-sm font-medium text-base-content/70">Total Users</span>
+                </div>
+                <div class="text-2xl font-bold text-primary">{{ total_users }}</div>
+                <div class="text-sm text-base-content/60">{{ active_users }} active (30d)</div>
+            </div>
+            
+            <div class="flex-1 min-w-48 bg-base-100 p-4 border">
+                <div class="flex items-center gap-3 mb-2">
+                    {% lucide 'package' size=20 class='text-primary' %}
+                    <span class="text-sm font-medium text-base-content/70">Collections</span>
+                </div>
+                <div class="text-2xl font-bold text-primary">{{ total_collections }}</div>
+                <div class="text-sm text-base-content/60">User collections</div>
+            </div>
+            
+            <div class="flex-1 min-w-48 bg-base-100 p-4 border">
+                <div class="flex items-center gap-3 mb-2">
+                    {% lucide 'archive' size=20 class='text-primary' %}
+                    <span class="text-sm font-medium text-base-content/70">Items</span>
+                </div>
+                <div class="text-2xl font-bold text-primary">{{ total_items }}</div>
+                <div class="text-sm text-base-content/60">Collection items</div>
+            </div>
+            
+            <div class="flex-1 min-w-48 bg-base-100 p-4 border">
+                <div class="flex items-center gap-3 mb-2">
+                    {% lucide 'activity' size=20 class='text-primary' %}
+                    <span class="text-sm font-medium text-base-content/70">Activity (24h)</span>
+                </div>
+                <div class="text-2xl font-bold text-primary">{{ recent_user_activity }}</div>
+                <div class="text-sm text-base-content/60">Active users</div>
+            </div>
+        </div>
+        {# / System Status Header section #}
+
+        {# Divider #}
+        <div class="divider divider-info"></div>
+
+        {# Charts and Analytics #}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Collection Visibility -->
-        <div class="terminal-bg">
-            <div class="p-6">
-                <h4 class="terminal-accent text-lg font-bold mb-4">
-                    <span class="terminal-text">></span> COLLECTION VISIBILITY
-                </h4>
+            <div>
+                <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                    {% lucide 'eye' size=18 class='text-primary mr-2' %}
+                    COLLECTION VISIBILITY
+                </h3>
                 <div class="space-y-2">
                     {% for stat in visibility_stats %}
                     <div class="flex justify-between items-center">
@@ -78,13 +114,12 @@
                     {% endfor %}
                 </div>
             </div>
-        </div>
 
         <!-- Item Status Distribution -->
-        <div class="terminal-bg">
-            <div class="p-6">
-                <h4 class="terminal-accent text-lg font-bold mb-4">
-                    <span class="terminal-text">></span> ITEM STATUS
+            <div>
+                <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                    {% lucide 'trending-up' size=18 class='text-primary mr-2' %}
+                    ITEM STATUS
                 </h4>
                 <div class="space-y-2">
                     {% for stat in status_stats %}
@@ -103,141 +138,38 @@
                 </div>
             </div>
         </div>
-    </div>
+        {# / Charts and Analytics #}
 
-    <!-- Recent Activity -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> RECENT SYSTEM ACTIVITY
-            </h4>
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>TIMESTAMP</th>
-                            <th>ACTION</th>
-                            <th>USER</th>
-                            <th>TARGET</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for activity in recent_activities %}
-                        <tr>
-                            <td>{{ activity.created|date:"M d H:i" }}</td>
-                            <td>{{ activity.get_name_display }}</td>
-                            <td>
-                                {% if activity.created_by %}
-                                    {{ activity.created_by.email|truncatechars:20 }}
-                                {% else %}
-                                    <span class="terminal-accent">SYSTEM</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ activity.target_repr|truncatechars:30 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center terminal-text opacity-60">
-                                // No recent activity found
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-4">
-                <a href="{% url 'sys_activity' %}" class="btn btn-primary btn-sm">
-                    {% lucide 'arrow-right' size=14 class='mr-1' %} View All Activity
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> QUICK ACTIONS
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <a href="{% url 'sys_users' %}" class="btn btn-primary">
-                    {% lucide 'users' size=16 class='mr-2' %}
-                    Manage Users
-                </a>
-                <a href="{% url 'sys_item_types' %}" class="btn btn-primary">
-                    {% lucide 'package' size=16 class='mr-2' %}
-                    Item Types
-                </a>
-                <a href="{% url 'sys_link_patterns' %}" class="btn btn-primary">
-                    {% lucide 'link' size=16 class='mr-2' %}
-                    Link Patterns
-                </a>
-                <a href="{% url 'sys_metrics' %}" class="btn btn-primary">
-                    {% lucide 'trending-up' size=16 class='mr-2' %}
-                    View Metrics
-                </a>
-                <a href="{% url 'sys_backup' %}" class="btn btn-primary">
-                    {% lucide 'database' size=16 class='mr-2' %}
-                    Backup System
-                </a>
-                <a href="{% url 'sys_settings' %}" class="btn btn-primary">
-                    {% lucide 'settings' size=16 class='mr-2' %}
-                    System Settings
-                </a>
-                <a href="{% url 'sys_media_browser' %}" class="btn btn-primary">
-                    {% lucide 'image' size=16 class='mr-2' %}
-                    Media Browser
-                </a>
-                {% if EXTERNAL_DB_URL %}
-                <a href="{{ EXTERNAL_DB_URL }}" target="_blank" class="btn btn-outline">
-                    {% lucide 'database' size=16 class='mr-2' %}
-                    Database Admin
-                </a>
-                {% endif %}
-                {% if EXTERNAL_GRAFANA_URL %}
-                <a href="{{ EXTERNAL_GRAFANA_URL }}" target="_blank" class="btn btn-outline">
-                    {% lucide 'activity' size=16 class='mr-2' %}
-                    Log Dashboard
-                </a>
-                {% endif %}
-                {% if EXTERNAL_LOKI_URL %}
-                <a href="{{ EXTERNAL_LOKI_URL }}" target="_blank" class="btn btn-outline">
-                    {% lucide 'file-text' size=16 class='mr-2' %}
-                    Log API
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+    <div class="divider divider-info"></div>
 
     <!-- System Information -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> SYSTEM INFO
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                    <div class="terminal-text mb-2">Django Version: <span class="terminal-accent">{{ django_version|default:"Unknown" }}</span></div>
-                    <div class="terminal-text mb-2">Site Domain: <span class="terminal-accent">{{ SITE_DOMAIN }}</span></div>
-                    <div class="terminal-text mb-2">Database: <span class="terminal-accent">{{ database_engine|default:"SQLite" }}</span></div>
-                    <div class="terminal-text mb-2">Debug Mode: <span class="{% if debug %}terminal-danger{% else %}terminal-accent{% endif %}">{{ debug|yesno:"ENABLED,DISABLED" }}</span></div>
-                </div>
-                <div>
-                    <div class="terminal-text mb-2">Server Time: <span class="terminal-accent" id="server-time">{{ now|date:"Y-m-d H:i:s T" }}</span></div>
-                    <div class="terminal-text mb-2">External Services: 
-                        <span class="terminal-accent">
-                            {% if EXTERNAL_DB_URL %}DB {% endif %}
-                            {% if EXTERNAL_INBUCKET_URL %}EMAIL {% endif %}
-                            {% if EXTERNAL_MONITORING_URL %}MONITOR {% endif %}
-                            {% if EXTERNAL_LOKI_URL %}LOKI {% endif %}
-                            {% if EXTERNAL_GRAFANA_URL %}GRAFANA {% endif %}
-                        </span>
-                    </div>
+        <h3 class="terminal-accent text-lg font-bold mb-2 flex items-center">
+            {% lucide 'server' size=18 class='text-primary mr-2' %}
+            SYSTEM INFO
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-0">
+            <div>
+                <div class="terminal-text mb-2">Django Version: <span class="terminal-accent">{{ django_version|default:"Unknown" }}</span></div>
+                <div class="terminal-text mb-2">Site Domain: <span class="terminal-accent">{{ SITE_DOMAIN }}</span></div>
+                <div class="terminal-text mb-2">Database: <span class="terminal-accent">{{ database_engine|default:"SQLite" }}</span></div>
+                <div class="terminal-text mb-2">Debug Mode: <span class="{% if debug %}terminal-danger{% else %}terminal-accent{% endif %}">{{ debug|yesno:"ENABLED,DISABLED" }}</span></div>
+            </div>
+            <div>
+                <div class="terminal-text mb-2">Server Time: <span class="terminal-accent" id="server-time">{{ now|date:"Y-m-d H:i:s T" }}</span></div>
+                <div class="terminal-text mb-2">External Services: 
+                    <span class="terminal-accent">
+                        {% if EXTERNAL_DB_URL %}DB {% endif %}
+                        {% if EXTERNAL_INBUCKET_URL %}EMAIL {% endif %}
+                        {% if EXTERNAL_MONITORING_URL %}MONITOR {% endif %}
+                        {% if EXTERNAL_LOKI_URL %}LOKI {% endif %}
+                        {% if EXTERNAL_GRAFANA_URL %}GRAFANA {% endif %}
+                    </span>
                 </div>
             </div>
         </div>
     </div>
+    {# / sections container #}
+    </div> <!-- End Dashboard Sections -->
 </div>
 
 <script>

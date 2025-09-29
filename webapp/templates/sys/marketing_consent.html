@@ -7,8 +7,31 @@
 {% block page_description %}Manage user email marketing preferences and Resend audience synchronization{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Statistics Overview -->
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Dashboard
+            </a>
+            <a href="{% url 'sys_users' %}" class="btn btn-primary">
+                {% lucide 'users' size=16 class='mr-2' %}
+                Manage Users
+            </a>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
+    
+        {# Marketing Consent Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'mail-open' size=18 class='text-primary mr-2' %}
+            MARKETING CONSENT OVERVIEW
+        </h3>
+        
+        <!-- Statistics Overview -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="terminal-bg">
             <div class="p-4">
@@ -386,6 +409,8 @@
                 </div>
             </div>
         </div>
+        
     </div>
+    {# / sections container #}
 </div>
 {% endblock %}

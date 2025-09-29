@@ -65,17 +65,8 @@
                     {% lucide 'link' size=14 class='inline mr-2' %} Link Patterns
                 </a>
                 
-                <a href="{% url 'sys_activity' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if request.resolver_match.url_name == 'sys_activity' %}active{% endif %}">
-                    {% lucide 'activity' size=14 class='inline mr-2' %} Activity Logs
-                </a>
-                
-                
                 <a href="{% url 'sys_metrics' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'metrics' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'trending-up' size=14 class='inline mr-2' %} Metrics
-                </a>
-                
-                <a href="{% url 'sys_backup' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'backup' in request.resolver_match.url_name %}active{% endif %}">
-                    {% lucide 'database' size=14 class='inline mr-2' %} Backup & Restore
                 </a>
                 
                 <a href="{% url 'sys_email_queue' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'email_queue' in request.resolver_match.url_name %}active{% endif %}">
@@ -88,6 +79,10 @@
                 
                 <a href="{% url 'sys_media_browser' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'media' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'image' size=14 class='inline mr-2' %} Media Browser
+                </a>
+                
+                <a href="{% url 'sys_content_moderation_dashboard' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'content_moderation' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'shield-alert' size=14 class='inline mr-2' %} Content Moderation
                 </a>
                 
                 <a href="{% url 'sys_import_data' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'import' in request.resolver_match.url_name %}active{% endif %}">
@@ -179,9 +174,9 @@
             </div>
             
             <!-- Page Content -->
-            <div class="p-6">
+            <div>
                 {% if messages %}
-                    <div class="mb-4">
+                    <div class="p-6 pb-0">
                         {% for message in messages %}
                         <div class="alert alert-{{ message.tags }} mb-2">
                             <div class="flex items-center gap-2">

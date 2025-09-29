@@ -2,6 +2,7 @@
 {% load static %}
 {% load lucide %}
 {% load markdown_tags %}
+{% load media_tags %}
 
 {% block title %}Dashboard{% endblock %}
 
@@ -90,9 +91,9 @@
             <a href="{% url 'item_detail' item.hash %}">
                 <figure class="h-20 rounded-t-2xl overflow-hidden">
                     {% if item.default_image %}
-                        <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
+                        <img src="{% media_url item.default_image.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
                     {% elif item.images.all.0 %}
-                        <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
+                        <img src="{% media_url item.images.all.0.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover hover:opacity-75 transition-opacity" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center hover:bg-base-300/80 transition-colors">
                             {% lucide 'image' size=64 class='text-neutral' %}
@@ -137,9 +138,9 @@
             <div class="card lg:card-side bg-base-100 shadow-sm">
                 <figure class="lg:w-1/4 w-full h-48 lg:h-auto">
                     {% if list.default_image %}
-                        <img src="{{ list.default_image.media_file.file_url }}" alt="{{ list.name }}" class="w-full h-full object-cover" />
+                        <img src="{% media_url list.default_image.media_file %}" alt="{{ list.name }}" class="w-full h-full object-cover" />
                     {% elif list.images.all.0 %}
-                        <img src="{{ list.images.all.0.media_file.file_url }}" alt="{{ list.name }}" class="w-full h-full object-cover" />
+                        <img src="{% media_url list.images.all.0.media_file %}" alt="{{ list.name }}" class="w-full h-full object-cover" />
                     {% else %}
                         <div class="w-full h-full bg-base-300 flex items-center justify-center">
                             {% lucide 'image' size=64 class='text-neutral' %}
@@ -198,9 +199,9 @@
                         <div class="avatar w-full">
                             <div class="w-full aspect-square rounded-lg">
                                 {% if collection.default_image %}
-                                    <img src="{{ collection.default_image.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+                                    <img src="{% media_url collection.default_image.media_file %}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
                                 {% elif collection.images.all.0 %}
-                                    <img src="{{ collection.images.all.0.media_file.file_url }}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
+                                    <img src="{% media_url collection.images.all.0.media_file %}" alt="{{ collection.name }}" class="w-full h-full object-cover" />
                                 {% else %}
                                     <div class="w-full h-full bg-base-300 flex items-center justify-center">
                                         {% lucide 'image' size=64 class='text-neutral' %}

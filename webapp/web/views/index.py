@@ -25,3 +25,23 @@ def index_view(request):
     
     content = "Hello from django!"
     return render(request, 'index.html', context={'content': content})
+
+
+@log_execution_time
+def terms_view(request):
+    """Site terms and policies page"""
+    logger.info('terms_view: Terms page accessed by user %s [%s]',
+               request.user.username if request.user.is_authenticated else 'Anonymous', 
+               request.user.id if request.user.is_authenticated else 'None')
+    
+    return render(request, 'legal/terms.html')
+
+
+@log_execution_time  
+def privacy_view(request):
+    """Privacy policy page"""
+    logger.info('privacy_view: Privacy page accessed by user %s [%s]',
+               request.user.username if request.user.is_authenticated else 'Anonymous', 
+               request.user.id if request.user.is_authenticated else 'None')
+    
+    return render(request, 'legal/privacy.html')

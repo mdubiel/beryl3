@@ -43,7 +43,7 @@
                     <select name="target_user" class="select select-bordered w-full" required>
                         <option value="">Select a user...</option>
                         {% for user in users %}
-                        <option value="{{ user.id }}">{{ user.get_display_name }} ({{ user.email }})</option>
+                        <option value="{{ user.id }}">{{ user.display_name }} ({{ user.email }})</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -165,7 +165,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div class="stat border border-primary">
                     <div class="stat-title">Target User</div>
-                    <div class="stat-value text-sm">{{ target_user.get_display_name }}</div>
+                    <div class="stat-value text-sm">{{ target_user.display_name }}</div>
                     <div class="stat-desc">{{ target_user.email }}</div>
                 </div>
                 <div class="stat border border-primary">

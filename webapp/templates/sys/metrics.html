@@ -6,20 +6,34 @@
 {% block page_title %}System Metrics{% endblock %}
 {% block page_description %}Analytics and performance metrics for the application{% endblock %}
 
-{% block header_actions %}
-<a href="{% url 'sys_prometheus_metrics' %}" class="btn btn-square btn-sm btn-primary" title="Prometheus Metrics Endpoint" target="_blank">
-    {% lucide 'activity' size=16 %}
-</a>
-{% endblock %}
-
 {% block content %}
-<div class="space-y-6">
-    <!-- User Metrics -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h3 class="text-lg font-bold terminal-accent mb-4">
-                <span class="terminal-text">></span> USER METRICS
-            </h3>
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'sys_prometheus_metrics' %}" class="btn btn-primary" target="_blank">
+                {% lucide 'activity' size=16 class='mr-2' %}
+                Prometheus Metrics
+            </a>
+            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Dashboard
+            </a>
+            <a href="{% url 'sys_users' %}" class="btn btn-primary">
+                {% lucide 'users' size=16 class='mr-2' %}
+                Manage Users
+            </a>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
+    
+        {# User Metrics Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'users' size=18 class='text-primary mr-2' %}
+            USER METRICS
+        </h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="stat border border-primary shadow-sm">
                     <div class="flex items-center gap-2 mb-2">
@@ -437,7 +451,9 @@
                 Last updated: <span id="last-updated">{{ now|date:"Y-m-d H:i:s" }}</span>
             </div>
         </div>
+        
     </div>
+    {# / sections container #}
 </div>
 
 <script>

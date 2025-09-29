@@ -130,6 +130,38 @@ class MediaFile(BerylModel):
     height = models.IntegerField(null=True, blank=True, verbose_name=_("Image Height"))
     metadata = models.JSONField(default=dict, blank=True, verbose_name=_("Additional Metadata"))
     
+    # Content moderation fields
+    class ContentModerationStatus(models.TextChoices):
+        PENDING = "PENDING", _("Pending Review")
+        APPROVED = "APPROVED", _("Approved")
+        FLAGGED = "FLAGGED", _("Flagged")
+        REJECTED = "REJECTED", _("Rejected")
+    
+    content_moderation_status = models.CharField(
+        max_length=20,
+        choices=ContentModerationStatus.choices,
+        default=ContentModerationStatus.PENDING,
+        verbose_name=_("Content Moderation Status"),
+        db_index=True
+    )
+    content_moderation_score = models.FloatField(
+        null=True, 
+        blank=True, 
+        verbose_name=_("Content Moderation Score"),
+        help_text=_("AI confidence score for inappropriate content (0.0-1.0)")
+    )
+    content_moderation_details = models.JSONField(
+        default=dict, 
+        blank=True, 
+        verbose_name=_("Content Moderation Details"),
+        help_text=_("Detailed results from content moderation analysis")
+    )
+    content_moderation_checked_at = models.DateTimeField(
+        null=True, 
+        blank=True, 
+        verbose_name=_("Last Content Check")
+    )
+    
     class Meta:
         verbose_name = _("Media File")
         verbose_name_plural = _("Media Files")
@@ -137,6 +169,8 @@ class MediaFile(BerylModel):
         indexes = [
             models.Index(fields=['media_type', 'storage_backend']),
             models.Index(fields=['file_exists', 'last_verified']),
+            models.Index(fields=['content_moderation_status']),
+            models.Index(fields=['content_moderation_checked_at']),
         ]
     
     def __str__(self):
@@ -153,6 +187,34 @@ class MediaFile(BerylModel):
         except Exception as e:
             logger.error(f"Error generating URL for {self.file_path}: {str(e)}")
             return None
+    
+    def get_user_safe_url(self, request=None):
+        """
+        Get URL for user-facing content. Returns error image URL for flagged content.
+        For SYS admin views, always returns the actual file URL.
+        
+        Args:
+            request: Django request object to determine if this is a SYS admin view
+            
+        Returns:
+            str: File URL or error image URL
+        """
+        # For SYS admin views, always return actual file URL
+        if request and hasattr(request, 'resolver_match') and request.resolver_match:
+            url_name = getattr(request.resolver_match, 'url_name', '')
+            if url_name and url_name.startswith('sys_'):
+                return self.file_url
+        
+        # For user-facing content, check moderation status
+        if self.content_moderation_status in [
+            self.ContentModerationStatus.FLAGGED, 
+            self.ContentModerationStatus.REJECTED
+        ]:
+            # Return a static error image URL
+            from django.conf import settings
+            return f"{settings.STATIC_URL}images/content-unavailable.svg"
+        
+        return self.file_url
     
     @property
     def formatted_file_size(self):
@@ -265,8 +327,10 @@ class MediaFile(BerylModel):
     
     def save(self, *args, **kwargs):
         """
-        Override save to set storage backend based on current configuration
+        Override save to set storage backend and trigger content moderation if needed
         """
+        is_new = self.pk is None
+        
         if not self.storage_backend:
             # Determine storage backend based on feature flag only
             use_gcs = getattr(settings, 'FEATURE_FLAGS', {}).get('USE_GCS_STORAGE', False)
@@ -277,6 +341,105 @@ class MediaFile(BerylModel):
                 self.storage_backend = self.StorageBackend.LOCAL
         
         super().save(*args, **kwargs)
+        
+        # Trigger content moderation for new image files
+        if is_new and self.content_type and self.content_type.startswith('image/'):
+            self.schedule_content_moderation()
+    
+    def schedule_content_moderation(self):
+        """
+        Schedule content moderation analysis for this media file
+        """
+        from django.conf import settings
+        
+        # Only proceed if content moderation is enabled
+        if not getattr(settings, 'CONTENT_MODERATION_ENABLED', False):
+            return
+        
+        try:
+            # Import here to avoid circular imports
+            from web.services.content_moderation import content_moderation_service
+            
+            # Process in background or immediately based on configuration
+            # For now, process immediately
+            result = content_moderation_service.process_media_file(self)
+            
+            logger.info(f"Content moderation completed for {self.original_filename}: {result}")
+            
+        except Exception as e:
+            logger.error(f"Failed to schedule content moderation for {self.original_filename}: {e}")
+    
+    def analyze_content(self, force=False):
+        """
+        Manually trigger content analysis for this media file
+        
+        Args:
+            force: Whether to re-analyze even if already checked
+            
+        Returns:
+            Dict with analysis results
+        """
+        from django.utils import timezone
+        
+        # Skip if already analyzed and not forcing
+        if not force and self.content_moderation_checked_at:
+            return {
+                "status": "already_analyzed",
+                "checked_at": self.content_moderation_checked_at,
+                "current_status": self.content_moderation_status
+            }
+        
+        # Never re-analyze approved images unless explicitly forced
+        if not force and self.content_moderation_status == self.ContentModerationStatus.APPROVED:
+            return {
+                "status": "approved_skipped",
+                "message": "Image is approved and will not be re-analyzed",
+                "current_status": self.content_moderation_status
+            }
+        
+        try:
+            from web.services.content_moderation import content_moderation_service
+            return content_moderation_service.process_media_file(self)
+        except Exception as e:
+            logger.error(f"Failed to analyze content for {self.original_filename}: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    def is_content_appropriate(self):
+        """
+        Check if content is appropriate based on moderation status
+        """
+        return self.content_moderation_status in [
+            self.ContentModerationStatus.APPROVED,
+            self.ContentModerationStatus.PENDING
+        ]
+    
+    def needs_content_review(self):
+        """
+        Check if content needs manual review
+        """
+        return self.content_moderation_status == self.ContentModerationStatus.FLAGGED
+    
+    @property
+    def content_moderation_summary(self):
+        """
+        Get a human-readable summary of content moderation status
+        """
+        status_messages = {
+            self.ContentModerationStatus.PENDING: "Pending review",
+            self.ContentModerationStatus.APPROVED: "Approved",
+            self.ContentModerationStatus.FLAGGED: "Flagged for review",
+            self.ContentModerationStatus.REJECTED: "Rejected"
+        }
+        
+        message = status_messages.get(self.content_moderation_status, "Unknown")
+        
+        if self.content_moderation_score:
+            message += f" (confidence: {self.content_moderation_score:.2f})"
+        
+        if self.content_moderation_checked_at:
+            message += f" - checked {self.content_moderation_checked_at.strftime('%Y-%m-%d %H:%M')}"
+        
+        return message
 
 
 class ItemType(BerylModel):
@@ -692,6 +855,7 @@ class CollectionItem(BerylModel):
     def default_image(self):
         """Get the default image for this collection item"""
         return self.images.filter(is_default=True).first()
+    
 
 
 
@@ -712,17 +876,7 @@ class RecentActivity(BerylModel):
         help_text="Markdown supported for highlights"
     )
     
-    def clean(self):
-        """Validate that icon is a valid Lucide icon"""
-        from core.lucide import LucideIcons
-        if not LucideIcons.is_valid(self.icon):
-            from django.core.exceptions import ValidationError
-            raise ValidationError({
-                'icon': f'"{self.icon}" is not a valid Lucide icon name. Use one of: {", ".join(sorted(list(LucideIcons.get_all_icons()))[:10])}...'
-            })
-    
     def save(self, *args, **kwargs):
-        self.clean()
         super().save(*args, **kwargs)
 
     class Meta:
@@ -778,7 +932,7 @@ class RecentActivity(BerylModel):
         RecentActivity.objects.create(
             created_by=user,
             message=f"Removed **{item_name}** from collection **{collection_name}**",
-            icon="minus-circle"
+            icon="circle-minus"
         )
     
     @staticmethod

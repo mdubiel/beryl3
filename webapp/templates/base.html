@@ -232,6 +232,28 @@
             </div>
             {% endif %}
             
+            <!-- Django Messages -->
+            {% if messages %}
+                <div class="px-4 pt-6">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'info' %}alert-info{% else %}alert-info{% endif %} mb-4">
+                            <div class="flex items-center gap-2">
+                                {% if message.tags == 'error' %}
+                                    {% lucide 'x' size=20 %}
+                                {% elif message.tags == 'warning' %}
+                                    {% lucide 'triangle-alert' size=20 %}
+                                {% elif message.tags == 'success' %}
+                                    {% lucide 'check' size=20 %}
+                                {% else %}
+                                    {% lucide 'info' size=20 %}
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
             <main class="py-12">
                 {% block content %}
                 {% endblock %}
@@ -240,19 +262,89 @@
         
     </div> {# End of main centered container #}
 
-    <footer class="footer footer-center p-10 bg-base-200 text-base-content mt-12">
-        <aside>
-            <p class="font-bold text-lg text-primary">
-                Beryl3 <br/>Built by nerds for nerds
-            </p>
-            <p>Copyright © {% now "Y" %} - All right reserved</p>
-        </aside>
-        <nav>
-            <div class="grid grid-flow-col gap-4">
-                <a class="link link-hover">About us</a>
-                <a class="link link-hover">Contact</a>
+    <footer class="footer bg-base-200 text-base-content p-10 mt-12">
+        <div class="max-w-6xl mx-auto w-full">
+            <!-- Company Info Section -->
+            <aside class="flex flex-col items-center md:items-start">
+                <p class="font-bold text-lg text-primary mb-2">
+                    {% lucide 'package' size=20 class='inline mr-2' %}
+                    Beryl3
+                </p>
+                <p class="text-sm text-base-content/70 mb-2">Built by nerds for nerds</p>
+                <p class="text-sm text-base-content/70">Organize, collect, and share your passions</p>
+                <div class="flex gap-4 mt-4">
+                    <!-- Social Media Links (placeholder) -->
+                    <a href="#" class="text-base-content/60 hover:text-primary transition-colors" title="Twitter">
+                        {% lucide 'twitter' size=18 %}
+                    </a>
+                    <a href="#" class="text-base-content/60 hover:text-primary transition-colors" title="GitHub">
+                        {% lucide 'github' size=18 %}
+                    </a>
+                    <a href="#" class="text-base-content/60 hover:text-primary transition-colors" title="Discord">
+                        {% lucide 'message-circle' size=18 %}
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Links Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full md:pl-12">
+                
+                <!-- Product Links -->
+                <nav class="flex flex-col">
+                    <header class="font-semibold text-base-content mb-3">Product</header>
+                    <a href="{% url 'index' %}" class="link link-hover text-sm mb-1">Home</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="link link-hover text-sm mb-1">Dashboard</a>
+                        <a href="{% url 'collection_list' %}" class="link link-hover text-sm mb-1">Collections</a>
+                    {% endif %}
+                    <a href="#" class="link link-hover text-sm mb-1">Features</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Pricing</a>
+                    <a href="#" class="link link-hover text-sm mb-1">API</a>
+                </nav>
+
+                <!-- Company Links -->
+                <nav class="flex flex-col">
+                    <header class="font-semibold text-base-content mb-3">Company</header>
+                    <a href="#" class="link link-hover text-sm mb-1">About Us</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Blog</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Careers</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Press Kit</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Contact</a>
+                </nav>
+
+                <!-- Legal & Support Links -->
+                <nav class="flex flex-col">
+                    <header class="font-semibold text-base-content mb-3">Legal & Support</header>
+                    <a href="{% url 'terms' %}" class="link link-hover text-sm mb-1">Terms of Service</a>
+                    <a href="{% url 'privacy' %}" class="link link-hover text-sm mb-1">Privacy Policy</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Cookie Policy</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Help Center</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Security</a>
+                    <a href="#" class="link link-hover text-sm mb-1">Status</a>
+                </nav>
             </div>
-        </nav>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="footer footer-center border-t border-base-300 pt-6 mt-8">
+            <aside class="text-center">
+                <p class="text-sm text-base-content/60">
+                    Copyright © {% now "Y" %} Beryl3. All rights reserved. 
+                    {% if user.is_authenticated and user.is_staff %}
+                    | <a href="{% url 'sys_dashboard' %}" class="link link-hover">Admin</a>
+                    {% endif %}
+                </p>
+                <div class="flex items-center justify-center gap-4 mt-2 text-xs text-base-content/50">
+                    <span>Made with ❤️ for collectors</span>
+                    <span>•</span>
+                    <span>Version {{ request.build_version|default:"1.0.0" }}</span>
+                    {% if settings.DEBUG %}
+                        <span>•</span>
+                        <span class="text-warning">Development Mode</span>
+                    {% endif %}
+                </div>
+            </aside>
+        </div>
     </footer>
 
 </body>

@@ -1,0 +1,265 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Content Moderation Dashboard - Beryl Admin{% endblock %}
+
+{% block page_title %}Content Moderation Dashboard{% endblock %}
+{% block page_description %}Monitor and manage content moderation, flagged content, and user violations{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- System Status Header -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> MODERATION OVERVIEW
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'flag' size=18 class='text-primary' %}
+                        <div class="stat-title">Flagged Content</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ flagged_content_count|default:0 }}</div>
+                    <div class="stat-desc">Requires review</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'clock' size=18 class='text-primary' %}
+                        <div class="stat-title">Pending Review</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ pending_review_count|default:0 }}</div>
+                    <div class="stat-desc">Awaiting analysis</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'user-x' size=18 class='text-primary' %}
+                        <div class="stat-title">User Violations</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ user_violations_count|default:0 }}</div>
+                    <div class="stat-desc">Content policy violations</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        {% lucide 'shield-ban' size=18 class='text-primary' %}
+                        <div class="stat-title">Banned Users</div>
+                    </div>
+                    <div class="stat-value text-primary">{{ banned_users_count|default:0 }}</div>
+                    <div class="stat-desc">Content banned</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> MODERATION ACTIONS
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{% url 'sys_flagged_images' %}" class="btn btn-primary">
+                    {% lucide 'flag' size=16 class='mr-2' %}
+                    Review Flagged Content
+                    {% if flagged_content_count > 0 %}
+                        <span class="badge badge-warning ml-2">{{ flagged_content_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'sys_user_violations' %}" class="btn btn-primary">
+                    {% lucide 'user-x' size=16 class='mr-2' %}
+                    Manage Violations
+                    {% if user_violations_count > 0 %}
+                        <span class="badge badge-error ml-2">{{ user_violations_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'sys_content_moderation_settings' %}" class="btn btn-primary">
+                    {% lucide 'settings' size=16 class='mr-2' %}
+                    Moderation Settings
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Recent Flagged Content -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> RECENT FLAGGED CONTENT
+            </h4>
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>TIMESTAMP</th>
+                            <th>IMAGE</th>
+                            <th>USER</th>
+                            <th>STATUS</th>
+                            <th>SCORE</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for media in recent_flagged_content %}
+                        <tr>
+                            <td>{{ media.content_moderation_checked_at|date:"M d H:i" }}</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 bg-primary bg-opacity-20 rounded group">
+                                        {% if media.file_url %}
+                                            <img src="{{ media.file_url }}" alt="Flagged content" 
+                                                 class="w-8 h-8 object-cover rounded blur-sm group-hover:blur-none transition-all duration-300">
+                                        {% else %}
+                                            {% lucide 'image' size=16 class='w-full h-full p-1' %}
+                                        {% endif %}
+                                    </div>
+                                    <span class="terminal-text text-sm">{{ media.original_filename|truncatechars:15 }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if media.created_by %}
+                                    <a href="/admin/web/user/{{ media.created_by.id }}/change/" class="terminal-accent hover:underline">
+                                        {{ media.created_by.display_name|truncatechars:15 }}
+                                    </a>
+                                {% else %}
+                                    <span class="terminal-accent">Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if media.content_moderation_status == 'FLAGGED' %}badge-warning{% elif media.content_moderation_status == 'REJECTED' %}badge-error{% else %}badge-info{% endif %}">
+                                    {{ media.get_content_moderation_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if media.content_moderation_score %}
+                                    <span class="terminal-accent">{{ media.content_moderation_score|floatformat:2 }}</span>
+                                {% else %}
+                                    <span class="terminal-text opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <button class="btn btn-xs btn-success" onclick="approveContent({{ media.id }})">
+                                        {% lucide 'check' size=12 %} Approve
+                                    </button>
+                                    <button class="btn btn-xs btn-error" onclick="rejectContent({{ media.id }})">
+                                        {% lucide 'trash-2' size=12 %} Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center terminal-text opacity-60">
+                                // No flagged content found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'sys_flagged_images' %}" class="btn btn-primary btn-sm">
+                    {% lucide 'arrow-right' size=14 class='mr-1' %} View All Flagged Content
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> SYSTEM CONFIGURATION
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="terminal-text mb-2">Content Moderation: 
+                        <span class="{% if settings.CONTENT_MODERATION_ENABLED %}terminal-accent{% else %}terminal-danger{% endif %}">
+                            {{ settings.CONTENT_MODERATION_ENABLED|yesno:"ENABLED,DISABLED" }}
+                        </span>
+                    </div>
+                    <div class="terminal-text mb-2">Moderation Action: 
+                        <span class="terminal-accent">{{ settings.CONTENT_MODERATION_ACTION|upper|default:"NOT SET" }}</span>
+                    </div>
+                    <div class="terminal-text mb-2">Soft Ban Threshold: 
+                        <span class="terminal-accent">{{ settings.CONTENT_MODERATION_SOFT_BAN_THRESHOLD|default:"Not set" }}</span>
+                    </div>
+                </div>
+                <div>
+                    <div class="terminal-text mb-2">Total Images Analyzed: 
+                        <span class="terminal-accent">{{ total_analyzed_images|default:0 }}</span>
+                    </div>
+                    <div class="terminal-text mb-2">Analysis Success Rate: 
+                        <span class="terminal-accent">{{ analysis_success_rate|default:"--" }}%</span>
+                    </div>
+                    <div class="terminal-text mb-2">Last Analysis: 
+                        <span class="terminal-accent">{{ last_analysis_time|date:"Y-m-d H:i:s"|default:"Never" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function approveContent(mediaId) {
+    if (confirm('Are you sure you want to approve this content?')) {
+        fetch(`/sys/content-moderation/approve/${mediaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.json().then(data => {
+                    alert(`Error approving content: ${data.message || 'Unknown error'}`);
+                }).catch(() => {
+                    alert(`Error approving content: ${response.status} ${response.statusText}`);
+                });
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Network error while approving content');
+        });
+    }
+}
+
+function rejectContent(mediaId) {
+    if (confirm('Are you sure you want to permanently delete this image? This action cannot be undone and will remove the file completely from the system.')) {
+        fetch(`/sys/content-moderation/reject/${mediaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.json().then(data => {
+                    alert(`Error deleting content: ${data.message || 'Unknown error'}`);
+                }).catch(() => {
+                    alert(`Error deleting content: ${response.status} ${response.statusText}`);
+                });
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Network error while deleting content');
+        });
+    }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

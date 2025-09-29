@@ -6,159 +6,173 @@
 {% block page_title %}Link Patterns{% endblock %}
 {% block page_description %}Manage URL patterns for automatic link recognition{% endblock %}
 
-{% block header_actions %}
-<a href="{% url 'sys_link_pattern_create' %}" class="btn btn-primary btn-sm">
-    {% lucide 'plus' size=16 class='mr-2' %}
-    New Pattern
-</a>
-{% endblock %}
-
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'sys_link_pattern_create' %}" class="btn btn-primary">
+                {% lucide 'plus' size=16 class='mr-2' %}
+                New Pattern
+            </a>
+            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Dashboard
+            </a>
+            <a href="{% url 'sys_users' %}" class="btn btn-primary">
+                {% lucide 'users' size=16 class='mr-2' %}
+                Manage Users
+            </a>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
     
-    <!-- Link Patterns Table -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h3 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> REGISTERED PATTERNS
-            </h3>
-            
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>DISPLAY NAME</th>
-                            <th>PATTERN</th>
-                            <th>ICON</th>
-                            <th>STATUS</th>
-                            <th>USAGE</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pattern in link_patterns %}
-                        <tr class="{% if not pattern.is_active %}opacity-60{% endif %}">
-                            <td>
-                                <div class="flex items-center gap-2">
-                                    {% if pattern.icon %}
-                                        {% lucide pattern.icon size=16 class='text-primary' %}
-                                    {% else %}
-                                        {% lucide 'link' size=16 class='text-gray-400' %}
-                                    {% endif %}
-                                    <span class="font-semibold">{{ pattern.display_name }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <code class="text-xs bg-base-200 px-2 py-1 rounded">{{ pattern.url_pattern }}</code>
-                            </td>
-                            <td>
+        {# Link Patterns Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'link' size=18 class='text-primary mr-2' %}
+            REGISTERED PATTERNS
+        </h3>
+        
+        {# Link Patterns Table section #}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>DISPLAY NAME</th>
+                        <th>PATTERN</th>
+                        <th>ICON</th>
+                        <th>STATUS</th>
+                        <th>USAGE</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pattern in link_patterns %}
+                    <tr class="{% if not pattern.is_active %}opacity-60{% endif %}">
+                        <td>
+                            <div class="flex items-center gap-2">
                                 {% if pattern.icon %}
-                                    <span class="badge badge-sm badge-outline">{{ pattern.icon }}</span>
+                                    {% lucide pattern.icon size=16 class='text-primary' %}
                                 {% else %}
-                                    <span class="text-gray-400 text-xs">none</span>
+                                    {% lucide 'link' size=16 class='text-gray-400' %}
                                 {% endif %}
-                            </td>
-                            <td>
-                                {% if pattern.is_active %}
-                                    <span class="badge badge-success badge-sm">ACTIVE</span>
-                                {% else %}
-                                    <span class="badge badge-error badge-sm">INACTIVE</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="terminal-accent">{{ pattern.usage_count }}</span> links
-                            </td>
-                            <td>
-                                <div class="flex gap-1">
-                                    <a href="{% url 'sys_link_pattern_detail' pattern.id %}" 
-                                       class="btn btn-xs btn-ghost" title="View Details">
-                                        {% lucide 'eye' size=12 %}
-                                    </a>
-                                    <a href="{% url 'sys_link_pattern_update' pattern.id %}" 
-                                       class="btn btn-xs btn-ghost" title="Edit">
-                                        {% lucide 'pencil' size=12 %}
-                                    </a>
-                                    <a href="{% url 'sys_link_pattern_delete' pattern.id %}" 
-                                       class="btn btn-xs btn-ghost text-error" title="Delete">
-                                        {% lucide 'trash-2' size=12 %}
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center terminal-text opacity-60 py-8">
-                                // No link patterns found
-                                <div class="mt-2">
-                                    <a href="{% url 'sys_link_pattern_create' %}" class="btn btn-primary btn-sm">
-                                        {% lucide 'plus' size=16 class='mr-2' %}
-                                        Create First Pattern
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                <span class="font-semibold">{{ pattern.display_name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <code class="text-xs bg-base-200 px-2 py-1 rounded">{{ pattern.url_pattern }}</code>
+                        </td>
+                        <td>
+                            {% if pattern.icon %}
+                                <span class="badge badge-sm badge-outline">{{ pattern.icon }}</span>
+                            {% else %}
+                                <span class="text-gray-400 text-xs">none</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pattern.is_active %}
+                                <span class="badge badge-success badge-sm">ACTIVE</span>
+                            {% else %}
+                                <span class="badge badge-error badge-sm">INACTIVE</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="terminal-accent">{{ pattern.usage_count }}</span> links
+                        </td>
+                        <td>
+                            <div class="flex gap-1">
+                                <a href="{% url 'sys_link_pattern_detail' pattern.id %}" 
+                                   class="btn btn-xs btn-primary" title="View Details">
+                                    {% lucide 'eye' size=12 %}
+                                </a>
+                                <a href="{% url 'sys_link_pattern_update' pattern.id %}" 
+                                   class="btn btn-xs btn-secondary" title="Edit">
+                                    {% lucide 'pencil' size=12 %}
+                                </a>
+                                <a href="{% url 'sys_link_pattern_delete' pattern.id %}" 
+                                   class="btn btn-xs btn-error" title="Delete">
+                                    {% lucide 'trash-2' size=12 %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center terminal-text opacity-60 py-8">
+                            // No link patterns found
+                            <div class="mt-2">
+                                <a href="{% url 'sys_link_pattern_create' %}" class="btn btn-primary btn-sm">
+                                    {% lucide 'plus' size=16 class='mr-2' %}
+                                    Create First Pattern
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if link_patterns %}
+        <div class="mt-4 text-sm terminal-text text-neutral">
+            Total: {{ link_patterns|length }} pattern{{ link_patterns|length|pluralize }}
+        </div>
+        {% endif %}
+        {# / Link Patterns Table section #}
+
+        {# Divider #}
+        {% if link_patterns %}
+        <div class="divider divider-info"></div>
+
+        {# Usage Statistics #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'trending-up' size=18 class='text-primary mr-2' %}
+            USAGE STATISTICS
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="stat border border-primary shadow-sm">
+                <div class="flex items-center gap-2 mb-2">
+                    {% lucide 'link' size=18 class='text-primary' %}
+                    <div class="stat-title">Total Patterns</div>
+                </div>
+                <div class="stat-value text-primary">{{ link_patterns|length }}</div>
+                <div class="stat-desc">
+                    {{ link_patterns|length|add:"-1"|default:"0" }} active
+                </div>
             </div>
             
-            {% if link_patterns %}
-            <div class="mt-4 text-sm terminal-text text-neutral">
-                Total: {{ link_patterns|length }} pattern{{ link_patterns|length|pluralize }}
+            <div class="stat border border-primary shadow-sm">
+                <div class="flex items-center gap-2 mb-2">
+                    {% lucide 'external-link' size=18 class='text-primary' %}
+                    <div class="stat-title">Total Links</div>
+                </div>
+                <div class="stat-value text-primary">
+                    {{ total_links_count }}
+                </div>
+                <div class="stat-desc">Across all items</div>
             </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Usage Statistics -->
-    {% if link_patterns %}
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h3 class="terminal-accent text-lg font-bold mb-4">
-                <span class="terminal-text">></span> USAGE STATISTICS
-            </h3>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'link' size=18 class='text-primary' %}
-                        <div class="stat-title">Total Patterns</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ link_patterns|length }}</div>
-                    <div class="stat-desc">
-                        {{ link_patterns|length|add:"-1"|default:"0" }} active
-                    </div>
+            <div class="stat border border-primary shadow-sm">
+                <div class="flex items-center gap-2 mb-2">
+                    {% lucide 'trending-up' size=18 class='text-primary' %}
+                    <div class="stat-title">Most Used</div>
                 </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'external-link' size=18 class='text-primary' %}
-                        <div class="stat-title">Total Links</div>
-                    </div>
-                    <div class="stat-value text-primary">
-                        {{ total_links_count }}
-                    </div>
-                    <div class="stat-desc">Across all items</div>
+                <div class="stat-value text-primary text-sm">
+                    {% if most_used_pattern %}
+                        {{ most_used_pattern.display_name|truncatechars:12 }}
+                    {% else %}
+                        --
+                    {% endif %}
                 </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'trending-up' size=18 class='text-primary' %}
-                        <div class="stat-title">Most Used</div>
-                    </div>
-                    <div class="stat-value text-primary text-sm">
-                        {% if most_used_pattern %}
-                            {{ most_used_pattern.display_name|truncatechars:12 }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </div>
-                    <div class="stat-desc">Most used pattern</div>
-                </div>
+                <div class="stat-desc">Most used pattern</div>
             </div>
         </div>
+        {% endif %}
+        
     </div>
-    {% endif %}
-
+    {# / sections container #}
 </div>
 {% endblock %}

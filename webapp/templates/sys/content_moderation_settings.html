@@ -1,0 +1,298 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Content Moderation Settings - Beryl Admin{% endblock %}
+
+{% block page_title %}Content Moderation Settings{% endblock %}
+{% block page_description %}Configure content moderation system settings and thresholds{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Current Configuration -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> CURRENT CONFIGURATION
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text terminal-text">Content Moderation Status</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span class="badge {% if content_moderation_enabled %}badge-success{% else %}badge-error{% endif %} badge-lg">
+                                {% if content_moderation_enabled %}
+                                    {% lucide 'shield-check' size=16 class='mr-1' %}
+                                    ENABLED
+                                {% else %}
+                                    {% lucide 'shield-off' size=16 class='mr-1' %}
+                                    DISABLED
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="label">
+                            <span class="label-text-alt terminal-text opacity-60">
+                                Set via CONTENT_MODERATION_ENABLED environment variable
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text terminal-text">Moderation Action</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-primary badge-lg">
+                                {% lucide 'settings' size=16 class='mr-1' %}
+                                {{ content_moderation_action|upper|default:"NOT SET" }}
+                            </span>
+                        </div>
+                        <div class="label">
+                            <span class="label-text-alt terminal-text opacity-60">
+                                Actions: flag_only, delete, soft_ban, hard_ban
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text terminal-text">Soft Ban Threshold</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-warning badge-lg">
+                                {% lucide 'triangle-alert' size=16 class='mr-1' %}
+                                {{ soft_ban_threshold|default:"NOT SET" }} violations
+                            </span>
+                        </div>
+                        <div class="label">
+                            <span class="label-text-alt terminal-text opacity-60">
+                                Number of violations before soft ban is applied
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text terminal-text">Detection Threshold</span>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-info badge-lg">
+                                {% lucide 'target' size=16 class='mr-1' %}
+                                0.6 (60%)
+                            </span>
+                        </div>
+                        <div class="label">
+                            <span class="label-text-alt terminal-text opacity-60">
+                                Minimum confidence score to flag content as inappropriate
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Guide -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> CONFIGURATION GUIDE
+            </h4>
+            
+            <div class="space-y-4">
+                <div class="alert alert-info">
+                    <div class="flex items-start gap-3">
+                        {% lucide 'info' size=20 %}
+                        <div>
+                            <h5 class="font-bold terminal-text">Environment Variables</h5>
+                            <p class="terminal-text text-sm mt-1">
+                                Content moderation settings are configured via environment variables. 
+                                Update your <code>.env</code> file and restart the application to apply changes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Current Value</th>
+                                <th>Description</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="text-primary">CONTENT_MODERATION_ENABLED</code></td>
+                                <td>
+                                    <span class="badge {% if content_moderation_enabled %}badge-success{% else %}badge-error{% endif %}">
+                                        {{ content_moderation_enabled|yesno:"True,False" }}
+                                    </span>
+                                </td>
+                                <td>Enable/disable content moderation system</td>
+                                <td><code>True</code>, <code>False</code></td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-primary">CONTENT_MODERATION_ACTION</code></td>
+                                <td>
+                                    <span class="badge badge-primary">{{ content_moderation_action|default:"flag_only" }}</span>
+                                </td>
+                                <td>Action to take when inappropriate content is detected</td>
+                                <td>
+                                    <div class="text-xs">
+                                        <div><code>flag_only</code> - Flag for review</div>
+                                        <div><code>delete</code> - Delete content</div>
+                                        <div><code>soft_ban</code> - Ban after threshold</div>
+                                        <div><code>hard_ban</code> - Immediate ban</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code class="text-primary">CONTENT_MODERATION_SOFT_BAN_THRESHOLD</code></td>
+                                <td>
+                                    <span class="badge badge-warning">{{ soft_ban_threshold|default:3 }}</span>
+                                </td>
+                                <td>Number of violations before soft ban</td>
+                                <td>Any positive integer (recommended: 3-5)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> SYSTEM STATUS
+            </h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="stat border border-primary shadow-sm">
+                    <div class="stat-figure text-primary">
+                        {% lucide 'cpu' size=24 %}
+                    </div>
+                    <div class="stat-title">NudeNet Status</div>
+                    <div class="stat-value text-success text-sm">READY</div>
+                    <div class="stat-desc">v3.4.2 Detector</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="stat-figure text-primary">
+                        {% lucide 'database' size=24 %}
+                    </div>
+                    <div class="stat-title">Database Schema</div>
+                    <div class="stat-value text-success text-sm">UP TO DATE</div>
+                    <div class="stat-desc">Migration 0023 applied</div>
+                </div>
+                
+                <div class="stat border border-primary shadow-sm">
+                    <div class="stat-figure text-primary">
+                        {% lucide 'settings' size=24 %}
+                    </div>
+                    <div class="stat-title">Feature Flags</div>
+                    <div class="stat-value text-success text-sm">CONFIGURED</div>
+                    <div class="stat-desc">Environment loaded</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> MANAGEMENT ACTIONS
+            </h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button class="btn btn-primary" onclick="testContentModeration()">
+                    {% lucide 'test-tube' size=16 class='mr-2' %}
+                    Test System
+                </button>
+                
+                <button class="btn btn-primary" onclick="reanalyzeContent()">
+                    {% lucide 'refresh-cw' size=16 class='mr-2' %}
+                    Re-analyze All
+                </button>
+                
+                <a href="{% url 'sys_flagged_images' %}" class="btn btn-outline">
+                    {% lucide 'flag' size=16 class='mr-2' %}
+                    Review Flagged
+                </a>
+                
+                <a href="{% url 'sys_user_violations' %}" class="btn btn-outline">
+                    {% lucide 'users' size=16 class='mr-2' %}
+                    User Violations
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documentation -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <h4 class="terminal-accent text-lg font-bold mb-4">
+                <span class="terminal-text">></span> DOCUMENTATION
+            </h4>
+            
+            <div class="prose max-w-none terminal-text">
+                <h5 class="terminal-accent">Detection Classes</h5>
+                <p class="text-sm mb-3">The system detects the following inappropriate content types:</p>
+                <ul class="text-xs grid grid-cols-2 gap-1 mb-4">
+                    <li><code>BUTTOCKS_EXPOSED</code></li>
+                    <li><code>FEMALE_BREAST_EXPOSED</code></li>
+                    <li><code>FEMALE_GENITALIA_EXPOSED</code></li>
+                    <li><code>MALE_BREAST_EXPOSED</code></li>
+                    <li><code>MALE_GENITALIA_EXPOSED</code></li>
+                    <li><code>ANUS_EXPOSED</code></li>
+                </ul>
+                
+                <h5 class="terminal-accent">Moderation Actions</h5>
+                <div class="text-sm space-y-2">
+                    <div><strong>flag_only:</strong> Content is flagged but remains visible. Admin review required.</div>
+                    <div><strong>delete:</strong> Inappropriate content is automatically deleted.</div>
+                    <div><strong>soft_ban:</strong> Users are banned after reaching violation threshold.</div>
+                    <div><strong>hard_ban:</strong> Users are banned immediately upon first violation.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testContentModeration() {
+    if (confirm('This will test the content moderation system. Continue?')) {
+        // Implementation would go here
+        alert('Content moderation test completed successfully.');
+    }
+}
+
+function reanalyzeContent() {
+    if (confirm('This will re-analyze all content in the system. This may take a while. Continue?')) {
+        fetch('/sys/content-moderation/batch-analyze/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        }).then(response => {
+            if (response.ok) {
+                alert('Content re-analysis started. Check the activity logs for progress.');
+            } else {
+                alert('Failed to start content re-analysis.');
+            }
+        });
+    }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load lucide %}
 {% load markdown_tags %}
+{% load media_tags %}
 
 {% block title %}{{ collection.name }}{% endblock %}
 
@@ -17,98 +18,230 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8">
 
-    {# Collection Header #}
-    <div class="hero bg-gradient-to-r from-base-200 to-base-100 rounded-box shadow-lg mb-8">
-        <div class="hero-content flex-col lg:flex-row gap-8 py-8">
-            <div class="flex-shrink-0">
-                <img src="{{ collection.image_url }}" alt="{{ collection.name }}" class="w-48 h-48 rounded-box shadow-xl object-cover">
-            </div>
-            <div class="text-center lg:text-left">
-                <h1 class="text-5xl font-bold">{{ collection.name }}</h1>
-                <div class="flex items-center justify-center lg:justify-start gap-2 mt-2">
+    {# Collection Hero Card - Updated to match private view #}
+    <div class="bg-base-100 rounded-lg min-w-80 max-w-none mx-auto lg:mx-0 mb-8">
+        
+        {# Image section using DaisyUI figure - Only show if image exists #}
+        {% if collection.default_image or collection.images.all.0 %}
+        <figure class="w-full h-64 rounded-t-lg overflow-hidden">
+            {% if collection.default_image %}
+                <img src="{% media_url collection.default_image.media_file %}" 
+                     alt="{{ collection.name }}" 
+                     class="w-full h-full object-cover cursor-pointer"
+                     onclick="showImageModal('{% media_url collection.default_image.media_file %}', '{{ collection.name|escapejs }}')" />
+            {% elif collection.images.all.0 %}
+                <img src="{% media_url collection.images.all.0.media_file %}" 
+                     alt="{{ collection.name }}" 
+                     class="w-full h-full object-cover cursor-pointer"
+                     onclick="showImageModal('{% media_url collection.images.all.0.media_file %}', '{{ collection.name|escapejs }}')" />
+            {% endif %}
+        </figure>
+        {% endif %}
+        
+        {# Content section using DaisyUI card-body #}
+        <div class="card-body flex flex-col justify-between py-8 px-4{% if not collection.default_image and not collection.images.all.0 %} rounded-t-lg{% endif %}">
+            
+            {# Top section #}
+            <div class="space-y-6">
+                
+                <h1 class="text-5xl font-bold leading-tight">{{ collection.name }}</h1>
+                
+                <div class="flex items-center gap-2">
                     {% lucide 'user' size=16 class='text-neutral' %}
                     <p class="text-lg opacity-80">
-                        Owned by {{ collection.created_by.username }}
+                        Owned by {{ collection.created_by.profile.get_display_name }}
                     </p>
                 </div>
+                
+                {# Only show description if it exists and is not empty #}
                 {% if collection.description %}
-                <p class="mt-4 max-w-2xl opacity-90">
-                    {{ collection.description|markdown_safe }}
-                </p>
+                <p class="text-base-content text-neutral">{{ collection.description|markdown_safe }}</p>
                 {% endif %}
                 
-                {# Collection stats #}
-                <div class="flex flex-wrap gap-2 mt-4 justify-center lg:justify-start">
-                    <div class="badge badge-lg badge-primary">
-                        {% lucide 'package' size=14 class='mr-1' %}
-                        {{ items.count }} items
+                {# Collection Images Gallery - Show if there are multiple images or single image when no header #}
+                {% if collection.images.all|length > 1 %}
+                <div class="mt-6">
+                    <h3 class="text-sm font-semibold mb-3 text-base-content text-neutral">Collection Images</h3>
+                    <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
+                        {% for image in collection.images.all %}
+                        <div class="aspect-square bg-base-200 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
+                             onclick="showImageModal('{% media_url image.media_file %}', '{{ collection.name|escapejs }} - Image {{ forloop.counter }}')">
+                            <img src="{% media_url image.media_file %}" 
+                                 alt="{{ collection.name }} - Image {{ forloop.counter }}" 
+                                 class="w-full h-full object-cover" />
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="badge badge-lg badge-secondary">
-                        {% lucide 'eye' size=14 class='mr-1' %}
-                        {{ collection.get_visibility_display }}
+                </div>
+                {% endif %}
+                
+            </div>
+            
+            {# Bottom section - Stats #}
+            <div class="mt-6">
+                <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-100/60 backdrop-blur-sm">
+                    <div class="stat">
+                        <div class="stat-title">Total Items</div>
+                        <div class="stat-value">{{ stats.total_items }}</div>
                     </div>
-                    {% if collection.created %}
-                    <div class="badge badge-lg badge-ghost">
-                        {% lucide 'calendar' size=14 class='mr-1' %}
-                        Created {{ collection.created|date:"M Y" }}
+                    <div class="stat">
+                        <div class="stat-title">In Collection</div>
+                        <div class="stat-value text-success">{{ stats.in_collection_count }}</div>
                     </div>
-                    {% endif %}
+                    <div class="stat">
+                        <div class="stat-title">Wanted</div>
+                        <div class="stat-value text-info">{{ stats.wanted_count }}</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-title">Reserved</div>
+                        <div class="stat-value text-warning">{{ stats.reserved_count }}</div>
+                    </div>
                 </div>
             </div>
+            
         </div>
+        
     </div>
 
-    {# Item List #}
-    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-        <h2 class="text-3xl font-bold">Items in this collection</h2>
-        <div class="badge badge-lg badge-neutral">
-            {{ items.count }} total items
-        </div>
-    </div>
+    {# Items listing #}
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-4">Items in this Collection</h2>
 
-    {% if items %}
-        {# Item type distribution #}
-        {% regroup items by item_type as items_by_type %}
-        {% if items_by_type|length > 1 %}
-        <div class="bg-base-200 rounded-box p-4 mb-6">
-            <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
-                {% lucide 'tags' size=18 %}
-                Item Types
-            </h3>
-            <div class="flex flex-wrap gap-2">
-                {% for item_type_group in items_by_type %}
-                    <div class="badge badge-outline badge-lg">
-                        {% if item_type_group.grouper %}
-                            {% lucide item_type_group.grouper.icon size=14 class='mr-1' %}
-                            {{ item_type_group.grouper.display_name }}
-                        {% else %}
-                            {% lucide 'package' size=14 class='mr-1' %}
-                            Generic
-                        {% endif %}
-                        <span class="ml-1 text-xs text-neutral">({{ item_type_group.list|length }})</span>
+        {% if stats.total_items > 0 %}
+            {# Item type distribution - based on all items, not current page #}
+            {% if item_type_distribution|length > 1 %}
+            <div class="bg-base-200 rounded-box p-4 mb-6">
+                <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                    {% lucide 'tags' size=18 %}
+                    Item Types
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for type_data in item_type_distribution %}
+                        <div class="badge badge-outline badge-lg">
+                            {% if type_data.item_type__display_name %}
+                                {% if type_data.item_type__icon %}
+                                    {% lucide type_data.item_type__icon size=14 class='mr-1' %}
+                                {% endif %}
+                                {{ type_data.item_type__display_name }}
+                            {% else %}
+                                {% lucide 'package' size=14 class='mr-1' %}
+                                Generic
+                            {% endif %}
+                            <span class="ml-1 text-xs text-neutral">({{ type_data.count }})</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="flex flex-col gap-6">
+                {# Loop through items and include the public card for each one #}
+                {% for item in items %}
+                    <div id="item-{{ item.hash }}-container">
+                        {% include "partials/_item_public_card.html" with item=item %}
                     </div>
                 {% endfor %}
             </div>
-        </div>
-        {% endif %}
-
-        {# Items grid #}
-        <div class="space-y-4">
-            {% for item in items %}
-                <li id="item-{{ item.hash }}-container" class="list-none">
-                    {% include 'partials/_item_public_card.html' with item=item %}
-                </li>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="text-center py-12">
-            <div class="max-w-md mx-auto">
+            
+            {# Pagination controls #}
+            {% if page_obj.has_other_pages %}
+            <div class="flex justify-center mt-8">
+                <div class="join">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1" class="join-item btn">
+                            {% lucide 'chevrons-left' size=16 %}
+                        </a>
+                        <a href="?page={{ page_obj.previous_page_number }}" class="join-item btn">
+                            {% lucide 'chevron-left' size=16 %}
+                        </a>
+                    {% endif %}
+                    
+                    {# Page number info #}
+                    <span class="join-item btn btn-active">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="join-item btn">
+                            {% lucide 'chevron-right' size=16 %}
+                        </a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}" class="join-item btn">
+                            {% lucide 'chevrons-right' size=16 %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {# Items count info #}
+            <div class="text-center mt-4 text-sm opacity-70">
+                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} items
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="card bg-base-100 shadow-sm p-8 text-center">
                 {% lucide 'package-x' size=48 class='mx-auto text-neutral mb-4' %}
                 <p class="text-lg text-neutral">This collection is currently empty.</p>
                 <p class="text-sm opacity-60 mt-2">Check back later for new items!</p>
             </div>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
+    {# End items list #}
 
 </div>
+
+{# Image lightbox modal #}
+<dialog id="image-modal" class="modal backdrop-blur-sm">
+    <div class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4">
+        {# Close button - top right #}
+        <button class="absolute top-4 right-4 z-10 btn btn-circle btn-ghost text-white hover:bg-base-100 hover:bg-opacity-20" 
+                onclick="document.getElementById('image-modal').close()" 
+                title="Close (ESC)">
+            {% lucide 'x' size=24 %}
+        </button>
+        
+        {# Image title - top center #}
+        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 text-white text-lg font-medium text-center px-4 py-2 bg-black bg-opacity-50 rounded-lg" id="image-modal-title">
+            Image Preview
+        </div>
+        
+        {# Main image - centered #}
+        <img id="image-modal-img" 
+             src="" 
+             alt="" 
+             class="max-w-full max-h-full object-contain shadow-2xl" />
+    </div>
+    
+    {# Backdrop click to close #}
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+function showImageModal(imageUrl, imageTitle) {
+    const modal = document.getElementById('image-modal');
+    const img = document.getElementById('image-modal-img');
+    const title = document.getElementById('image-modal-title');
+    
+    img.src = imageUrl;
+    img.alt = imageTitle;
+    title.textContent = imageTitle;
+    
+    modal.showModal();
+    
+    // Add keyboard event listener for ESC key
+    const handleKeydown = (e) => {
+        if (e.key === 'Escape') {
+            modal.close();
+        }
+    };
+    document.addEventListener('keydown', handleKeydown);
+    
+    // Remove event listener when modal closes
+    modal.addEventListener('close', () => {
+        document.removeEventListener('keydown', handleKeydown);
+    }, { once: true });
+}
+</script>
+
 {% endblock %}

@@ -1,0 +1,282 @@
+{% extends "base_sys.html" %}
+{% load lucide %}
+
+{% block title %}Flagged Images - Content Moderation{% endblock %}
+
+{% block page_title %}Flagged Images{% endblock %}
+{% block page_description %}Review and manage flagged content requiring moderation{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Filter Controls -->
+    <div class="terminal-bg">
+        <div class="p-4">
+            <form method="get" class="flex flex-wrap gap-4 items-end">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Status Filter</span>
+                    </label>
+                    <select name="status" class="select select-bordered select-sm">
+                        <option value="">All Statuses</option>
+                        <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>Pending Review</option>
+                        <option value="FLAGGED" {% if request.GET.status == 'FLAGGED' %}selected{% endif %}>Flagged</option>
+                        <option value="REJECTED" {% if request.GET.status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                        <option value="APPROVED" {% if request.GET.status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                    </select>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Score Range</span>
+                    </label>
+                    <select name="score_range" class="select select-bordered select-sm">
+                        <option value="">All Scores</option>
+                        <option value="high" {% if request.GET.score_range == 'high' %}selected{% endif %}>High Risk (0.8+)</option>
+                        <option value="medium" {% if request.GET.score_range == 'medium' %}selected{% endif %}>Medium Risk (0.5-0.8)</option>
+                        <option value="low" {% if request.GET.score_range == 'low' %}selected{% endif %}>Low Risk (0.2-0.5)</option>
+                    </select>
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text terminal-text">Date Range</span>
+                    </label>
+                    <select name="date_range" class="select select-bordered select-sm">
+                        <option value="">All Time</option>
+                        <option value="today" {% if request.GET.date_range == 'today' %}selected{% endif %}>Today</option>
+                        <option value="week" {% if request.GET.date_range == 'week' %}selected{% endif %}>This Week</option>
+                        <option value="month" {% if request.GET.date_range == 'month' %}selected{% endif %}>This Month</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-sm">
+                    {% lucide 'filter' size=14 class='mr-1' %} Filter
+                </button>
+                
+                <a href="{% url 'sys_flagged_images' %}" class="btn btn-outline btn-sm">
+                    {% lucide 'x' size=14 class='mr-1' %} Clear
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="terminal-bg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="terminal-accent text-lg font-bold">
+                    <span class="terminal-text">></span> FLAGGED CONTENT ({{ flagged_images.count|default:0 }} items)
+                </h4>
+            </div>
+            
+            <!-- Table View -->
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <thead>
+                        <tr>
+                            <th>IMAGE</th>
+                            <th>USER</th>
+                            <th>FLAGGED AT</th>
+                            <th>TOTAL SCORE</th>
+                            <th>DETECTION DETAILS</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for media in flagged_images %}
+                        <tr>
+                            <td>
+                                <div class="flex items-center justify-center">
+                                    <div class="w-32 h-32 bg-primary bg-opacity-20 rounded group">
+                                        {% if media.file_url %}
+                                            <img src="{{ media.file_url }}" alt="Flagged content" 
+                                                 class="w-32 h-32 object-cover rounded blur-sm group-hover:blur-none transition-all duration-300">
+                                        {% else %}
+                                            {% lucide 'image-off' size=48 class='w-full h-full p-4' %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if media.created_by %}
+                                    <a href="/admin/web/user/{{ media.created_by.id }}/change/" class="terminal-accent hover:underline">
+                                        {{ media.created_by.display_name }}
+                                    </a>
+                                {% else %}
+                                    <span class="terminal-accent">Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="terminal-text">{{ media.content_moderation_checked_at|date:"M d, Y H:i" }}</span>
+                            </td>
+                            <td>
+                                {% if media.content_moderation_score %}
+                                    <span class="terminal-accent font-bold">{{ media.content_moderation_score|floatformat:2 }}</span>
+                                {% else %}
+                                    <span class="terminal-text opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if media.content_moderation_details %}
+                                    <div class="flex flex-wrap gap-1">
+                                        {% for key, value in media.content_moderation_details.items %}
+                                            {% if key != 'boxes' and key != 'timestamp' and key != 'detection' and key != 'model_version' and key != 'threshold_used' %}
+                                                <span class="badge badge-warning text-xs">
+                                                    {{ key|title }}: {{ value|floatformat:2 }}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="terminal-text opacity-60">--</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <button class="btn btn-xs btn-success" onclick="approveContent({{ media.id }})" title="Approve">
+                                        {% lucide 'check' size=12 %}
+                                    </button>
+                                    <button class="btn btn-xs btn-error" onclick="rejectContent({{ media.id }})" title="Delete">
+                                        {% lucide 'trash-2' size=12 %}
+                                    </button>
+                                    <button class="btn btn-xs btn-warning" onclick="banUser({{ media.created_by.id }})" title="Ban User">
+                                        {% lucide 'user-x' size=12 %}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center terminal-text opacity-60 py-12">
+                                <div class="mb-4">
+                                    {% lucide 'image-off' size=48 class='mx-auto opacity-30' %}
+                                </div>
+                                <p class="text-lg mb-2">// No flagged content found</p>
+                                <p class="text-sm">Try adjusting your filters or check back later.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="flex justify-center">
+        <div class="btn-group">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}" class="btn btn-sm">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}" class="btn btn-sm">Previous</a>
+            {% endif %}
+            
+            <span class="btn btn-sm btn-active">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}" class="btn btn-sm">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.score_range %}&score_range={{ request.GET.score_range }}{% endif %}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}" class="btn btn-sm">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function approveContent(mediaId) {
+    if (confirm('Are you sure you want to approve this content?')) {
+        fetch(`/sys/content-moderation/approve/${mediaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.json().then(data => {
+                    alert(`Error approving content: ${data.message || 'Unknown error'}`);
+                }).catch(() => {
+                    alert(`Error approving content: ${response.status} ${response.statusText}`);
+                });
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Network error while approving content');
+        });
+    }
+}
+
+function banUser(userId) {
+    if (!userId) {
+        alert('Cannot ban user: User ID not found');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to ban this user? They will be unable to log in until manually unblocked by an admin.')) {
+        fetch(`/sys/ban-user/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            if (response.ok) {
+                alert('User has been banned successfully');
+                location.reload();
+            } else {
+                response.json().then(data => {
+                    alert(`Error banning user: ${data.message || 'Unknown error'}`);
+                }).catch(() => {
+                    alert(`Error banning user: ${response.status} ${response.statusText}`);
+                });
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('Network error while banning user');
+        });
+    }
+}
+
+function rejectContent(mediaId) {
+    if (confirm('Are you sure you want to permanently delete this image? This action cannot be undone and will remove the file completely from the system.')) {
+        console.log('Attempting to delete media ID:', mediaId);
+        fetch(`/sys/content-moderation/reject/${mediaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }).then(response => {
+            console.log('Response status:', response.status);
+            if (response.ok) {
+                return response.json().then(data => {
+                    console.log('Delete successful:', data.message);
+                    location.reload();
+                });
+            } else {
+                return response.json().then(data => {
+                    console.error('Delete failed:', data.message);
+                    alert(`Error deleting content: ${data.message}`);
+                }).catch(() => {
+                    console.error('Delete failed with status:', response.status);
+                    alert(`Error deleting content: ${response.status} ${response.statusText}`);
+                });
+            }
+        }).catch(error => {
+            console.error('Fetch error:', error);
+            alert('Network error while deleting content');
+        });
+    }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

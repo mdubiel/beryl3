@@ -1,43 +1,58 @@
 {% extends "base_sys.html" %}
 {% load lucide %}
 
-{% block title %}Media Browser - Admin{% endblock title %}
+{% block title %}Media Browser - Beryl Admin{% endblock title %}
 
-{% block header %}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold">Media Browser</h1>
-            <p class="text-base-content/70 mt-2">
-                Manage media files, upload new content, and maintain storage
-            </p>
-        </div>
-        <div class="flex items-center gap-4">
+{% block page_title %}Media Browser{% endblock %}
+{% block page_description %}Manage media files, upload new content, and maintain storage{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Action Buttons -->
+    <div class="px-6 pt-6">
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
+                {% lucide 'arrow-left' size=16 class='mr-2' %}
+                Dashboard
+            </a>
+            <a href="{% url 'sys_users' %}" class="btn btn-primary">
+                {% lucide 'users' size=16 class='mr-2' %}
+                Manage Users
+            </a>
             {% if abandoned_count > 0 %}
-            <div class="alert alert-warning p-2">
+            <div class="alert alert-warning p-2 rounded">
                 <span class="text-sm">⚠️ {{ abandoned_count }} abandoned files</span>
             </div>
             {% endif %}
-            <div class="stats stats-horizontal shadow">
-                <div class="stat">
-                    <div class="stat-title">Total Files</div>
-                    <div class="stat-value text-primary">{{ stats.total_files }}</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-title">Storage Used</div>
-                    <div class="stat-value text-info">
-                        {% if stats.size_statistics.total_size %}
-                            {{ stats.size_statistics.total_size|filesizeformat }}
-                        {% else %}
-                            0 B
-                        {% endif %}
-                    </div>
+        </div>
+    </div>
+
+    {# sections container #}
+    <div class="mx-6 mb-6 rounded-lg space-y-3">
+    
+        {# Media Browser Header #}
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'image' size=18 class='text-primary mr-2' %}
+            MEDIA STORAGE
+        </h3>
+        
+        {# Statistics section #}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="stat border border-primary shadow-sm">
+                <div class="stat-title">Total Files</div>
+                <div class="stat-value text-primary">{{ stats.total_files }}</div>
+            </div>
+            <div class="stat border border-primary shadow-sm">
+                <div class="stat-title">Storage Used</div>
+                <div class="stat-value text-info">
+                    {% if stats.size_statistics.total_size %}
+                        {{ stats.size_statistics.total_size|filesizeformat }}
+                    {% else %}
+                        0 B
+                    {% endif %}
                 </div>
             </div>
         </div>
-    </div>
-{% endblock header %}
-
-{% block content %}
 <div class="space-y-6">
     <!-- Upload Section -->
     <div class="card bg-base-100 shadow-sm">
@@ -195,44 +210,97 @@
             <table class="table table-sm">
                 <thead>
                     <tr class="border-b border-base-300">
-                        <th class="w-12">Type</th>
-                        <th>Name</th>
-                        <th class="text-right w-20">Size</th>
-                        <th class="w-16">Storage</th>
-                        <th class="w-32">Modified</th>
-                        <th class="w-24">Owner</th>
-                        <th class="w-16">Status</th>
-                        <th class="w-32">Actions</th>
+                        <th class="w-20">THUMBNAIL</th>
+                        <th>NAME & FILE</th>
+                        <th>ITEM/COLLECTION</th>
+                        <th class="text-right w-20">SIZE</th>
+                        <th class="w-32">CREATED</th>
+                        <th class="w-24">OWNER</th>
+                        <th class="w-24">CONTENT STATUS</th>
+                        <th class="w-16">STATUS</th>
+                        <th class="w-32">ACTIONS</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for media_file in page_obj %}
                     <tr class="hover:bg-base-200 border-b border-base-200">
-                        <!-- File Type with Icon -->
+                        <!-- Thumbnail -->
                         <td class="text-center">
-                            {% if media_file.media_type == "COLLECTION_HEADER" %}
-                                {% lucide 'image' size=14 class='text-primary' title='Collection Header' %}
-                            {% elif media_file.media_type == "COLLECTION_ITEM" %}
-                                {% lucide 'archive' size=14 class='text-secondary' title='Collection Item' %}
-                            {% elif media_file.media_type == "AVATAR" %}
-                                {% lucide 'user' size=14 class='text-accent' title='User Avatar' %}
-                            {% else %}
-                                {% lucide 'file' size=14 class='text-base-content/50' title='Other Media' %}
-                            {% endif %}
+                            <div class="w-12 h-12 bg-base-300 rounded overflow-hidden">
+                                {% if media_file.file_url and media_file.content_type|slice:":5" == "image" %}
+                                    <img src="{{ media_file.file_url }}" alt="thumbnail" 
+                                         class="w-12 h-12 object-cover{% if media_file.content_moderation_status == 'FLAGGED' or media_file.content_moderation_status == 'REJECTED' %} blur-md{% endif %}">
+                                {% else %}
+                                    <div class="w-12 h-12 flex items-center justify-center">
+                                        {% if media_file.media_type == "COLLECTION_HEADER" %}
+                                            {% lucide 'image' size=16 class='text-primary' %}
+                                        {% elif media_file.media_type == "COLLECTION_ITEM" %}
+                                            {% lucide 'archive' size=16 class='text-secondary' %}
+                                        {% elif media_file.media_type == "AVATAR" %}
+                                            {% lucide 'user' size=16 class='text-accent' %}
+                                        {% else %}
+                                            {% lucide 'file' size=16 class='text-base-content/50' %}
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </td>
                         
-                        <!-- File Name -->
+                        <!-- Name & File -->
                         <td class="font-mono text-sm">
                             <div class="flex flex-col">
-                                <span class="font-semibold" title="{{ media_file.name }}">
-                                    {{ media_file.name|truncatechars:40 }}
-                                </span>
-                                <span class="text-xs opacity-60" title="{{ media_file.original_filename }}">
-                                    {{ media_file.original_filename|truncatechars:35 }}
-                                </span>
-                                <span class="text-xs opacity-40 font-mono" title="{{ media_file.file_path }}">
-                                    {{ media_file.file_path|truncatechars:35 }}
-                                </span>
+                                <div class="flex items-center gap-2">
+                                    <!-- Media Type Icon -->
+                                    {% if media_file.media_type == "COLLECTION_HEADER" %}
+                                        {% lucide 'image' size=14 class='text-primary' title='Collection Header' %}
+                                    {% elif media_file.media_type == "COLLECTION_ITEM" %}
+                                        {% lucide 'archive' size=14 class='text-secondary' title='Collection Item' %}
+                                    {% elif media_file.media_type == "AVATAR" %}
+                                        {% lucide 'user' size=14 class='text-accent' title='User Avatar' %}
+                                    {% else %}
+                                        {% lucide 'file' size=14 class='text-base-content/50' title='Other Media' %}
+                                    {% endif %}
+                                    
+                                    <!-- Upload/Download Icon -->
+                                    {% if media_file.metadata.source == "download" %}
+                                        {% lucide 'download' size=12 class='text-info' title='Downloaded' %}
+                                    {% else %}
+                                        {% lucide 'upload' size=12 class='text-success' title='Uploaded' %}
+                                    {% endif %}
+                                    
+                                    <span class="font-semibold" title="{{ media_file.name }}">
+                                        {{ media_file.name|truncatechars:30 }}
+                                    </span>
+                                    
+                                    <!-- Storage Backend Icon -->
+                                    {% if media_file.storage_backend == "GCS" %}
+                                        <a href="#" class="text-primary" title="Google Cloud Storage">
+                                            {% lucide 'cloud' size=12 %}
+                                        </a>
+                                    {% elif media_file.storage_backend == "S3" %}
+                                        {% lucide 'cloud' size=12 class='text-accent' title='Amazon S3' %}
+                                    {% else %}
+                                        {% lucide 'hard-drive' size=12 class='text-secondary' title='Local Storage' %}
+                                    {% endif %}
+                                </div>
+                                <div class="text-xs opacity-60">
+                                    {% if media_file.file_url %}
+                                        <a href="{{ media_file.file_url }}" target="_blank" class="hover:underline">
+                                            {{ media_file.original_filename|truncatechars:35 }}
+                                        </a>
+                                    {% else %}
+                                        {{ media_file.original_filename|truncatechars:35 }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Item/Collection -->
+                        <td class="text-xs">
+                            {% comment %} This would need to be added to the view context {% endcomment %}
+                            <div class="flex flex-col">
+                                <span class="font-medium">{{ media_file.related_object_name|truncatechars:15|default:"--" }}</span>
+                                <span class="opacity-50 font-mono">{{ media_file.hash|slice:":8" }}</span>
                             </div>
                         </td>
                         
@@ -241,18 +309,7 @@
                             {{ media_file.formatted_file_size }}
                         </td>
                         
-                        <!-- Storage Backend -->
-                        <td class="text-center">
-                            {% if media_file.storage_backend == "GCS" %}
-                                {% lucide 'cloud' size=14 class='text-primary' title='Google Cloud Storage' %}
-                            {% elif media_file.storage_backend == "S3" %}
-                                {% lucide 'cloud' size=14 class='text-accent' title='Amazon S3' %}
-                            {% else %}
-                                {% lucide 'hard-drive' size=14 class='text-secondary' title='Local Storage' %}
-                            {% endif %}
-                        </td>
-                        
-                        <!-- Modified Date -->
+                        <!-- Created Date -->
                         <td class="font-mono text-xs">
                             {{ media_file.created|date:"M d H:i" }}
                         </td>
@@ -260,9 +317,27 @@
                         <!-- Owner -->
                         <td class="text-xs">
                             {% if media_file.created_by %}
-                                {{ media_file.created_by.email|truncatechars:15 }}
+                                <a href="/admin/web/user/{{ media_file.created_by.id }}/change/" class="hover:underline">
+                                    {{ media_file.created_by.display_name|truncatechars:15 }}
+                                </a>
                             {% else %}
                                 <span class="opacity-50">system</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Content Status -->
+                        <td class="text-xs">
+                            {% if media_file.content_moderation_status %}
+                                <div class="flex flex-col">
+                                    <span class="badge {% if media_file.content_moderation_status == 'APPROVED' %}badge-success{% elif media_file.content_moderation_status == 'FLAGGED' %}badge-warning{% elif media_file.content_moderation_status == 'REJECTED' %}badge-error{% else %}badge-info{% endif %} badge-xs">
+                                        {{ media_file.get_content_moderation_status_display }}
+                                    </span>
+                                    {% if media_file.content_moderation_score %}
+                                        <span class="text-xs opacity-60 mt-1">{{ media_file.content_moderation_score|floatformat:2 }}</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="opacity-50">--</span>
                             {% endif %}
                         </td>
                         
@@ -302,7 +377,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center py-12">
+                        <td colspan="9" class="text-center py-12">
                             <div class="flex flex-col items-center gap-2 opacity-50">
                                 {% lucide 'folder-open' size=32 %}
                                 <span>No media files found</span>
@@ -348,8 +423,16 @@
                 </div>
                 
                 <div>
-                    <div class="font-medium mb-2">Storage & Actions:</div>
+                    <div class="font-medium mb-2">Source & Storage:</div>
                     <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            {% lucide 'upload' size=12 class='text-success' %}
+                            <span>Uploaded File</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% lucide 'download' size=12 class='text-info' %}
+                            <span>Downloaded File</span>
+                        </div>
                         <div class="flex items-center gap-2">
                             {% lucide 'cloud' size=12 class='text-primary' %}
                             <span>Google Cloud Storage</span>
@@ -609,6 +692,9 @@
         </div>
     </div>
     {% endif %}
+        
+    </div>
+    {# / sections container #}
 </div>
 
 

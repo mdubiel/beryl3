@@ -87,10 +87,8 @@ urlpatterns = [
     path('sys/', sys.sys_dashboard, name='sys_dashboard'),
     path('sys/users/', sys.sys_users, name='sys_users'),
     path('sys/users/<int:user_id>/profile/', sys.sys_user_profile, name='sys_user_profile'),
-    path('sys/activity/', sys.sys_activity, name='sys_activity'),
     path('sys/metrics/', sys.sys_metrics, name='sys_metrics'),
     path('sys/metrics/prometheus/', sys.sys_prometheus_metrics, name='sys_prometheus_metrics'),
-    path('sys/backup/', sys.sys_backup, name='sys_backup'),
     path('sys/email-queue/', sys.sys_email_queue, name='sys_email_queue'),
     path('sys/email-queue/process/', sys.sys_email_queue_process, name='sys_email_queue_process'),
     path('sys/email-queue/cleanup/', sys.sys_email_queue_cleanup, name='sys_email_queue_cleanup'),
@@ -103,6 +101,19 @@ urlpatterns = [
     path('sys/import/', sys.sys_import_data, name='sys_import_data'),
     path('sys/import/confirm/', sys.sys_import_data_confirm, name='sys_import_data_confirm'),
     path('sys/import/result/', sys.sys_import_result, name='sys_import_result'),
+    
+    # Content moderation
+    path('sys/content-moderation/', sys.content_moderation_dashboard, name='sys_content_moderation_dashboard'),
+    path('sys/content-moderation/flagged/', sys.flagged_images, name='sys_flagged_images'),
+    path('sys/content-moderation/violations/', sys.user_violations, name='sys_user_violations'),
+    path('sys/content-moderation/settings/', sys.content_moderation_settings, name='sys_content_moderation_settings'),
+    path('sys/content-moderation/review/<int:file_id>/', sys.review_content, name='sys_review_content'),
+    path('sys/content-moderation/batch-analyze/', sys.batch_analyze_images, name='sys_batch_analyze_images'),
+    path('sys/content-moderation/approve/<int:file_id>/', sys.approve_flagged_image, name='sys_approve_flagged_image'),
+    path('sys/content-moderation/reject/<int:file_id>/', sys.reject_flagged_image, name='sys_reject_flagged_image'),
+    path('sys/users/<int:user_id>/detail/', sys.user_detail, name='sys_user_detail'),
+    path('sys/users/<int:user_id>/content/', sys.user_content, name='sys_user_content'),
+    
     path('sys/settings/', sys.sys_settings, name='sys_settings'),
     path('sys/media/', sys.sys_media_browser, name='sys_media_browser'),
     path('sys/media/upload/', sys.sys_media_upload, name='sys_media_upload'),
@@ -115,7 +126,6 @@ urlpatterns = [
     path('sys/users/<int:user_id>/reset-password/', sys.sys_user_reset_password, name='sys_user_reset_password'),
     path('sys/users/<int:user_id>/unlock-account/', sys.sys_user_unlock_account, name='sys_user_unlock_account'),
     path('sys/users/<int:user_id>/verify-email/', sys.sys_user_force_email_verification, name='sys_user_verify_email'),
-    path('sys/activity/cleanup/', sys.sys_activity_cleanup, name='sys_activity_cleanup'),
     
     # Item type management
     path('sys/item-types/', sys.sys_item_types, name='sys_item_types'),
@@ -141,6 +151,10 @@ urlpatterns = [
     
     # Marketing email management
     path('unsubscribe/<str:token>/', marketing.marketing_unsubscribe, name='marketing_unsubscribe'),
+    
+    # Legal pages
+    path('terms/', index.terms_view, name='terms'),
+    path('privacy/', index.privacy_view, name='privacy'),
     
 ]
 

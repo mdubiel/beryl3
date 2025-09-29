@@ -1,75 +1,129 @@
 {% load lucide %}
+{% load media_tags %}
 
-<div class="card card-side bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-    <figure class="w-32 h-32 flex-shrink-0">
+<div class="card lg:card-side bg-base-100 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0 shadow-md hover:shadow-lg transition-shadow">
+    {# Image section using DaisyUI figure #}
+    <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch">
         {% if item.default_image %}
-            <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+            <img src="{% media_url item.default_image.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover" />
         {% elif item.images.all.0 %}
-            <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover"/>
+            <img src="{% media_url item.images.all.0.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover" />
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center">
                 {% lucide 'image' size=64 class='text-neutral' %}
             </div>
         {% endif %}
     </figure>
-    <div class="card-body flex-row items-start justify-between p-6">
-        <div class="flex-grow">
-            <div class="flex items-center gap-2 mb-2">
-                <h3 class="card-title text-xl">{{ item.name }}</h3>
-                {# Item type icon and label #}
-                {% if item.item_type %}
-                    <div class="badge badge-secondary badge-sm">
-                        {% lucide item.item_type.icon size=12 class='mr-1' %}
-                        {{ item.item_type.display_name }}
-                    </div>
-                {% endif %}
-                {# Favorite star #}
-                {% if item.is_favorite %}
+    {# Content section using DaisyUI card-body #}
+    <div class="card-body lg:w-3/4 flex flex-col justify-between">
+        
+        {# Top section #}
+        <div class="space-y-3">
+            
+            {# Row 1: Item name with favorite star #}
+            <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2 flex-grow">
+                    {# Favorite star - display only (not interactive for public view) #}
+                    {% if item.is_favorite %}
                     <div class="tooltip" data-tip="Owner's favorite">
-                        {% lucide 'star' size=16 class='text-warning fill-current' %}
+                        {% lucide 'star' size=20 class='text-warning fill-current' %}
                     </div>
+                    {% endif %}
+                    
+                    <h2 class="font-bold text-lg leading-tight">
+                        {{ item.name }}
+                    </h2>
+                </div>
+                
+                {# Item type badge #}
+                {% if item.item_type %}
+                <div class="badge badge-secondary">
+                    {% lucide item.item_type.icon size=14 class='mr-1' %}
+                    {{ item.item_type.display_name }}
+                </div>
                 {% endif %}
             </div>
             
-            {# Description #}
+            {# Row 2: Description #}
             {% if item.description %}
-                <p class="text-sm text-neutral mb-3">{{ item.description }}</p>
+            <div>
+                <p class="text-sm opacity-70">{{ item.description }}</p>
+            </div>
             {% endif %}
             
-            {# Status badge #}
-            <div class="mb-3">
-                <div class="badge {% if item.is_bookable %}badge-success{% else %}badge-warning{% endif %} badge-sm">
+            {# Row 3: Status badge #}
+            <div class="flex flex-wrap gap-2">
+                <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% else %}badge-neutral{% endif %}">
+                    {% lucide 'tag' size=12 class='mr-1' %}
                     {{ item.get_status_display }}
                 </div>
             </div>
             
-            {# Attributes display #}
+            {# Row 4: Attributes display (detailed like private view) #}
             {% if item.item_type %}
-                <div class="attributes-section">
-                    {% for attr_data in item.get_display_attributes %}
-                        <div class="badge badge-outline badge-sm mr-2 mb-1">
-                            <span class="text-xs">
-                                <strong>{{ attr_data.attribute.display_name }}:</strong> 
-                                {% if attr_data.attribute.attribute_type == 'URL' %}
-                                    <a href="{{ attr_data.value }}" target="_blank" class="link link-hover">
-                                        {{ attr_data.value|truncatechars:30 }}
-                                    </a>
-                                {% elif attr_data.attribute.attribute_type == 'BOOLEAN' %}
-                                    {% if attr_data.value %}Yes{% else %}No{% endif %}
-                                {% elif attr_data.attribute.attribute_type == 'DATE' %}
-                                    {{ attr_data.display_value }}
-                                {% else %}
-                                    {{ attr_data.value }}
-                                {% endif %}
-                            </span>
+                {% with attributes=item.get_display_attributes %}
+                    {% if attributes|length > 0 %}
+                        <div class="mt-3">
+                            <div class="space-y-1">
+                                {% for attr_data in attributes %}
+                                <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
+                                    <span class="text-xs" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
+                                        <strong>{{ attr_data.attribute.display_name }}:</strong> 
+                                        {% if attr_data.attribute.attribute_type == 'URL' %}
+                                            <a href="{{ attr_data.value }}" target="_blank" class="link link-hover text-primary">
+                                                {{ attr_data.value }}
+                                            </a>
+                                        {% elif attr_data.attribute.attribute_type == 'BOOLEAN' %}
+                                            {% if attr_data.value %}Yes{% else %}No{% endif %}
+                                        {% elif attr_data.attribute.attribute_type == 'DATE' %}
+                                            {{ attr_data.display_value }}
+                                        {% else %}
+                                            {{ attr_data.value }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
-                    {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+            
+            {# Row 5: Links display (detailed like private view) #}
+            {% if item.links.all %}
+                <div class="mt-3">
+                    <div class="flex flex-wrap gap-1 max-w-2xl">
+                        {% for link in item.links.all %}
+                        <div class="inline-flex items-center gap-1 mr-2 mb-1">
+                            <a href="{{ link.url }}" target="_blank" class="text-xs flex items-center gap-1 hover:text-primary" title="{{ link.get_display_name }}: {{ link.url }}">
+                                {{ link.get_display_name }}
+                                {% lucide link.get_icon size=10 %}
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
+            
+            {# Row 6: All images - thumbnails using avatar styling #}
+            {% if item.images.all|length > 0 %}
+            <div class="mt-3">
+                <div class="flex flex-wrap gap-1 justify-start">
+                    {% for image in item.images.all %}
+                    <div class="avatar cursor-pointer hover:opacity-75 transition-opacity" onclick="showImageModal('{% media_url image.media_file %}', '{{ item.name|escapejs }} - Image {{ forloop.counter }}')">
+                        <div class="w-12 h-12 rounded">
+                            <img src="{% media_url image.media_file %}" alt="{{ item.name }} - Image {{ forloop.counter }}" class="object-cover" />
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
         </div>
         
-        {# Action buttons #}
-        <div class="card-actions justify-end flex-shrink-0">
+        {# Bottom section - Action buttons #}
+        <div class="flex justify-end mt-4">
             {% if item.is_bookable %}
                 {% if request.user.is_authenticated %}
                     {# Authenticated user: Simple POST to book #}
@@ -109,5 +163,6 @@
                 {% endif %}
             {% endif %}
         </div>
+        
     </div>
 </div>

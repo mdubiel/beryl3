@@ -41,6 +41,22 @@
                 <div class="text-error text-sm mt-1">{{ form.password2.errors.as_text }}</div>
             {% endif %}
 
+            {# Terms and Policies Acceptance - REQUIRED #}
+            {% if form.accept_policies %}
+            <div class="form-control mt-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    {% render_field form.accept_policies %}
+                    <span class="label-text">{{ form.accept_policies.label }}</span>
+                </label>
+                {% if form.accept_policies.help_text %}
+                    <div class="text-sm text-base-content/70 mt-1 ml-8">{{ form.accept_policies.help_text|safe }}</div>
+                {% endif %}
+                {% if form.accept_policies.errors %}
+                    <div class="text-error text-sm mt-1">{{ form.accept_policies.errors.as_text }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
             {# Marketing Email Preference #}
             {% if form.receive_marketing_emails %}
             <div class="form-control mt-4">
@@ -65,5 +81,6 @@
 <p class="text-center mt-4 text-sm">
     {% blocktrans %}Already have an account? Then please <a href="{{ login_url }}" class="link">sign in</a>.{% endblocktrans %}
 </p>
+</div>
 
 {% endblock allauth_content %}

@@ -1,15 +1,16 @@
 {% load i18n %}
 {% load lucide %}
 {% load markdown_tags %}
+{% load media_tags %}
 
 <div id="item-row-{{ item.hash }}" class="card lg:card-side bg-base-100 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0">
     
     {# Image section using DaisyUI figure #}
     <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch">
         {% if item.default_image %}
-            <img src="{{ item.default_image.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover" />
+            <img src="{% media_url item.default_image.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover" />
         {% elif item.images.all.0 %}
-            <img src="{{ item.images.all.0.media_file.file_url }}" alt="{{ item.name }}" class="w-full h-full object-cover" />
+            <img src="{% media_url item.images.all.0.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover" />
         {% else %}
             <div class="w-full h-full bg-base-300 flex items-center justify-center">
                 {% lucide 'image' size=64 class='text-neutral' %}
@@ -106,6 +107,7 @@
                             {% lucide 'link' size=18 %}
                         </button>
                         
+                        {# Status dropdown #}
                         <div class="dropdown dropdown-end dropdown-top">
                             <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Status">
                                 {% lucide 'list-checks' size=18 %}
@@ -141,7 +143,7 @@
                                 <li class="menu-title"><span>Move or Copy Item</span></li>
                                 <li>
                                     <a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">
-                                        {% lucide 'arrow-right-left' size=16 %}
+                                        {% lucide 'arrow-right-left' size=16 %>
                                         Move to another collection
                                     </a>
                                 </li>
@@ -159,6 +161,7 @@
                             {% lucide 'images' size=18 %}
                         </a>
                         
+                        {# Edit Item Button #}
                         <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-square btn-sm" title="Edit Item">
                             {% lucide 'pencil' size=18 %}
                         </a>
@@ -199,9 +202,9 @@
             <div class="mt-4">
                 <div class="flex flex-wrap gap-1 justify-start">
                     {% for image in item.images.all %}
-                    <div class="avatar cursor-pointer hover:opacity-75 transition-opacity" onclick="showImageGallery({{ forloop.counter0 }}, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{{ img.media_file.file_url }}'{% if not forloop.last %},{% endif %}{% endfor %}])">
+                    <div class="avatar cursor-pointer hover:opacity-75 transition-opacity" onclick="showImageGallery({{ forloop.counter0 }}, '{{ item.name|escapejs }}', [{% for img in item.images.all %}'{% media_url img.media_file %}'{% if not forloop.last %},{% endif %}{% endfor %}])">
                         <div class="w-12 h-12 rounded">
-                            <img src="{{ image.media_file.file_url }}" alt="{{ item.name }} - Image {{ forloop.counter }}" class="object-cover" />
+                            <img src="{% media_url image.media_file %}" alt="{{ item.name }} - Image {{ forloop.counter }}" class="object-cover" />
                         </div>
                     </div>
                     {% endfor %}

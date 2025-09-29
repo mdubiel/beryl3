@@ -259,73 +259,6 @@ def sys_user_profile(request, user_id):
     return render(request, 'sys/user_profile.html', context)
 
 
-@application_admin_required
-@log_execution_time
-def sys_activity(request):
-    """Activity logs management"""
-    logger.info("System activity logs accessed by admin user '%s' [%s]", request.user.username, request.user.id)
-    
-    # Get filter parameters
-    action_filter = request.GET.get('action', '')
-    user_filter = request.GET.get('user', '')
-    date_from = request.GET.get('date_from', '')
-    date_to = request.GET.get('date_to', '')
-    
-    # Build queryset
-    activities = RecentActivity.objects.select_related('created_by')
-    
-    if action_filter:
-        activities = activities.filter(name=action_filter)
-    
-    if user_filter:
-        try:
-            user_id = int(user_filter)
-            activities = activities.filter(created_by_id=user_id)
-        except ValueError:
-            pass
-    
-    if date_from:
-        try:
-            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
-            activities = activities.filter(created__date__gte=from_date)
-        except ValueError:
-            pass
-    
-    if date_to:
-        try:
-            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
-            activities = activities.filter(created__date__lte=to_date)
-        except ValueError:
-            pass
-    
-    activities = activities.order_by('-created')
-    
-    # Pagination
-    paginator = Paginator(activities, 50)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Get distinct actions for filter
-    distinct_actions = RecentActivity.objects.values_list('name', flat=True).distinct()
-    
-    # Get recent users for filter
-    recent_users = User.objects.filter(
-        recentactivity_created__isnull=False
-    ).distinct().order_by('email')[:20]
-    
-    context = {
-        'page_obj': page_obj,
-        'action_filter': action_filter,
-        'user_filter': user_filter,
-        'date_from': date_from,
-        'date_to': date_to,
-        'distinct_actions': distinct_actions,
-        'recent_users': recent_users,
-        'total_count': activities.count(),
-        'debug': settings.DEBUG,
-    }
-    
-    return render(request, 'sys/activity.html', context)
 
 
 @application_admin_required
@@ -685,40 +618,6 @@ def sys_prometheus_metrics(request):
     return HttpResponse(response_content, content_type='text/plain; version=0.0.4; charset=utf-8')
 
 
-@application_admin_required
-@log_execution_time
-def sys_backup(request):
-    """Backup and restore functionality"""
-    logger.info("System backup/restore accessed by admin user '%s' [%s]", request.user.username, request.user.id)
-    
-    # Get backup directory info if configured
-    backup_dir = getattr(settings, 'BACKUP_DIR', None)
-    backup_files = []
-    
-    if backup_dir and os.path.exists(backup_dir):
-        try:
-            files = os.listdir(backup_dir)
-            for file in files:
-                if file.endswith(('.sql', '.json', '.tar.gz')):
-                    file_path = os.path.join(backup_dir, file)
-                    stat = os.stat(file_path)
-                    backup_files.append({
-                        'name': file,
-                        'size': stat.st_size,
-                        'modified': datetime.fromtimestamp(stat.st_mtime),
-                    })
-            backup_files.sort(key=lambda x: x['modified'], reverse=True)
-        except Exception as e:
-            logger.error("Error reading backup directory: %s", str(e))
-    
-    context = {
-        'backup_dir': backup_dir,
-        'backup_files': backup_files,
-        'database_url': getattr(settings, 'DATABASE_URL', None),
-        'debug': settings.DEBUG,
-    }
-    
-    return render(request, 'sys/backup.html', context)
 
 
 @application_admin_required
@@ -744,23 +643,6 @@ def sys_user_toggle_active(request, user_id):
     })
 
 
-@application_admin_required
-@require_http_methods(["DELETE"])
-def sys_activity_cleanup(request):
-    """Clean up old activity logs via HTMX"""
-    days = int(request.GET.get('days', 90))
-    cutoff_date = timezone.now() - timedelta(days=days)
-    
-    deleted_count, _ = RecentActivity.objects.filter(created__lt=cutoff_date).delete()
-    
-    logger.info("Admin user '%s' [%s] cleaned up %d activity logs older than %d days", 
-                request.user.username, request.user.id, deleted_count, days)
-    
-    return JsonResponse({
-        'success': True,
-        'deleted_count': deleted_count,
-        'message': f"Deleted {deleted_count} activity logs older than {days} days"
-    })
 
 
 @application_admin_required
@@ -1725,25 +1607,62 @@ def sys_media_upload(request):
 @application_admin_required
 @require_http_methods(["POST"])
 def sys_media_delete(request, media_file_hash):
-    """Delete media file and its storage"""
+    """Delete media file and its storage along with all related records"""
     media_file = get_object_or_404(MediaFile, hash=media_file_hash)
     
     try:
         file_path = media_file.file_path
         filename = media_file.original_filename
+        media_file_id = media_file.id
+        
+        # Check what will be cleaned up before deletion
+        collection_images_count = media_file.collection_images.count()
+        item_images_count = media_file.item_images.count()
+        
+        # Get names of affected collections/items for better logging
+        affected_collections = list(media_file.collection_images.select_related('collection').values_list('collection__name', flat=True))
+        affected_items = list(media_file.item_images.select_related('item').values_list('item__name', flat=True))
         
         # Delete from storage if it exists
         if default_storage.exists(file_path):
             default_storage.delete(file_path)
             logger.info("Deleted file from storage: %s", file_path)
         
-        # Delete MediaFile record
+        # Delete MediaFile record (CASCADE will automatically delete related records)
         media_file.delete()
+        
+        # Verify CASCADE deletions worked properly
+        from web.models import CollectionImage, CollectionItemImage
+        remaining_collection_images = CollectionImage.objects.filter(media_file_id=media_file_id).count()
+        remaining_item_images = CollectionItemImage.objects.filter(media_file_id=media_file_id).count()
+        
+        if remaining_collection_images > 0 or remaining_item_images > 0:
+            # Clean up orphaned records manually
+            CollectionImage.objects.filter(media_file_id=media_file_id).delete()
+            CollectionItemImage.objects.filter(media_file_id=media_file_id).delete()
+            logger.warning("Had to manually clean up %d orphaned CollectionImage and %d orphaned CollectionItemImage records for media file ID %d", 
+                          remaining_collection_images, remaining_item_images, media_file_id)
+        
+        # Build success message with cleanup info
+        cleanup_info = []
+        if collection_images_count > 0:
+            cleanup_info.append(f"{collection_images_count} collection image references")
+            logger.info("Cleaned up %d collection image references for collections: %s", 
+                       collection_images_count, ', '.join(affected_collections))
+        
+        if item_images_count > 0:
+            cleanup_info.append(f"{item_images_count} item image references")
+            logger.info("Cleaned up %d item image references for items: %s", 
+                       item_images_count, ', '.join(affected_items))
+        
+        success_message = f"File '{filename}' deleted successfully"
+        if cleanup_info:
+            success_message += f" (also cleaned up {', '.join(cleanup_info)})"
         
         logger.info("Admin user '%s' [%s] deleted media file '%s' at '%s'", 
                    request.user.username, request.user.id, filename, file_path)
         
-        messages.success(request, f"File '{filename}' deleted successfully")
+        messages.success(request, success_message)
         return redirect('sys_media_browser')
         
     except Exception as e:
@@ -2538,8 +2457,13 @@ def sys_import_data_confirm(request):
         else:
             messages.success(request, f"Import completed successfully! Created {result['collections_created']} collections and {result['items_created']} items.")
         
-        # Store detailed results for display
-        request.session['import_result'] = result
+        # Store detailed results for display (convert datetime objects to strings)
+        serializable_result = result.copy()
+        if 'start_time' in serializable_result and serializable_result['start_time']:
+            serializable_result['start_time'] = serializable_result['start_time'].isoformat()
+        if 'end_time' in serializable_result and serializable_result['end_time']:
+            serializable_result['end_time'] = serializable_result['end_time'].isoformat()
+        request.session['import_result'] = serializable_result
         return redirect('sys_import_result')
         
     except Exception as e:
@@ -2556,6 +2480,19 @@ def sys_import_result(request):
         messages.info(request, "No import results to display.")
         return redirect('sys_import_data')
     
+    # Convert ISO datetime strings back to datetime objects for template rendering
+    from datetime import datetime
+    if 'start_time' in result and result['start_time']:
+        try:
+            result['start_time'] = datetime.fromisoformat(result['start_time'].replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            pass
+    if 'end_time' in result and result['end_time']:
+        try:
+            result['end_time'] = datetime.fromisoformat(result['end_time'].replace('Z', '+00:00'))
+        except (ValueError, AttributeError):
+            pass
+    
     context = {
         'result': result
     }
@@ -2565,4 +2502,400 @@ def sys_import_result(request):
     
     return render(request, 'sys/import_result.html', context)
 
+
+@application_admin_required
+@login_required
+def content_moderation_dashboard(request):
+    """
+    Content moderation dashboard showing flagged images and user violations
+    """
+    # Content moderation statistics
+    total_images = MediaFile.objects.filter(content_type__startswith='image/').count()
+    
+    flagged_images = MediaFile.objects.filter(
+        content_moderation_status=MediaFile.ContentModerationStatus.FLAGGED
+    ).count()
+    
+    pending_review = MediaFile.objects.filter(
+        content_moderation_status=MediaFile.ContentModerationStatus.PENDING,
+        content_type__startswith='image/'
+    ).count()
+    
+    # User violation statistics
+    users_with_violations = UserProfile.objects.filter(
+        content_moderation_violations__gt=0
+    ).count()
+    
+    banned_users = UserProfile.objects.filter(
+        is_content_banned=True
+    ).count()
+    
+    # Recent flagged images
+    recent_flagged = MediaFile.objects.filter(
+        content_moderation_status=MediaFile.ContentModerationStatus.FLAGGED
+    ).select_related('created_by').order_by('-content_moderation_checked_at')[:10]
+    
+    # Users with highest violation counts
+    high_violation_users = UserProfile.objects.filter(
+        content_moderation_violations__gt=0
+    ).select_related('user').order_by('-content_moderation_violations')[:10]
+    
+    # Status statistics for the chart
+    status_stats = MediaFile.objects.filter(
+        content_type__startswith='image/'
+    ).values('content_moderation_status').annotate(count=models.Count('id')).order_by('-count')
+    
+    context = {
+        # Template expects these specific variable names
+        'flagged_content_count': flagged_images,
+        'pending_review_count': pending_review,
+        'user_violations_count': users_with_violations,
+        'banned_users_count': banned_users,
+        'recent_flagged_content': recent_flagged,
+        'recent_violations': high_violation_users,
+        'status_stats': status_stats,
+        
+        # Additional stats for template
+        'total_content': total_images,
+        'total_analyzed_images': total_images,
+        'analysis_success_rate': 100 if total_images > 0 else 0,
+        'last_analysis_time': recent_flagged.first().content_moderation_checked_at if recent_flagged.exists() else None,
+        
+        # Settings for template
+        'moderation_enabled': getattr(settings, 'CONTENT_MODERATION_ENABLED', False),
+        'moderation_action': getattr(settings, 'CONTENT_MODERATION_ACTION', 'flag_only'),
+        'ban_threshold': getattr(settings, 'CONTENT_MODERATION_SOFT_BAN_THRESHOLD', 3),
+        'settings': settings,
+    }
+    
+    return render(request, 'sys/content_moderation_dashboard.html', context)
+
+
+@application_admin_required
+@login_required
+def flagged_images(request):
+    """
+    List of all flagged images requiring review
+    """
+    flagged_images_query = MediaFile.objects.filter(
+        content_moderation_status=MediaFile.ContentModerationStatus.FLAGGED
+    ).select_related('created_by').order_by('-content_moderation_checked_at')
+    
+    # Pagination
+    paginator = Paginator(flagged_images_query, 50)
+    page_number = request.GET.get('page')
+    flagged_images_page = paginator.get_page(page_number)
+    
+    context = {
+        'flagged_images': flagged_images_page,
+        'is_paginated': flagged_images_page.has_other_pages(),
+        'page_obj': flagged_images_page,
+    }
+    
+    return render(request, 'sys/flagged_images.html', context)
+
+
+@application_admin_required
+@login_required
+def user_violations(request):
+    """
+    List of users with content violations
+    """
+    users_query = UserProfile.objects.filter(
+        Q(content_moderation_violations__gt=0) | Q(is_content_banned=True)
+    ).select_related('user').order_by('-content_moderation_violations')
+    
+    # Pagination
+    paginator = Paginator(users_query, 50)
+    page_number = request.GET.get('page')
+    users_page = paginator.get_page(page_number)
+    
+    context = {
+        'users': users_page,
+    }
+    
+    return render(request, 'sys/user_violations.html', context)
+
+
+@application_admin_required
+@login_required 
+@require_http_methods(["POST"])
+def batch_analyze_images(request):
+    """
+    Trigger batch analysis of pending images
+    """
+    try:
+        from web.services.content_moderation import content_moderation_service
+        
+        if not content_moderation_service.is_enabled():
+            messages.error(request, "Content moderation is not enabled")
+            return redirect('sys_content_moderation_dashboard')
+        
+        batch_size = int(request.POST.get('batch_size', 50))
+        
+        # Process batch
+        result = content_moderation_service.batch_analyze_pending_files(batch_size)
+        
+        if result['processed'] > 0:
+            messages.success(
+                request,
+                f"Analyzed {result['processed']} images. "
+                f"Approved: {result['approved']}, Flagged: {result['flagged']}"
+            )
+            
+            if result['errors'] > 0:
+                messages.warning(request, f"{result['errors']} images had errors during analysis")
+        else:
+            messages.info(request, "No pending images to analyze")
+        
+    except Exception as e:
+        logger.error(f"Batch analysis error: {e}")
+        messages.error(request, f"Analysis failed: {str(e)}")
+    
+    return redirect('sys_content_moderation_dashboard')
+
+
+@application_admin_required
+@login_required
+@require_http_methods(["POST"])
+def approve_flagged_image(request, file_id):
+    """
+    Manually approve a flagged image
+    """
+    try:
+        media_file = get_object_or_404(MediaFile, id=file_id)
+        
+        media_file.content_moderation_status = MediaFile.ContentModerationStatus.APPROVED
+        media_file.save(update_fields=['content_moderation_status'])
+        
+        messages.success(request, f"Image '{media_file.original_filename}' has been approved")
+        
+    except Exception as e:
+        logger.error(f"Error approving image {file_id}: {e}")
+        messages.error(request, f"Failed to approve image: {str(e)}")
+    
+    return redirect('sys_flagged_images')
+
+
+@application_admin_required
+@login_required
+@require_http_methods(["POST"])
+def reject_flagged_image(request, file_id):
+    """
+    Manually delete a flagged image and remove it completely from the system along with all related records
+    """
+    try:
+        media_file = get_object_or_404(MediaFile, id=file_id)
+        original_filename = media_file.original_filename
+        file_path = media_file.file_path
+        media_file_id = media_file.id
+        
+        # Check what will be cleaned up before deletion
+        collection_images_count = media_file.collection_images.count()
+        item_images_count = media_file.item_images.count()
+        
+        # Get names of affected collections/items for better logging
+        affected_collections = list(media_file.collection_images.select_related('collection').values_list('collection__name', flat=True))
+        affected_items = list(media_file.item_images.select_related('item').values_list('item__name', flat=True))
+        
+        # Delete the file from storage
+        if default_storage.exists(file_path):
+            default_storage.delete(file_path)
+            logger.info("Deleted file from storage: %s", file_path)
+        
+        # Delete the MediaFile record completely from database (CASCADE will automatically delete related records)
+        media_file.delete()
+        
+        # Verify CASCADE deletions worked properly
+        from web.models import CollectionImage, CollectionItemImage
+        remaining_collection_images = CollectionImage.objects.filter(media_file_id=media_file_id).count()
+        remaining_item_images = CollectionItemImage.objects.filter(media_file_id=media_file_id).count()
+        
+        if remaining_collection_images > 0 or remaining_item_images > 0:
+            # Clean up orphaned records manually
+            CollectionImage.objects.filter(media_file_id=media_file_id).delete()
+            CollectionItemImage.objects.filter(media_file_id=media_file_id).delete()
+            logger.warning("Content moderation: Had to manually clean up %d orphaned CollectionImage and %d orphaned CollectionItemImage records for media file ID %d", 
+                          remaining_collection_images, remaining_item_images, media_file_id)
+        
+        # Build cleanup message
+        cleanup_info = []
+        if collection_images_count > 0:
+            cleanup_info.append(f"{collection_images_count} collection image references")
+            logger.info("Content moderation deletion cleaned up %d collection image references for collections: %s", 
+                       collection_images_count, ', '.join(affected_collections))
+        
+        if item_images_count > 0:
+            cleanup_info.append(f"{item_images_count} item image references")
+            logger.info("Content moderation deletion cleaned up %d item image references for items: %s", 
+                       item_images_count, ', '.join(affected_items))
+        
+        success_message = f"Image '{original_filename}' has been permanently deleted from the system"
+        if cleanup_info:
+            success_message += f" (also cleaned up {', '.join(cleanup_info)})"
+        
+        logger.info("Admin user '%s' [%s] rejected and deleted flagged image '%s' at '%s'", 
+                   request.user.username, request.user.id, original_filename, file_path)
+        
+        # Return JSON response for AJAX calls
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({
+                'success': True,
+                'message': success_message
+            })
+        
+        messages.success(request, success_message)
+        
+    except Exception as e:
+        logger.error(f"Error deleting flagged image {file_id}: {e}")
+        
+        # Return JSON error response for AJAX calls
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({
+                'success': False,
+                'message': f"Failed to delete image: {str(e)}"
+            }, status=500)
+            
+        messages.error(request, f"Failed to delete image: {str(e)}")
+    
+    return redirect('sys_flagged_images')
+
+
+@application_admin_required
+@login_required
+@require_http_methods(["POST"])
+def approve_flagged_image(request, file_id):
+    """
+    Manually approve a flagged image
+    """
+    try:
+        media_file = get_object_or_404(MediaFile, id=file_id)
+        original_filename = media_file.original_filename
+        
+        # Set status to approved
+        media_file.content_moderation_status = MediaFile.ContentModerationStatus.APPROVED
+        media_file.save(update_fields=['content_moderation_status'])
+        
+        logger.info(f"Successfully approved image '{original_filename}' (ID: {file_id})")
+        
+        # Return JSON response for AJAX calls
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({
+                'success': True,
+                'message': f"Image '{original_filename}' has been approved"
+            })
+        
+        messages.success(request, f"Image '{original_filename}' has been approved")
+        
+    except Exception as e:
+        logger.error(f"Error approving image {file_id}: {e}")
+        
+        # Return JSON error response for AJAX calls
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return JsonResponse({
+                'success': False,
+                'message': f"Failed to approve image: {str(e)}"
+            }, status=500)
+            
+        messages.error(request, f"Failed to approve image: {str(e)}")
+    
+    return redirect('sys_flagged_images')
+
+
+@application_admin_required
+def content_moderation_settings(request):
+    """Content moderation settings and configuration."""
+    
+    context = {
+        'content_moderation_enabled': settings.CONTENT_MODERATION_ENABLED,
+        'content_moderation_action': settings.CONTENT_MODERATION_ACTION,
+        'soft_ban_threshold': settings.CONTENT_MODERATION_SOFT_BAN_THRESHOLD,
+    }
+    
+    return render(request, 'sys/content_moderation_settings.html', context)
+
+
+
+@application_admin_required
+def review_content(request, file_id):
+    """Detailed review of a specific piece of content."""
+    
+    media_file = get_object_or_404(MediaFile, id=file_id)
+    
+    # Get user's other flagged content
+    other_flagged = MediaFile.objects.filter(
+        uploaded_by=media_file.uploaded_by,
+        content_moderation_status='FLAGGED'
+    ).exclude(id=file_id)[:10]
+    
+    context = {
+        'media_file': media_file,
+        'other_flagged': other_flagged,
+        'user_profile': media_file.uploaded_by.userprofile if media_file.uploaded_by else None,
+    }
+    
+    return render(request, 'sys/review_content.html', context)
+
+
+@application_admin_required
+def user_detail(request, user_id):
+    """Detailed view of a user including violation history."""
+    
+    user = get_object_or_404(User, id=user_id)
+    profile = user.userprofile
+    
+    # Get user's flagged content
+    flagged_content = MediaFile.objects.filter(
+        uploaded_by=user,
+        content_moderation_status__in=['FLAGGED', 'REJECTED']
+    ).order_by('-content_moderation_checked_at')[:20]
+    
+    # Get user's activities
+    recent_activities = Activity.objects.filter(
+        created_by=user
+    ).order_by('-created')[:20]
+    
+    context = {
+        'user': user,
+        'profile': profile,
+        'flagged_content': flagged_content,
+        'recent_activities': recent_activities,
+        'total_violations': profile.content_moderation_violations,
+        'is_content_banned': profile.is_content_banned,
+        'last_violation': profile.last_violation_at,
+    }
+    
+    return render(request, 'sys/user_detail.html', context)
+
+
+@application_admin_required
+def user_content(request, user_id):
+    """View all content uploaded by a specific user."""
+    
+    user = get_object_or_404(User, id=user_id)
+    
+    # Get all user's media files with content moderation info
+    media_files = MediaFile.objects.filter(
+        uploaded_by=user
+    ).order_by('-created')
+    
+    # Apply status filter if provided
+    status_filter = request.GET.get('status')
+    if status_filter:
+        media_files = media_files.filter(content_moderation_status=status_filter)
+    
+    # Pagination
+    paginator = Paginator(media_files, 24)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'user': user,
+        'media_files': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'page_obj': page_obj,
+        'status_filter': status_filter,
+    }
+    
+    return render(request, 'sys/user_content.html', context)
 

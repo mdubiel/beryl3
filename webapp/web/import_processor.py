@@ -64,6 +64,8 @@ class ImportProcessor:
         self.warnings = []
         self.downloaded_images = {}
         self.created_item_types = {}
+        self.target_user = target_user
+        self.admin_user = admin_user
         
         result = {
             'collections_created': 0,
@@ -109,7 +111,7 @@ class ImportProcessor:
                     RecentActivity.objects.create(
                         created_by=admin_user or target_user,
                         icon='upload',
-                        message=f"**Admin import**: Created {result['collections_created']} collection(s) and {result['items_created']} item(s) for user **{target_user.get_display_name()}**"
+                        message=f"**Admin import**: Created {result['collections_created']} collection(s) and {result['items_created']} item(s) for user **{target_user.display_name()}**"
                     )
                 
         except Exception as e:
@@ -294,6 +296,26 @@ class ImportProcessor:
                 except Exception as e:
                     self.warnings.append(f"Failed to download item image from {image_data['url']}: {str(e)}")
         
+        # Process image_url field (single image download)
+        if download_images and item_data.get('image_url'):
+            try:
+                media_file = self._download_image(
+                    item_data['image_url'],
+                    f"item_{item.hash}_main"
+                )
+                if media_file:
+                    CollectionItemImage.objects.create(
+                        item=item,
+                        media_file=media_file,
+                        is_default=True,  # Single image is default
+                        order=0,
+                        created_by=target_user
+                    )
+                    stats['images_downloaded'] += 1
+                    
+            except Exception as e:
+                self.warnings.append(f"Failed to download item image from {item_data['image_url']}: {str(e)}")
+        
         # Process links
         for link_data in item_data.get('links', []):
             try:
@@ -354,13 +376,39 @@ class ImportProcessor:
             
             filename = f"{filename_prefix}_{original_name}"
             
-            # Create MediaFile
+            # Save file to storage
+            from django.core.files.storage import default_storage
             content_file = ContentFile(response.content, name=filename)
+            file_path = f"items/{filename}"
+            saved_path = default_storage.save(file_path, content_file)
+            
+            # Get image dimensions
+            try:
+                img = PILImage.open(BytesIO(response.content))
+                width, height = img.size
+            except Exception:
+                width, height = None, None
+            
+            # Determine storage backend based on Django storage backend
+            storage_backend = MediaFile.StorageBackend.LOCAL
+            if hasattr(default_storage, '__class__'):
+                storage_class_name = default_storage.__class__.__name__
+                if 'gcs' in storage_class_name.lower() or 'google' in storage_class_name.lower():
+                    storage_backend = MediaFile.StorageBackend.GCS
+                elif 's3' in storage_class_name.lower():
+                    storage_backend = MediaFile.StorageBackend.S3
+            
+            # Create MediaFile
             media_file = MediaFile.objects.create(
-                file=content_file,
+                file_path=saved_path,
                 original_filename=original_name,
                 file_size=len(response.content),
-                mime_type=response.headers.get('content-type', 'image/jpeg')
+                content_type=response.headers.get('content-type', 'image/jpeg'),
+                media_type=MediaFile.MediaType.COLLECTION_ITEM,
+                storage_backend=storage_backend,
+                width=width,
+                height=height,
+                created_by=self.target_user
             )
             
             self.downloaded_images[url] = media_file

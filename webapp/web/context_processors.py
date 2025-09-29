@@ -23,6 +23,7 @@ def external_services(request):
         'EXTERNAL_RESEND_URL': getattr(settings, 'EXTERNAL_RESEND_URL', None),
         'EXTERNAL_REGISTRY_URL': getattr(settings, 'EXTERNAL_REGISTRY_URL', None),
         'SITE_DOMAIN': getattr(settings, 'SITE_DOMAIN', 'beryl3.localdomain'),
+        'ALLOW_USER_REGISTRATION': getattr(settings, 'ALLOW_USER_REGISTRATION', False),
     }
 
 

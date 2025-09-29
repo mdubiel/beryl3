@@ -89,6 +89,34 @@ class UserProfile(models.Model):
         help_text="Whether the email is actually in the Resend audience (last known status)"
     )
     
+    # Content moderation and misuse tracking
+    content_moderation_violations = models.IntegerField(
+        default=0,
+        verbose_name="Content Violations Count",
+        help_text="Number of inappropriate content violations"
+    )
+    is_content_banned = models.BooleanField(
+        default=False,
+        verbose_name="Content Banned",
+        help_text="User is banned due to content policy violations"
+    )
+    content_ban_reason = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Content Ban Reason",
+        help_text="Reason for content-related ban"
+    )
+    content_banned_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Content Banned At"
+    )
+    last_violation_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Last Violation"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -123,6 +151,21 @@ class UserProfile(models.Model):
         relative_url = reverse("marketing_unsubscribe", kwargs={"token": self.unsubscribe_token})
         protocol = 'https' if getattr(settings, 'SECURE_SSL_REDIRECT', False) else 'http'
         return f"{protocol}://{current_site.domain}{relative_url}"
+    
+    def get_display_name(self):
+        """
+        Get the user's preferred display name
+        
+        Returns the nickname if use_nickname is True and nickname exists,
+        otherwise returns the user's full name or email
+        """
+        if self.use_nickname and self.nickname:
+            return self.nickname
+        
+        if self.user.first_name or self.user.last_name:
+            return self.user.get_full_name().strip()
+        
+        return self.user.email.split('@')[0]  # Use email prefix as fallback
     
     def get_sync_status_display(self):
         """
@@ -192,6 +235,70 @@ class UserProfile(models.Model):
             sync_user_marketing_subscription(self.user)
         except ImportError:
             logger.warning("Resend service not available, skipping subscription sync")
+    
+    def add_content_violation(self, reason=None):
+        """
+        Add a content violation and check if user should be banned
+        
+        Returns:
+            bool: Whether user was banned as a result
+        """
+        from django.utils import timezone
+        from django.conf import settings
+        
+        self.content_moderation_violations += 1
+        self.last_violation_at = timezone.now()
+        
+        # Check ban thresholds based on moderation action setting
+        action = getattr(settings, 'CONTENT_MODERATION_ACTION', 'flag_only')
+        threshold = getattr(settings, 'CONTENT_MODERATION_SOFT_BAN_THRESHOLD', 3)
+        
+        banned = False
+        if action == 'hard_ban':
+            # Ban immediately on first violation
+            banned = self._ban_user(reason or "Inappropriate content detected - hard ban policy")
+        elif action == 'soft_ban' and self.content_moderation_violations >= threshold:
+            # Ban after threshold violations
+            banned = self._ban_user(reason or f"Inappropriate content detected - {self.content_moderation_violations} violations")
+        
+        self.save()
+        
+        logger.warning(
+            f"Content violation added for user {self.user.id} ({self.user.email}). "
+            f"Total violations: {self.content_moderation_violations}. "
+            f"Banned: {banned}"
+        )
+        
+        return banned
+    
+    def _ban_user(self, reason):
+        """
+        Ban user from the platform
+        
+        Returns:
+            bool: True if user was successfully banned
+        """
+        from django.utils import timezone
+        
+        if not self.is_content_banned:
+            self.is_content_banned = True
+            self.content_ban_reason = reason
+            self.content_banned_at = timezone.now()
+            
+            # Set user as inactive to prevent login
+            self.user.is_active = False
+            self.user.save(update_fields=['is_active'])
+            
+            logger.error(f"User {self.user.id} ({self.user.email}) has been banned: {reason}")
+            return True
+        
+        return False
+    
+    def is_user_content_banned(self):
+        """
+        Check if user is banned due to content violations
+        """
+        return self.is_content_banned and not self.user.is_active
 
 
 @receiver(post_save, sender=User)

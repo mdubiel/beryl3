@@ -1,10 +1,11 @@
 {% load lucide %}
+{% load media_tags %}
 
 <div id="image-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for image in images %}
     <div class="card bg-base-200 shadow-sm" data-image-hash="{{ image.media_file.hash }}">
         <figure class="px-4 pt-4">
-            <img src="{{ image.media_file.file_url }}" 
+            <img src="{% media_url image.media_file %}" 
                  alt="{{ image.media_file.original_filename }}" 
                  class="rounded-lg w-full h-48 object-cover">
         </figure>
