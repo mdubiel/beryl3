@@ -382,106 +382,52 @@ GOOGLE_CLOUD_LOGGING_RESOURCE_TYPE = env('GOOGLE_CLOUD_LOGGING_RESOURCE_TYPE')
 GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH = env('GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH') if env('GOOGLE_CLOUD_LOGGING_CREDENTIALS_PATH') else None
 
 # LOGGING CONFIGURATION
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {
-        # Filter that uses the class from Step 1
-        "user_info": {
-            "()": "webapp.logging_middleware.RequestUserInfoFilter",
+# Dynamic logging configuration based on environment and feature flags
+
+def _load_logging_config():
+    """Load logging configuration from appropriate file based on environment."""
+    
+    # Determine which logging configuration to use
+    if DEBUG:
+        # Development environment - console logging
+        config_module = 'logging_configs.development'
+    elif FEATURE_FLAGS['LOKI_ENABLED'] or FEATURE_FLAGS['USE_GOOGLE_CLOUD_LOGGING']:
+        # Cloud logging environment - will be enhanced with cloud handlers later
+        config_module = 'logging_configs.preprod'
+    else:
+        # File-based logging environment (preprod, staging)
+        config_module = 'logging_configs.preprod'
+    
+    try:
+        # Import the appropriate configuration module
+        from importlib import import_module
+        config_mod = import_module(config_module)
+        
+        # Get the logging configuration
+        return config_mod.get_logging_config(BASE_DIR)
+        
+    except ImportError as e:
+        # Fallback to basic console logging if config files are missing
+        import logging
+        logging.getLogger(__name__).warning(f"Failed to load logging config {config_module}: {e}")
+        
+        return {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "level": "INFO",
+                }
+            },
+            "root": {
+                "level": "INFO", 
+                "handlers": ["console"],
+            }
         }
-    },
-    # FORMATTERS
-    # Define how your log messages will look.
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
-        },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
-        },
-        "minimal": {
-            "format": "{message}",
-            "style": "{",
-        },
-        "json": {
-            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
-        },
-        "webapp_json": {
-            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "format": "%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(user)s %(path)s %(message)s",
-        },
-    },
-    # HANDLERS
-    # Define where your logs will go.
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler", 
-            "formatter": "simple",
-            "level": "WARNING",  # Only show warnings and errors in console
-        },
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/django.log"),
-            "maxBytes": 1024 * 1024 * 5,  # 5 MB
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
-        "performance_file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/performance.jsonl"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
-            "formatter": "json", 
-        },
-        "webapp_json_file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/webapp.jsonl"),
-            "maxBytes": 1024 * 1024 * 5,
-            "backupCount": 5,
-            "formatter": "webapp_json",
-            "filters": ["user_info"],
-        },
-    },
-    # ROOT LOGGER
-    "root": {
-        "level": "INFO",
-        "handlers": ["console"],
-    },
-    # LOGGERS
-    # Define which loggers to use.
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": True,
-        },
-        "performance": {
-            # Use both handlers for development: JSON to the file, simple text to console
-            "handlers": ["performance_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "webapp": {
-            "handlers": ["console", "webapp_json_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        # Suppress verbose markdown extension loading messages
-        "markdown.extensions": {
-            "level": "INFO",
-            "propagate": False,
-        },
-        # Suppress template variable resolution debug messages
-        "django.template": {
-            "level": "INFO",
-            "propagate": True,
-        },
-    },
-}
+
+# Load the base logging configuration
+LOGGING = _load_logging_config()
 
 # Add Loki handler if enabled
 if FEATURE_FLAGS['LOKI_ENABLED'] and LOKI_URL:
