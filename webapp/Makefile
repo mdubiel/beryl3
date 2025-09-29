@@ -37,7 +37,7 @@ GAR_IMAGE_LATEST = $(GAR_REGISTRY)/$(GCP_PROJECT_ID)/$(GAR_REPOSITORY)/$(DOCKER_
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -367,3 +367,203 @@ qa-status: ## Show comprehensive QA environment status
 # All staging infrastructure and application management targets have been removed.
 # The staging environment (192.168.1.14) has been decommissioned.
 # Use QA environment targets (qa-*) for testing and development.
+
+# =====================================
+# DJANGO EUROPE PREPROD ENVIRONMENT
+# =====================================
+
+# Django Europe preprod configuration
+DJE_PRE_HOST = mdubiel@148.251.140.153
+DJE_PRE_PATH = /home/mdubiel/beryl3-preprod
+DJE_PRE_ENV_FILE = $(DJE_PRE_PATH)/.env
+
+dje-pre-verify-env: ## Verify Django Europe preprod environment variables are loaded
+	@echo "🔍 Verifying Django Europe preprod environment variables..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		if [ ! -f .env ]; then \
+			echo "❌ .env file not found at $(DJE_PRE_PATH)/.env"; \
+			exit 1; \
+		fi; \
+		echo "✅ .env file found"; \
+		echo "🔧 Verifying critical environment variables..."; \
+		source .env && \
+		for var in DEBUG SECRET_KEY DATABASE_URL ALLOWED_HOSTS USE_GCS_STORAGE GCS_BUCKET_NAME; do \
+			if [ -z "$${!var}" ]; then \
+				echo "❌ Missing required variable: $$var"; \
+				exit 1; \
+			else \
+				echo "✅ $$var: $${!var}"; \
+			fi; \
+		done; \
+		echo "🎉 All critical environment variables verified!"'
+
+dje-pre-migrate: dje-pre-verify-env ## Run Django database migrations on Django Europe preprod
+	@echo "🔄 Running database migrations on Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py migrate --noinput && \
+		echo "✅ Database migrations completed successfully!"'
+
+dje-pre-setup-initial-users: dje-pre-verify-env ## Setup initial users on Django Europe preprod
+	@echo "👥 Setting up initial users on Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py setup_initial_users && \
+		echo "✅ Initial users setup completed!"'
+
+dje-pre-setup-site: dje-pre-verify-env ## Setup Django site configuration on Django Europe preprod
+	@echo "🌐 Setting up site configuration on Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py setup_site && \
+		echo "✅ Site configuration completed!"'
+
+dje-pre-seed: dje-pre-verify-env ## Seed initial data on Django Europe preprod
+	@echo "🌱 Seeding initial data on Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py seed_data && \
+		echo "✅ Data seeding completed!"'
+
+dje-pre-collectstatic: dje-pre-verify-env ## Collect static files on Django Europe preprod
+	@echo "📦 Collecting static files on Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py collectstatic --noinput --clear && \
+		echo "✅ Static files collected successfully!"'
+
+dje-pre-test-email: dje-pre-verify-env ## Send test email on Django Europe preprod
+	@echo "📧 Sending test email on Django Europe preprod..."
+	@if [ -z "$(EMAIL)" ]; then \
+		echo "❌ Error: EMAIL variable is required. Usage: make dje-pre-test-email EMAIL=your@email.com"; \
+		exit 1; \
+	fi
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py send_test_emails $(EMAIL) 3 --priority now && \
+		echo "✅ Test emails sent to $(EMAIL)!"'
+
+dje-pre-send-queued-mail: dje-pre-verify-env ## Process queued emails on Django Europe preprod
+	@echo "📬 Processing queued emails on Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		source .env && \
+		uv run python manage.py send_queued_mail && \
+		echo "✅ Queued emails processed!"'
+
+dje-pre-deploy-all: dje-pre-verify-env ## Run full deployment sequence on Django Europe preprod
+	@echo "🚀 Running full deployment sequence on Django Europe preprod..."
+	@echo "Step 1/4: Database migrations..."
+	@$(MAKE) dje-pre-migrate
+	@echo "Step 2/4: Site setup..."
+	@$(MAKE) dje-pre-setup-site
+	@echo "Step 3/4: Static files collection..."
+	@$(MAKE) dje-pre-collectstatic
+	@echo "Step 4/4: Restarting service..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && ./restart.sh'
+	@echo "✅ Full deployment completed on Django Europe preprod!"
+	@echo "🌐 Service available at: http://148.251.140.153/"
+
+dje-pre-status: ## Show Django Europe preprod environment status
+	@echo "=== DJANGO EUROPE PREPROD STATUS ==="
+	@echo "Host: $(DJE_PRE_HOST)"
+	@echo "Path: $(DJE_PRE_PATH)"
+	@echo ""
+	@echo "📊 Service Status:"
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		if [ -f gunicorn.pid ]; then \
+			PID=$$(cat gunicorn.pid); \
+			if ps -p $$PID > /dev/null 2>&1; then \
+				echo "✅ Gunicorn service running (PID: $$PID)"; \
+			else \
+				echo "❌ Gunicorn service not running (stale PID file)"; \
+			fi; \
+		else \
+			echo "❌ Gunicorn service not running (no PID file)"; \
+		fi; \
+		echo ""; \
+		echo "📁 Directory Status:"; \
+		ls -la $(DJE_PRE_PATH) | head -10; \
+		echo ""; \
+		echo "🔧 Environment File:"; \
+		if [ -f .env ]; then \
+			echo "✅ .env file exists"; \
+			echo "Environment variables count: $$(grep -c "^[^#]" .env)"; \
+		else \
+			echo "❌ .env file missing"; \
+		fi; \
+		echo ""; \
+		echo "📋 Recent Log Activity:"; \
+		if [ -d logs ]; then \
+			echo "Log files:"; \
+			ls -la logs/ | tail -5; \
+		else \
+			echo "No logs directory found"; \
+		fi'
+
+dje-pre-setup-logrotate: dje-pre-verify-env ## Setup local logrotate configuration for Django Europe preprod logs
+	@echo "🔄 Setting up local logrotate configuration for Django Europe preprod..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		echo "Creating workflows directory..."; \
+		mkdir -p workflows; \
+		echo "Creating local logrotate configuration..."; \
+		cat > workflows/logrotate.conf << "EOF"
+$(DJE_PRE_PATH)/logs/*.log {
+    size 5M
+    rotate 5
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 mdubiel mdubiel
+    postrotate
+        # Signal gunicorn to reopen log files if running
+        if [ -f $(DJE_PRE_PATH)/gunicorn.pid ]; then
+            PID=$$(cat $(DJE_PRE_PATH)/gunicorn.pid)
+            if ps -p $$PID > /dev/null 2>&1; then
+                kill -USR1 $$PID
+            fi
+        fi
+    endscript
+}
+
+$(DJE_PRE_PATH)/logs/*.jsonl {
+    size 5M
+    rotate 5
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 mdubiel mdubiel
+    copytruncate
+}
+EOF
+		echo "✅ Local logrotate configuration created at workflows/logrotate.conf"; \
+		echo "Testing logrotate configuration..."; \
+		/usr/sbin/logrotate -d workflows/logrotate.conf && \
+		echo "✅ Logrotate configuration test passed!" && \
+		echo "📋 Manual execution command: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"'
+
+dje-pre-setup-cron: dje-pre-verify-env ## Setup crontab for email queue processing and log rotation on Django Europe preprod
+	@echo "📅 Setting up crontab for email queue processing and log rotation..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
+		echo "Creating cron jobs for email queue and log rotation..."; \
+		(crontab -l 2>/dev/null | grep -v -E "(send_queued_mail|logrotate)" || true; \
+		echo "*/5 * * * * cd $(DJE_PRE_PATH) && source .env && uv run python manage.py send_queued_mail >> logs/cron.log 2>&1"; \
+		echo "0 */6 * * * cd $(DJE_PRE_PATH) && /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf >> logs/logrotate.log 2>&1") | crontab -; \
+		echo "✅ Crontab configured:"; \
+		echo "  - Email queue processing: every 5 minutes"; \
+		echo "  - Log rotation: every 6 hours via logrotate"; \
+		echo "Current crontab:"; \
+		crontab -l | grep -E "(send_queued_mail|logrotate|#)" || echo "No matching cron jobs found"'
+
+dje-pre-setup-services: dje-pre-setup-logrotate dje-pre-setup-cron ## Setup all background services (logrotate + cron) for Django Europe preprod
+	@echo "🛠️  Setting up all background services for Django Europe preprod..."
+	@echo "✅ Local logrotate configuration created and tested"
+	@echo "✅ Crontab configured for email queue processing and log rotation"
+	@echo "📊 Service summary:"
+	@echo "  - Log rotation: Every 5MB, keep 5 files, compressed (via cron every 6 hours)"
+	@echo "  - Email queue: Processed every 5 minutes via cron"
+	@echo "  - Configuration: $(DJE_PRE_PATH)/workflows/logrotate.conf"
+	@echo "  - Log files: $(DJE_PRE_PATH)/logs/*.log and *.jsonl"
+	@echo "  - Manual execution: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"
+	@echo "🎉 All background services configured successfully!"

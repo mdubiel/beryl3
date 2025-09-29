@@ -17,3 +17,4 @@ tmp/data-2/komiksy_thorgal_import.json
 tmp/data-2/książki_import.json
 .gitignore
 tmp/
+datadump.json
