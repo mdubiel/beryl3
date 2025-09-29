@@ -228,6 +228,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'web.context_processors.external_services',
                 'web.context_processors.user_avatar',
+                'web.context_processors.app_version',
             ],
         },
     },

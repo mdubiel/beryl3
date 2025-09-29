@@ -2,6 +2,7 @@
 Context processors for the web application.
 """
 import hashlib
+from pathlib import Path
 from urllib.parse import urlencode
 from django.conf import settings
 
@@ -62,3 +63,40 @@ def user_avatar(request):
     if request.user.is_authenticated:
         context['user_avatar_url'] = gravatar_url(request.user.email, size=32)
     return context
+
+
+def app_version(request):
+    """
+    Add application version to template context.
+    Reads version from VERSION file in the project root.
+    """
+    try:
+        version_file = Path(settings.BASE_DIR) / 'VERSION'
+        if version_file.exists():
+            content = version_file.read_text().strip()
+            # Parse VERSION file format: MAJOR=x MINOR=y BUILD=z
+            version_parts = {}
+            for line in content.split('\n'):
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    version_parts[key.strip()] = value.strip()
+            
+            major = version_parts.get('MAJOR', '0')
+            minor = version_parts.get('MINOR', '0')  
+            build = version_parts.get('BUILD', '0')
+            
+            return {
+                'APP_VERSION': f"{major}.{minor}.{build}",
+                'APP_VERSION_MAJOR': major,
+                'APP_VERSION_MINOR': minor,
+                'APP_VERSION_BUILD': build,
+            }
+    except Exception:
+        pass
+    
+    return {
+        'APP_VERSION': 'dev',
+        'APP_VERSION_MAJOR': '0',
+        'APP_VERSION_MINOR': '0',
+        'APP_VERSION_BUILD': '0',
+    }
