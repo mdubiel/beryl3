@@ -182,7 +182,7 @@ SECURE_SSL_REDIRECT = False
 export PATH=$HOME/.local/bin:$PATH
 source {self.host_config["venv_path"]}/bin/activate
 cd {self.host_config["project_path"]}
-export DJANGO_SETTINGS_MODULE=config.settings.production
+export DJANGO_SETTINGS_MODULE=production_settings
 gunicorn config.wsgi:application --bind 127.0.0.1:62059 --workers 2 --timeout 120
 '''
         

@@ -121,6 +121,9 @@ FEATURE_FLAGS = {
     # User registration control
     'ALLOW_USER_REGISTRATION': _get_feature_flag('ALLOW_USER_REGISTRATION', dev_default=False, prod_default=False),
     
+    # Newsletter subscription section on main page
+    'SHOW_NEWSLETTER_SUBSCRIPTION': _get_feature_flag('SHOW_NEWSLETTER_SUBSCRIPTION', dev_default=False, prod_default=False),
+    
     # Database backend: SQLite (dev) vs PostgreSQL (prod)
 }
 

@@ -272,22 +272,10 @@
                 </p>
                 <p class="text-sm text-base-content/70 mb-2">Built by nerds for nerds</p>
                 <p class="text-sm text-base-content/70">Organize, collect, and share your passions</p>
-                <div class="flex gap-4 mt-4">
-                    <!-- Social Media Links (placeholder) -->
-                    <a href="#" class="text-base-content/60 hover:text-primary transition-colors" title="Twitter">
-                        {% lucide 'twitter' size=18 %}
-                    </a>
-                    <a href="#" class="text-base-content/60 hover:text-primary transition-colors" title="GitHub">
-                        {% lucide 'github' size=18 %}
-                    </a>
-                    <a href="#" class="text-base-content/60 hover:text-primary transition-colors" title="Discord">
-                        {% lucide 'message-circle' size=18 %}
-                    </a>
-                </div>
             </aside>
 
             <!-- Links Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full md:pl-12">
+            <div class="grid grid-cols-1 md:grid-cols-1 gap-8 w-full md:pl-2">
                 
                 <!-- Product Links -->
                 <nav class="flex flex-col">
@@ -298,30 +286,12 @@
                         <a href="{% url 'collection_list' %}" class="link link-hover text-sm mb-1">Collections</a>
                     {% endif %}
                     <a href="#" class="link link-hover text-sm mb-1">Features</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Pricing</a>
-                    <a href="#" class="link link-hover text-sm mb-1">API</a>
-                </nav>
-
-                <!-- Company Links -->
-                <nav class="flex flex-col">
-                    <header class="font-semibold text-base-content mb-3">Company</header>
-                    <a href="#" class="link link-hover text-sm mb-1">About Us</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Blog</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Careers</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Press Kit</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Contact</a>
-                </nav>
-
-                <!-- Legal & Support Links -->
-                <nav class="flex flex-col">
-                    <header class="font-semibold text-base-content mb-3">Legal & Support</header>
                     <a href="{% url 'terms' %}" class="link link-hover text-sm mb-1">Terms of Service</a>
                     <a href="{% url 'privacy' %}" class="link link-hover text-sm mb-1">Privacy Policy</a>
                     <a href="#" class="link link-hover text-sm mb-1">Cookie Policy</a>
                     <a href="#" class="link link-hover text-sm mb-1">Help Center</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Security</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Status</a>
                 </nav>
+
             </div>
         </div>
 

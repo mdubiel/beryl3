@@ -142,6 +142,7 @@
         <div class="divider"></div>
 
         <!-- Newsletter Subscription -->
+        {% if settings.FEATURE_FLAGS.SHOW_NEWSLETTER_SUBSCRIPTION %}
         <section class="py-16">
             <div class="max-w-2xl mx-auto text-center">
                 <h2 class="text-3xl font-bold mb-6 text-primary">Stay Updated</h2>
@@ -160,5 +161,6 @@
                 </p>
             </div>
         </section>
+        {% endif %}
 
 {% endblock %}
