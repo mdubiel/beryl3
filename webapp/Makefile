@@ -37,7 +37,7 @@ GAR_IMAGE_LATEST = $(GAR_REGISTRY)/$(GCP_PROJECT_ID)/$(GAR_REPOSITORY)/$(DOCKER_
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services dje-pre-git-deploy dje-pre-git-deploy-release dje-prod-git-deploy dje-prod-git-deploy-release
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -567,3 +567,27 @@ dje-pre-setup-services: dje-pre-setup-logrotate dje-pre-setup-cron ## Setup all 
 	@echo "  - Log files: $(DJE_PRE_PATH)/logs/*.log and *.jsonl"
 	@echo "  - Manual execution: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"
 	@echo "🎉 All background services configured successfully!"
+
+dje-pre-git-deploy: ## Deploy from git to Django Europe preprod environment
+	@echo "🚀 Deploying from git to Django Europe preprod environment..."
+	uv run python workflows/bin/dje-deploy-project.py --environment preprod
+
+dje-pre-git-deploy-release: ## Deploy specific release to Django Europe preprod environment (usage: make dje-pre-git-deploy-release RELEASE=v0.2.1)
+	@if [ -z "$(RELEASE)" ]; then \
+		echo "❌ Error: RELEASE variable is required. Usage: make dje-pre-git-deploy-release RELEASE=v0.2.1"; \
+		exit 1; \
+	fi
+	@echo "🚀 Deploying release $(RELEASE) to Django Europe preprod environment..."
+	uv run python workflows/bin/dje-deploy-project.py --environment preprod --commit $(RELEASE)
+
+dje-prod-git-deploy: ## Deploy from git to Django Europe production environment
+	@echo "🚀 Deploying from git to Django Europe production environment..."
+	uv run python workflows/bin/dje-deploy-project.py --environment production
+
+dje-prod-git-deploy-release: ## Deploy specific release to Django Europe production environment (usage: make dje-prod-git-deploy-release RELEASE=v0.2.1)
+	@if [ -z "$(RELEASE)" ]; then \
+		echo "❌ Error: RELEASE variable is required. Usage: make dje-prod-git-deploy-release RELEASE=v0.2.1"; \
+		exit 1; \
+	fi
+	@echo "🚀 Deploying release $(RELEASE) to Django Europe production environment..."
+	uv run python workflows/bin/dje-deploy-project.py --environment production --commit $(RELEASE)

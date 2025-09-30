@@ -17,20 +17,43 @@ import os
 class DjangoEuropeProjectDeploy:
     """Manages git-based project deployment for Django Europe hosting."""
     
-    def __init__(self, host_config=None, git_config=None):
+    def __init__(self, environment='preprod', host_config=None, git_config=None):
+        # Environment-specific configurations
+        self.environment = environment
+        
+        # Default configurations based on environment
+        env_configs = {
+            'preprod': {
+                'project_path': '~/beryl3-preprod',
+                'venv_path': '~/.virtualenvs/beryl3-preprod',
+                'url': 'http://beryl3-preprod.mdubiel.org',
+                'dev_url': 'http://dev.beryl3-preprod.mdubiel.org'
+            },
+            'production': {
+                'project_path': '~/beryl3-prod',
+                'venv_path': '~/.virtualenvs/beryl3-prod',
+                'url': 'http://beryl3.mdubiel.org',
+                'dev_url': 'http://dev.beryl3.mdubiel.org'
+            }
+        }
+        
+        env_config = env_configs.get(environment, env_configs['preprod'])
+        
         # Default Django Europe configuration
         self.host_config = host_config or {
             'host': '148.251.140.153',
             'user': 'mdubiel',
-            'project_path': '~/beryl3-preprod',
-            'venv_path': '~/.virtualenvs/beryl3-preprod'
+            'project_path': env_config['project_path'],
+            'venv_path': env_config['venv_path'],
+            'url': env_config['url'],
+            'dev_url': env_config['dev_url']
         }
         
         # Git repository configuration
         self.git_config = git_config or {
             'repo_url': 'https://github.com/mdubiel/beryl3.git',
             'branch': 'main',
-            'commit': 'HEAD'  # Can be specific commit hash
+            'commit': 'HEAD'  # Can be specific commit hash or release tag
         }
     
     def clone_from_git(self) -> bool:
@@ -334,7 +357,7 @@ gunicorn config.wsgi:application --bind 127.0.0.1:62059 --workers 2 --timeout 12
     
     def deploy_all(self) -> bool:
         """Run the complete git-based deployment process."""
-        print("🚀 Starting Django Europe git-based deployment...")
+        print(f"🚀 Starting Django Europe git-based deployment to {self.environment.upper()} environment...")
         
         # Step 1: Clone/update from git
         if not self.clone_from_git():
@@ -356,9 +379,9 @@ gunicorn config.wsgi:application --bind 127.0.0.1:62059 --workers 2 --timeout 12
         if not self.collect_static():
             return False
         
-        print("🎉 Git-based deployment completed successfully!")
-        print(f"🌐 Your application should be available at: http://beryl3-preprod.mdubiel.org/")
-        print(f"🛠️  Development URL: http://dev.beryl3-preprod.mdubiel.org/")
+        print(f"🎉 Git-based deployment to {self.environment.upper()} completed successfully!")
+        print(f"🌐 Your application should be available at: {self.host_config['url']}/")
+        print(f"🛠️  Development URL: {self.host_config['dev_url']}/")
         
         # Check final .env file status
         check_env_commands = [
@@ -386,25 +409,32 @@ gunicorn config.wsgi:application --bind 127.0.0.1:62059 --workers 2 --timeout 12
 
 def main():
     parser = argparse.ArgumentParser(description="Deploy beryl3 project to Django Europe hosting from git")
+    parser.add_argument('--environment', '--env', default='preprod', choices=['preprod', 'production'], 
+                       help='Target environment (default: preprod)')
     parser.add_argument('--host', default='148.251.140.153', help='Django Europe host IP')
     parser.add_argument('--user', default='mdubiel', help='SSH username')
-    parser.add_argument('--project-path', default='~/beryl3-preprod', help='Remote project path')
-    parser.add_argument('--venv-path', default='~/.virtualenvs/beryl3-preprod', help='Remote virtual environment path')
+    parser.add_argument('--project-path', help='Remote project path (overrides environment default)')
+    parser.add_argument('--venv-path', help='Remote virtual environment path (overrides environment default)')
     parser.add_argument('--repo-url', default='https://github.com/mdubiel/beryl3.git', help='Git repository URL')
     parser.add_argument('--branch', default='main', help='Git branch to deploy')
-    parser.add_argument('--commit', default='HEAD', help='Git commit/tag to deploy')
+    parser.add_argument('--commit', default='HEAD', help='Git commit/tag/release to deploy (e.g., v0.2.1)')
     parser.add_argument('--migrations-only', action='store_true', help='Only run migrations')
     parser.add_argument('--static-only', action='store_true', help='Only collect static files')
     parser.add_argument('--git-only', action='store_true', help='Only clone/update from git')
     
     args = parser.parse_args()
     
+    # Build host config, allowing overrides
     host_config = {
         'host': args.host,
         'user': args.user,
-        'project_path': args.project_path,
-        'venv_path': args.venv_path
     }
+    
+    # Only override paths if explicitly provided
+    if args.project_path:
+        host_config['project_path'] = args.project_path
+    if args.venv_path:
+        host_config['venv_path'] = args.venv_path
     
     git_config = {
         'repo_url': args.repo_url,
@@ -412,7 +442,11 @@ def main():
         'commit': args.commit
     }
     
-    deploy = DjangoEuropeProjectDeploy(host_config, git_config)
+    deploy = DjangoEuropeProjectDeploy(
+        environment=args.environment,
+        host_config=host_config if any([args.project_path, args.venv_path]) else None,
+        git_config=git_config
+    )
     
     if args.git_only:
         success = deploy.clone_from_git()
