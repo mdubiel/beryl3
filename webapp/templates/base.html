@@ -262,58 +262,35 @@
         
     </div> {# End of main centered container #}
 
-    <footer class="footer bg-base-200 text-base-content p-10 mt-12">
-        <div class="max-w-6xl mx-auto w-full">
-            <!-- Company Info Section -->
-            <aside class="flex flex-col items-center md:items-start">
-                <p class="font-bold text-lg text-primary mb-2">
-                    {% lucide 'package' size=20 class='inline mr-2' %}
-                    Beryl3
-                </p>
-                <p class="text-sm text-base-content/70 mb-2">Built by nerds for nerds</p>
-                <p class="text-sm text-base-content/70">Organize, collect, and share your passions</p>
-            </aside>
-
-            <!-- Links Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-1 gap-8 w-full md:pl-2">
-                
-                <!-- Product Links -->
-                <nav class="flex flex-col">
-                    <header class="font-semibold text-base-content mb-3">Product</header>
-                    <a href="{% url 'index' %}" class="link link-hover text-sm mb-1">Home</a>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="link link-hover text-sm mb-1">Dashboard</a>
-                        <a href="{% url 'collection_list' %}" class="link link-hover text-sm mb-1">Collections</a>
-                    {% endif %}
-                    <a href="#" class="link link-hover text-sm mb-1">Features</a>
-                    <a href="{% url 'terms' %}" class="link link-hover text-sm mb-1">Terms of Service</a>
-                    <a href="{% url 'privacy' %}" class="link link-hover text-sm mb-1">Privacy Policy</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Cookie Policy</a>
-                    <a href="#" class="link link-hover text-sm mb-1">Help Center</a>
-                </nav>
-
-            </div>
-        </div>
-
-        <!-- Bottom Section -->
-        <div class="footer footer-center border-t border-base-300 pt-6 mt-8">
-            <aside class="text-center">
-                <p class="text-sm text-base-content/60">
-                    Copyright © {% now "Y" %} Beryl3. All rights reserved. 
-                    {% if user.is_authenticated and user.is_staff %}
-                    | <a href="{% url 'sys_dashboard' %}" class="link link-hover">Admin</a>
-                    {% endif %}
-                </p>
-                <div class="flex items-center justify-center gap-4 mt-2 text-xs text-base-content/50">
-                    <span>Made with ❤️ for collectors</span>
-                    <span>•</span>
-                    <span>Version {{ APP_VERSION }}</span>
-                    {% if settings.DEBUG %}
-                        <span>•</span>
-                        <span class="text-warning">Development Mode</span>
-                    {% endif %}
-                </div>
-            </aside>
+    <footer class="footer footer-horizontal footer-center bg-base-200 text-base-content rounded p-8">
+        <aside class="flex flex-col items-center md:items-start">
+            <p class="font-bold text-lg text-primary mb-2">
+                {% lucide 'package' size=20 class='inline mr-2' %}Beryl3
+            </p>
+        </aside>
+        <nav class="flex flex-row gap-2 items-center">
+            <a href="{% url 'index' %}" class="link link-hover text-sm">Home</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="link link-hover text-sm">Dashboard</a>
+                    <a href="{% url 'collection_list' %}" class="link link-hover text-sm">Collections</a>
+                {% endif %}<span>&bull;</span>
+            <a href="#" class="link link-hover text-sm">Features</a><span>&bull;</span>
+            <a href="{% url 'terms' %}" class="link link-hover text-sm">Terms of Service</a><span>&bull;</span>
+            <a href="{% url 'privacy' %}" class="link link-hover text-sm">Privacy Policy</a><span>&bull;</span>
+            <a href="#" class="link link-hover text-sm">Cookie Policy</a><span>&bull;</span>
+            <a href="#" class="link link-hover text-sm">Help Center</a>
+        </nav>
+        <div class="flex flex-col items-center justify-center gap-2 text-xs text-base-content/50">
+            <p>
+            <span>Made with ❤️ for collectors</span>
+            <span>&bull;</span>
+            <span>Version {{ APP_VERSION }}</span>
+            {% if settings.DEBUG %}
+                <span>&bull;</span>
+                <span class="text-warning">Development Mode</span>
+            {% endif %}
+            </p>
+            <p>Copyright &copy; {% now "Y" %} Beryl3. All rights reserved.</p>
         </div>
     </footer>
 

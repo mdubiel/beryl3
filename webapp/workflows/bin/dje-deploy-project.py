@@ -37,6 +37,26 @@ class DjangoEuropeProjectDeploy:
         """Clone/update project from git repository on remote host."""
         print(f"📦 Cloning beryl3 from git ({self.git_config['commit']})...")
         
+        # First, backup existing .env file if it exists
+        env_backup_path = f"{self.host_config['project_path']}/.env.backup"
+        env_file_path = f"{self.host_config['project_path']}/.env"
+        
+        backup_commands = [
+            f'cd {self.host_config["project_path"]}',
+            f'if [ -f .env ]; then cp .env .env.backup && echo "✅ Backed up existing .env file"; else echo "ℹ️ No existing .env file to backup"; fi'
+        ]
+        
+        backup_command = ' && '.join(backup_commands)
+        backup_result = subprocess.run([
+            'ssh', f"{self.host_config['user']}@{self.host_config['host']}", 
+            backup_command
+        ], capture_output=True, text=True)
+        
+        if backup_result.returncode != 0:
+            print(f"⚠️ Warning: Could not backup .env file: {backup_result.stderr}")
+        else:
+            print(backup_result.stdout.strip())
+        
         # Commands to clone or update git repository
         commands = [
             f'cd ~',
@@ -63,6 +83,24 @@ class DjangoEuropeProjectDeploy:
             return False
         
         print("✅ Project cloned from git successfully")
+        
+        # Restore .env file if backup exists
+        restore_commands = [
+            f'cd {self.host_config["project_path"]}',
+            f'if [ -f .env.backup ]; then cp .env.backup .env && echo "✅ Restored .env file from backup"; else echo "ℹ️ No .env backup found, using fresh environment"; fi'
+        ]
+        
+        restore_command = ' && '.join(restore_commands)
+        restore_result = subprocess.run([
+            'ssh', f"{self.host_config['user']}@{self.host_config['host']}", 
+            restore_command
+        ], capture_output=True, text=True)
+        
+        if restore_result.returncode != 0:
+            print(f"⚠️ Warning: Could not restore .env file: {restore_result.stderr}")
+        else:
+            print(restore_result.stdout.strip())
+        
         return True
     
     def create_production_settings(self) -> bool:
@@ -321,6 +359,27 @@ gunicorn config.wsgi:application --bind 127.0.0.1:62059 --workers 2 --timeout 12
         print("🎉 Git-based deployment completed successfully!")
         print(f"🌐 Your application should be available at: http://beryl3-preprod.mdubiel.org/")
         print(f"🛠️  Development URL: http://dev.beryl3-preprod.mdubiel.org/")
+        
+        # Check final .env file status
+        check_env_commands = [
+            f'cd {self.host_config["project_path"]}',
+            f'if [ -f .env ]; then echo "📄 Environment file: .env exists (restored from backup or fresh)"; else echo "⚠️ Environment file: No .env file found"; fi',
+            f'if [ -f .env.backup ]; then echo "💾 Backup file: .env.backup preserved for reference"; else echo "ℹ️ Backup file: No backup file created (no original .env existed)"; fi'
+        ]
+        
+        check_env_command = ' && '.join(check_env_commands)
+        env_status_result = subprocess.run([
+            'ssh', f"{self.host_config['user']}@{self.host_config['host']}", 
+            check_env_command
+        ], capture_output=True, text=True)
+        
+        if env_status_result.returncode == 0:
+            print("\n📋 Environment File Status:")
+            for line in env_status_result.stdout.strip().split('\n'):
+                if line.strip():
+                    print(f"   {line.strip()}")
+        else:
+            print("⚠️ Could not check environment file status")
         
         return True
 
