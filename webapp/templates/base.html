@@ -268,17 +268,26 @@
                 {% lucide 'package' size=20 class='inline mr-2' %}Beryl3
             </p>
         </aside>
-        <nav class="flex flex-row gap-2 items-center">
-            <a href="{% url 'index' %}" class="link link-hover text-sm">Home</a>
+        <nav class="flex flex-row gap-2 flex-wrap items-center">
+            <p>
+            <a href="{% url 'index' %}" class="link link-hover text-sm">Home</a></p>
+            <p><span>&bull;</span></p>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'dashboard' %}" class="link link-hover text-sm">Dashboard</a>
-                    <a href="{% url 'collection_list' %}" class="link link-hover text-sm">Collections</a>
-                {% endif %}<span>&bull;</span>
-            <a href="#" class="link link-hover text-sm">Features</a><span>&bull;</span>
-            <a href="{% url 'terms' %}" class="link link-hover text-sm">Terms of Service</a><span>&bull;</span>
-            <a href="{% url 'privacy' %}" class="link link-hover text-sm">Privacy Policy</a><span>&bull;</span>
-            <a href="#" class="link link-hover text-sm">Cookie Policy</a><span>&bull;</span>
-            <a href="#" class="link link-hover text-sm">Help Center</a>
+                    <p><a href="{% url 'dashboard' %}" class="link link-hover text-sm">Dashboard</a></p>
+                    <p><span>&bull;</span></p>
+                    <p><a href="{% url 'collection_list' %}" class="link link-hover text-sm">Collections</a></p>
+                    <p><span>&bull;</span></p>
+                {% endif %}
+            </p>
+            <p><a href="#" class="link link-hover text-sm">Features</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="{% url 'terms' %}" class="link link-hover text-sm">Terms of Service</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="{% url 'privacy' %}" class="link link-hover text-sm">Privacy Policy</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="#" class="link link-hover text-sm">Cookie Policy</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="#" class="link link-hover text-sm">Help Center</a></p>
         </nav>
         <div class="flex flex-col items-center justify-center gap-2 text-xs text-base-content/50">
             <p>

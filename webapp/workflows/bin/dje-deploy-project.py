@@ -30,10 +30,11 @@ class DjangoEuropeProjectDeploy:
                 'dev_url': 'http://dev.beryl3-preprod.mdubiel.org'
             },
             'production': {
-                'project_path': '~/beryl3-prod',
-                'venv_path': '~/.virtualenvs/beryl3-prod',
+                'project_path': '~/beryl3',
+                'venv_path': '~/.virtualenvs/beryl3',
                 'url': 'http://beryl3.mdubiel.org',
-                'dev_url': 'http://dev.beryl3.mdubiel.org'
+                'dev_url': 'http://dev.beryl3.mdubiel.org',
+                'port': '62079'
             }
         }
         
@@ -131,7 +132,8 @@ class DjangoEuropeProjectDeploy:
         print("📝 Creating production settings file...")
         
         # Create production settings that extends webapp.settings with environment overrides
-        production_settings_content = '''"""Production settings for Django Europe hosting.
+        project_path = self.host_config['project_path'].replace('~', '/home/mdubiel')
+        production_settings_content = f'''"""Production settings for Django Europe hosting.
 Extends the main webapp.settings with environment-specific overrides.
 """
 import os
@@ -142,7 +144,7 @@ import environ
 from webapp.settings import *
 
 # Build paths - Django Europe project directory
-BASE_DIR = Path('/home/mdubiel/beryl3-preprod')
+BASE_DIR = Path('{project_path}')
 
 # Initialize environment variables
 env = environ.Env(
@@ -194,14 +196,21 @@ if USE_GCS_STORAGE:
     GCS_PROJECT_ID = env('GCS_PROJECT_ID')
     GCS_CREDENTIALS_PATH = env('GCS_CREDENTIALS_PATH')
     
-    # Override static and media settings for GCS
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    
+    # Override static and media settings for GCS using Django 4+ STORAGES
     GS_BUCKET_NAME = GCS_BUCKET_NAME
     GS_PROJECT_ID = GCS_PROJECT_ID
     GS_CREDENTIALS_FILE = GCS_CREDENTIALS_PATH
     GS_LOCATION = env('GCS_LOCATION', default='media')
+    
+    # Configure STORAGES for Django 4+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+    }
     
     STATIC_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/static/'
     MEDIA_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/{GS_LOCATION}/'
@@ -239,12 +248,17 @@ SECURE_SSL_REDIRECT = False
         """Create the RUN script for Django Europe using gunicorn."""
         print("📝 Creating RUN script with gunicorn...")
         
+        # Determine port based on environment
+        port = self.host_config.get('port', '62059')  # Default to preprod port
+        if self.environment == 'production':
+            port = '62079'
+        
         run_content = f'''#!/bin/bash
 export PATH=$HOME/.local/bin:$PATH
 source {self.host_config["venv_path"]}/bin/activate
 cd {self.host_config["project_path"]}
 export DJANGO_SETTINGS_MODULE=production_settings
-gunicorn config.wsgi:application --bind 127.0.0.1:62059 --workers 2 --timeout 120
+gunicorn config.wsgi:application --bind 127.0.0.1:{port} --workers 2 --timeout 120
 '''
         
         # Create temp file and upload RUN script

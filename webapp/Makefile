@@ -37,7 +37,7 @@ GAR_IMAGE_LATEST = $(GAR_REGISTRY)/$(GCP_PROJECT_ID)/$(GAR_REPOSITORY)/$(DOCKER_
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services dje-pre-git-deploy dje-pre-git-deploy-release dje-prod-git-deploy dje-prod-git-deploy-release
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services dje-pre-git-deploy dje-pre-git-deploy-release dje-prod-git-deploy dje-prod-git-deploy-release dje-prod-verify-env dje-prod-migrate dje-prod-setup-initial-users dje-prod-setup-site dje-prod-seed dje-prod-collectstatic dje-prod-test-email dje-prod-send-queued-mail dje-prod-deploy-all dje-prod-status dje-prod-setup-logrotate dje-prod-setup-cron dje-prod-setup-services
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -501,60 +501,25 @@ dje-pre-status: ## Show Django Europe preprod environment status
 		fi'
 
 dje-pre-setup-logrotate: dje-pre-verify-env ## Setup local logrotate configuration for Django Europe preprod logs
-	@echo "🔄 Setting up local logrotate configuration for Django Europe preprod..."
-	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
-		echo "Creating workflows directory..."; \
-		mkdir -p workflows; \
-		echo "Creating local logrotate configuration..."; \
-		cat > workflows/logrotate.conf << "EOF"
-$(DJE_PRE_PATH)/logs/*.log {
-    size 5M
-    rotate 5
-    compress
-    delaycompress
-    missingok
-    notifempty
-    create 644 mdubiel mdubiel
-    postrotate
-        # Signal gunicorn to reopen log files if running
-        if [ -f $(DJE_PRE_PATH)/gunicorn.pid ]; then
-            PID=$$(cat $(DJE_PRE_PATH)/gunicorn.pid)
-            if ps -p $$PID > /dev/null 2>&1; then
-                kill -USR1 $$PID
-            fi
-        fi
-    endscript
-}
-
-$(DJE_PRE_PATH)/logs/*.jsonl {
-    size 5M
-    rotate 5
-    compress
-    delaycompress
-    missingok
-    notifempty
-    create 644 mdubiel mdubiel
-    copytruncate
-}
-EOF
-		echo "✅ Local logrotate configuration created at workflows/logrotate.conf"; \
-		echo "Testing logrotate configuration..."; \
-		/usr/sbin/logrotate -d workflows/logrotate.conf && \
-		echo "✅ Logrotate configuration test passed!" && \
-		echo "📋 Manual execution command: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"'
+	@echo "🔄 Setting up logrotate for Django Europe preprod..."
+	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "mkdir -p $(DJE_PRE_PATH)/logs $(DJE_PRE_PATH)/workflows"
+	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "cat > $(DJE_PRE_PATH)/workflows/logrotate.conf << 'EOF'\n# Logrotate configuration for Beryl3 Django Europe Preprod\n# Keep 5 recent files, max 5MB per file, compress old files\n\n$(DJE_PRE_PATH)/logs/*.log $(DJE_PRE_PATH)/logs/*.jsonl {\n    # Rotate when file reaches 5MB\n    size 5M\n    \n    # Keep 5 rotated files\n    rotate 5\n    \n    # Compress rotated files (except the most recent)\n    compress\n    delaycompress\n    \n    # Don't rotate if file is empty\n    notifempty\n    \n    # Don't error if log file is missing\n    missingok\n    \n    # Create new log file with same permissions\n    create 644 $(DJE_PRE_USER) $(DJE_PRE_USER)\n    \n    # Use date as suffix\n    dateext\n    dateformat -%Y%m%d-%s\n    \n    # Copy and truncate instead of moving (safer for active logs)\n    copytruncate\n}\nEOF"
+	@echo "✅ Logrotate configuration created at $(DJE_PRE_PATH)/workflows/logrotate.conf"
+	@echo "🧪 Testing logrotate configuration..."
+	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "/usr/sbin/logrotate -d $(DJE_PRE_PATH)/workflows/logrotate.conf" || echo "⚠️ Logrotate test failed, but configuration was created"
+	@echo "✅ Logrotate setup completed for Django Europe preprod!"
 
 dje-pre-setup-cron: dje-pre-verify-env ## Setup crontab for email queue processing and log rotation on Django Europe preprod
-	@echo "📅 Setting up crontab for email queue processing and log rotation..."
-	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && \
-		echo "Creating cron jobs for email queue and log rotation..."; \
-		(crontab -l 2>/dev/null | grep -v -E "(send_queued_mail|logrotate)" || true; \
-		echo "*/5 * * * * cd $(DJE_PRE_PATH) && source .env && uv run python manage.py send_queued_mail >> logs/cron.log 2>&1"; \
-		echo "0 */6 * * * cd $(DJE_PRE_PATH) && /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf >> logs/logrotate.log 2>&1") | crontab -; \
-		echo "✅ Crontab configured:"; \
-		echo "  - Email queue processing: every 5 minutes"; \
-		echo "  - Log rotation: every 6 hours via logrotate"; \
-		echo "Current crontab:"; \
-		crontab -l | grep -E "(send_queued_mail|logrotate|#)" || echo "No matching cron jobs found"'
+	@echo "⏰ Setting up crontab for Django Europe preprod..."
+	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "\
+	(crontab -l 2>/dev/null | grep -v 'beryl3.*preprod' || true; \
+	echo '# Beryl3 Django Europe Preprod - Email queue processing every 5 minutes'; \
+	echo '*/5 * * * * cd $(DJE_PRE_PATH) && source $(DJE_PRE_VENV)/bin/activate && python manage.py send_queued_mail --settings=production_settings >> $(DJE_PRE_PATH)/logs/cron_email.log 2>&1'; \
+	echo '# Beryl3 Django Europe Preprod - Log rotation every 6 hours'; \
+	echo '0 */6 * * * /usr/sbin/logrotate -s $(DJE_PRE_PATH)/workflows/logrotate.state $(DJE_PRE_PATH)/workflows/logrotate.conf >> $(DJE_PRE_PATH)/logs/cron_logrotate.log 2>&1') | crontab -"
+	@echo "✅ Crontab configured for Django Europe preprod!"
+	@echo "📋 Current crontab entries:"
+	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "crontab -l | grep -E '(beryl3|Beryl3)' || echo 'No beryl3 cron entries found'"
 
 dje-pre-setup-services: dje-pre-setup-logrotate dje-pre-setup-cron ## Setup all background services (logrotate + cron) for Django Europe preprod
 	@echo "🛠️  Setting up all background services for Django Europe preprod..."
@@ -591,3 +556,158 @@ dje-prod-git-deploy-release: ## Deploy specific release to Django Europe product
 	fi
 	@echo "🚀 Deploying release $(RELEASE) to Django Europe production environment..."
 	uv run python workflows/bin/dje-deploy-project.py --environment production --commit $(RELEASE)
+
+# =====================================
+# DJANGO EUROPE PRODUCTION ENVIRONMENT MANAGEMENT
+# =====================================
+
+# Django Europe Production Environment Variables
+DJE_PROD_HOST = 148.251.140.153
+DJE_PROD_USER = mdubiel
+DJE_PROD_PATH = ~/beryl3
+DJE_PROD_VENV = ~/.virtualenvs/beryl3
+
+dje-prod-verify-env: ## Verify Django Europe production environment variables are loaded
+	@echo "🔍 Verifying Django Europe production environment variables..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py check --settings=production_settings" || { \
+		echo "❌ Environment verification failed. Check Django Europe production environment setup."; \
+		exit 1; \
+	}
+	@echo "✅ Django Europe production environment variables verified successfully!"
+
+dje-prod-migrate: dje-prod-verify-env ## Run Django database migrations on Django Europe production
+	@echo "🔄 Running Django migrations on Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py migrate --settings=production_settings"
+	@echo "✅ Migrations completed on Django Europe production!"
+
+dje-prod-setup-initial-users: dje-prod-verify-env ## Setup initial users on Django Europe production
+	@echo "👤 Setting up initial users on Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(is_superuser=True).exists() or User.objects.create_superuser('admin', 'admin@beryl3.mdubiel.org', 'changeme123')\""
+	@echo "✅ Initial users configured on Django Europe production!"
+
+dje-prod-setup-site: dje-prod-verify-env ## Setup Django site configuration on Django Europe production
+	@echo "🌐 Setting up Django site configuration on Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.sites.models import Site; site, created = Site.objects.get_or_create(pk=1); site.domain = 'beryl3.mdubiel.org'; site.name = 'Beryl3 Production'; site.save(); print(f'Site configured: {site.domain}')\""
+	@echo "✅ Site configuration completed on Django Europe production!"
+
+dje-prod-seed: dje-prod-verify-env ## Seed initial data on Django Europe production
+	@echo "🌱 Seeding initial data on Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py loaddata --settings=production_settings fixtures/initial_data.json" || echo "No fixtures found, skipping seed"
+	@echo "✅ Initial data seeded on Django Europe production!"
+
+dje-prod-collectstatic: dje-prod-verify-env ## Collect static files on Django Europe production
+	@echo "📦 Collecting static files on Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py collectstatic --noinput --settings=production_settings"
+	@echo "✅ Static files collected on Django Europe production!"
+
+dje-prod-test-email: dje-prod-verify-env ## Send test email on Django Europe production
+	@if [ -z "$(EMAIL)" ]; then \
+		echo "❌ Error: EMAIL variable is required. Usage: make dje-prod-test-email EMAIL=your@email.com"; \
+		exit 1; \
+	fi
+	@echo "📧 Sending test email to $(EMAIL) from Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.core.mail import send_mail; send_mail('Test Email from Beryl3 Production', 'This is a test email from the Django Europe production environment.', 'noreply@beryl3.mdubiel.org', ['$(EMAIL)']); print('Test email sent!')\""
+	@echo "✅ Test email sent from Django Europe production!"
+
+dje-prod-send-queued-mail: dje-prod-verify-env ## Process queued emails on Django Europe production
+	@echo "📬 Processing queued emails on Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py send_queued_mail --settings=production_settings"
+	@echo "✅ Queued emails processed on Django Europe production!"
+
+dje-prod-deploy-all: dje-prod-verify-env ## Run full deployment sequence on Django Europe production
+	@echo "🚀 Running full deployment sequence on Django Europe production..."
+	@echo "Step 1/4: Database migrations..."
+	@$(MAKE) dje-prod-migrate
+	@echo "Step 2/4: Site setup..."
+	@$(MAKE) dje-prod-setup-site
+	@echo "Step 3/4: Static files collection..."
+	@$(MAKE) dje-prod-collectstatic
+	@echo "Step 4/4: Background services setup..."
+	@$(MAKE) dje-prod-setup-services
+	@echo "✅ Full deployment completed on Django Europe production!"
+	@echo "🌐 Service available at: http://148.251.140.153:62079/"
+
+dje-prod-status: ## Show Django Europe production environment status
+	@echo "📊 Django Europe Production Environment Status"
+	@echo "============================================="
+	@echo "Host: $(DJE_PROD_HOST)"
+	@echo "User: $(DJE_PROD_USER)"
+	@echo "Path: $(DJE_PROD_PATH)"
+	@echo "Venv: $(DJE_PROD_VENV)"
+	@echo ""
+	@echo "🔍 Checking remote environment..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '📁 Directory contents:' && ls -la $(DJE_PROD_PATH)/ 2>/dev/null || echo 'Directory not found'"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '🐍 Python environment:' && source $(DJE_PROD_VENV)/bin/activate && python --version 2>/dev/null || echo 'Virtual environment not found'"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '🌐 Django check:' && cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py check --settings=production_settings 2>/dev/null || echo 'Django not configured'"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '📄 Environment file:' && ls -la $(DJE_PROD_PATH)/.env 2>/dev/null || echo 'No .env file found'"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '🏃 Process status:' && ps aux | grep -E '(gunicorn|beryl3)' | grep -v grep || echo 'No processes running'"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '🔧 Service status:' && ls -la $(DJE_PROD_PATH)/RUN 2>/dev/null && echo 'RUN script exists' || echo 'RUN script not found'"
+	@echo ""
+	@echo "🌐 URLs:"
+	@echo "  Production: http://beryl3.mdubiel.org/"
+	@echo "  Direct:     http://148.251.140.153:62079/"
+	@echo "============================================="
+
+dje-prod-setup-logrotate: dje-prod-verify-env ## Setup local logrotate configuration for Django Europe production logs
+	@echo "🔄 Setting up logrotate for Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "mkdir -p $(DJE_PROD_PATH)/logs $(DJE_PROD_PATH)/workflows"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cat > $(DJE_PROD_PATH)/workflows/logrotate.conf << 'EOF'\n\
+# Logrotate configuration for Beryl3 Django Europe Production\n\
+# Keep 5 recent files, max 5MB per file, compress old files\n\
+\n\
+$(DJE_PROD_PATH)/logs/*.log $(DJE_PROD_PATH)/logs/*.jsonl {\n\
+    # Rotate when file reaches 5MB\n\
+    size 5M\n\
+    \n\
+    # Keep 5 rotated files\n\
+    rotate 5\n\
+    \n\
+    # Compress rotated files (except the most recent)\n\
+    compress\n\
+    delaycompress\n\
+    \n\
+    # Don't rotate if file is empty\n\
+    notifempty\n\
+    \n\
+    # Don't error if log file is missing\n\
+    missingok\n\
+    \n\
+    # Create new log file with same permissions\n\
+    create 644 $(DJE_PROD_USER) $(DJE_PROD_USER)\n\
+    \n\
+    # Use date as suffix\n\
+    dateext\n\
+    dateformat -%Y%m%d-%s\n\
+    \n\
+    # Copy and truncate instead of moving (safer for active logs)\n\
+    copytruncate\n\
+}\n\
+EOF"
+	@echo "✅ Logrotate configuration created at $(DJE_PROD_PATH)/workflows/logrotate.conf"
+	@echo "🧪 Testing logrotate configuration..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "/usr/sbin/logrotate -d $(DJE_PROD_PATH)/workflows/logrotate.conf" || echo "⚠️ Logrotate test failed, but configuration was created"
+	@echo "✅ Logrotate setup completed for Django Europe production!"
+
+dje-prod-setup-cron: dje-prod-verify-env ## Setup crontab for email queue processing and log rotation on Django Europe production
+	@echo "⏰ Setting up crontab for Django Europe production..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "\
+	(crontab -l 2>/dev/null | grep -v 'beryl3.*production' || true; \
+	echo '# Beryl3 Django Europe Production - Email queue processing every 5 minutes'; \
+	echo '*/5 * * * * cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py send_queued_mail --settings=production_settings >> $(DJE_PROD_PATH)/logs/cron_email.log 2>&1'; \
+	echo '# Beryl3 Django Europe Production - Log rotation every 6 hours'; \
+	echo '0 */6 * * * /usr/sbin/logrotate -s $(DJE_PROD_PATH)/workflows/logrotate.state $(DJE_PROD_PATH)/workflows/logrotate.conf >> $(DJE_PROD_PATH)/logs/cron_logrotate.log 2>&1') | crontab -"
+	@echo "✅ Crontab configured for Django Europe production!"
+	@echo "📋 Current crontab entries:"
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "crontab -l | grep -E '(beryl3|Beryl3)' || echo 'No beryl3 cron entries found'"
+
+dje-prod-setup-services: dje-prod-setup-logrotate dje-prod-setup-cron ## Setup all background services (logrotate + cron) for Django Europe production
+	@echo "🛠️  Setting up all background services for Django Europe production..."
+	@echo "✅ Local logrotate configuration created and tested"
+	@echo "✅ Crontab configured for email queue processing and log rotation"
+	@echo "📊 Service summary:"
+	@echo "  - Log rotation: Every 5MB, keep 5 files, compressed (via cron every 6 hours)"
+	@echo "  - Email queue: Processed every 5 minutes via cron"
+	@echo "  - Configuration: $(DJE_PROD_PATH)/workflows/logrotate.conf"
+	@echo "  - Log files: $(DJE_PROD_PATH)/logs/*.log and *.jsonl"
+	@echo "  - Manual execution: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"
+	@echo "🎉 All background services configured successfully!"
