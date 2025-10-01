@@ -651,38 +651,21 @@ dje-prod-status: ## Show Django Europe production environment status
 dje-prod-setup-logrotate: dje-prod-verify-env ## Setup local logrotate configuration for Django Europe production logs
 	@echo "🔄 Setting up logrotate for Django Europe production..."
 	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "mkdir -p $(DJE_PROD_PATH)/logs $(DJE_PROD_PATH)/workflows"
-	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cat > $(DJE_PROD_PATH)/workflows/logrotate.conf << 'EOF'\n\
-# Logrotate configuration for Beryl3 Django Europe Production\n\
-# Keep 5 recent files, max 5MB per file, compress old files\n\
-\n\
-$(DJE_PROD_PATH)/logs/*.log $(DJE_PROD_PATH)/logs/*.jsonl {\n\
-    # Rotate when file reaches 5MB\n\
-    size 5M\n\
-    \n\
-    # Keep 5 rotated files\n\
-    rotate 5\n\
-    \n\
-    # Compress rotated files (except the most recent)\n\
-    compress\n\
-    delaycompress\n\
-    \n\
-    # Don't rotate if file is empty\n\
-    notifempty\n\
-    \n\
-    # Don't error if log file is missing\n\
-    missingok\n\
-    \n\
-    # Create new log file with same permissions\n\
-    create 644 $(DJE_PROD_USER) $(DJE_PROD_USER)\n\
-    \n\
-    # Use date as suffix\n\
-    dateext\n\
-    dateformat -%Y%m%d-%s\n\
-    \n\
-    # Copy and truncate instead of moving (safer for active logs)\n\
-    copytruncate\n\
-}\n\
-EOF"
+	@echo "# Logrotate configuration for Beryl3 Django Europe Production" > /tmp/logrotate-prod.conf
+	@echo "$(DJE_PROD_PATH)/logs/*.log $(DJE_PROD_PATH)/logs/*.jsonl {" >> /tmp/logrotate-prod.conf
+	@echo "    size 5M" >> /tmp/logrotate-prod.conf
+	@echo "    rotate 5" >> /tmp/logrotate-prod.conf
+	@echo "    compress" >> /tmp/logrotate-prod.conf
+	@echo "    delaycompress" >> /tmp/logrotate-prod.conf
+	@echo "    notifempty" >> /tmp/logrotate-prod.conf
+	@echo "    missingok" >> /tmp/logrotate-prod.conf
+	@echo "    create 644 $(DJE_PROD_USER) $(DJE_PROD_USER)" >> /tmp/logrotate-prod.conf
+	@echo "    dateext" >> /tmp/logrotate-prod.conf
+	@echo "    dateformat -%Y%m%d-%s" >> /tmp/logrotate-prod.conf
+	@echo "    copytruncate" >> /tmp/logrotate-prod.conf
+	@echo "}" >> /tmp/logrotate-prod.conf
+	@scp /tmp/logrotate-prod.conf $(DJE_PROD_USER)@$(DJE_PROD_HOST):$(DJE_PROD_PATH)/workflows/logrotate.conf
+	@rm /tmp/logrotate-prod.conf
 	@echo "✅ Logrotate configuration created at $(DJE_PROD_PATH)/workflows/logrotate.conf"
 	@echo "🧪 Testing logrotate configuration..."
 	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "/usr/sbin/logrotate -d $(DJE_PROD_PATH)/workflows/logrotate.conf" || echo "⚠️ Logrotate test failed, but configuration was created"
