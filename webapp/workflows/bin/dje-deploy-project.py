@@ -133,9 +133,10 @@ class DjangoEuropeProjectDeploy:
         
         # Create production settings that extends webapp.settings with environment overrides
         project_path = self.host_config['project_path'].replace('~', '/home/mdubiel')
-        production_settings_content = f'''"""Production settings for Django Europe hosting.
+        
+        production_settings_content = f"""\"\"\"Production settings for Django Europe hosting.
 Extends the main webapp.settings with environment-specific overrides.
-"""
+\"\"\"
 import os
 from pathlib import Path
 import environ
@@ -165,16 +166,16 @@ SECRET_KEY = env('SECRET_KEY')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['beryl3-preprod.mdubiel.org'])
 
 # Database configuration (individual postgres settings)
-DATABASES = {
-    'default': {
+DATABASES = {{
+    'default': {{
         'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
         'NAME': env('PG_DB'),
         'USER': env('PG_USER'),
         'PASSWORD': env('PG_PASSWORD'),
         'HOST': env('PG_HOST', default='localhost'),
         'PORT': env('PG_PORT', default='5432'),
-    }
-}
+    }}
+}}
 
 # Email settings
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
@@ -203,24 +204,24 @@ if USE_GCS_STORAGE:
     GS_LOCATION = env('GCS_LOCATION', default='media')
     
     # Configure STORAGES for Django 4+
-    STORAGES = {
-        "default": {
+    STORAGES = {{
+        "default": {{
             "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-        },
-        "staticfiles": {
+        }},
+        "staticfiles": {{
             "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-        },
-    }
+        }},
+    }}
     
-    STATIC_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/static/'
-    MEDIA_URL = f'https://storage.googleapis.com/{GCS_BUCKET_NAME}/{GS_LOCATION}/'
+    STATIC_URL = f'https://storage.googleapis.com/{{GCS_BUCKET_NAME}}/static/'
+    MEDIA_URL = f'https://storage.googleapis.com/{{GCS_BUCKET_NAME}}/{{GS_LOCATION}}/'
 
 # Security settings (Django Europe handles SSL)
 SECURE_SSL_REDIRECT = False
 
 # Note: Logging configuration is now handled automatically by 
 # webapp/logging_configs/preprod.py and loaded dynamically by settings.py
-'''
+"""
         
         # Create temp file and upload production settings
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:

@@ -145,3 +145,86 @@ The project uses Python scripts in `workflows/bin/` for all deployment and manag
 - **Consistent API**: All scripts follow similar patterns and error handling
 - **Cloud-Native**: Designed specifically for Google Cloud Platform
 - **Automated Tasks**: Cloud Run Jobs handle recurring maintenance tasks
+
+## Release and Deployment Workflow
+
+### Git Release Management
+The project uses semantic versioning with git tags for stable release deployments.
+
+#### Version Format
+- **Format**: `v{MAJOR}.{MINOR}.{BUILD}` (e.g., `v0.2.1`)
+- **Semantic Versioning**:
+  - `MAJOR`: Breaking changes
+  - `MINOR`: New features, backwards compatible
+  - `BUILD`: Bug fixes, patches
+
+#### Creating Releases
+1. **Manual Version Update**:
+   ```bash
+   # Edit VERSION file to desired version
+   echo "MAJOR=0\nMINOR=2\nBUILD=1" > VERSION
+   git add VERSION
+   git commit -m "chore: Set version to 0.2.1 for release" --no-verify
+   ```
+
+2. **Create Git Tag**:
+   ```bash
+   git tag -a v0.2.1 -m "Release v0.2.1 - Feature description"
+   git push origin main
+   git push origin v0.2.1
+   ```
+
+3. **GitHub Release** (optional):
+   ```bash
+   gh release create v0.2.1 --title "Release v0.2.1" --notes "Release notes"
+   ```
+
+#### Django Europe Deployment
+
+**Environment-Specific Deployment**:
+
+**Preprod Environment**:
+```bash
+# Deploy latest code
+make dje-pre-git-deploy
+
+# Deploy specific release
+make dje-pre-git-deploy-release RELEASE=v0.2.1
+```
+
+**Production Environment**:
+```bash
+# Deploy latest code (not recommended)
+make dje-prod-git-deploy
+
+# Deploy specific release (recommended)
+make dje-prod-git-deploy-release RELEASE=v0.2.1
+```
+
+**Direct Script Usage**:
+```bash
+# Deploy to preprod
+uv run python workflows/bin/dje-deploy-project.py --environment preprod --commit v0.2.1
+
+# Deploy to production
+uv run python workflows/bin/dje-deploy-project.py --environment production --commit v0.2.1
+```
+
+#### Environment Configuration
+- **Preprod**: `~/beryl3-preprod` with `~/.virtualenvs/beryl3-preprod`
+- **Production**: `~/beryl3-prod` with `~/.virtualenvs/beryl3-prod`
+- **Environment File Protection**: Automatic backup/restore of `.env` files during deployment
+- **Release Tracking**: Each deployment shows the exact git commit/tag being deployed
+
+#### Best Practices
+1. **Always use releases for production**: Never deploy `HEAD` or `main` to production
+2. **Test in preprod first**: Deploy and test releases in preprod before production
+3. **Use semantic versioning**: Follow semver for predictable version management
+4. **Document releases**: Include meaningful release notes describing changes
+5. **Environment isolation**: Use environment-specific configurations and paths
+
+#### Available Deployment Targets
+- `dje-pre-git-deploy`: Deploy HEAD to preprod
+- `dje-pre-git-deploy-release RELEASE=v0.2.1`: Deploy specific release to preprod
+- `dje-prod-git-deploy`: Deploy HEAD to production (not recommended)
+- `dje-prod-git-deploy-release RELEASE=v0.2.1`: Deploy specific release to production (recommended)
