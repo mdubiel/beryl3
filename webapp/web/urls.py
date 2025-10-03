@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, marketing, user_settings
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, marketing, user_settings, fix_attrs
 
 
 urlpatterns = [
@@ -101,6 +101,7 @@ urlpatterns = [
     path('sys/import/', sys.sys_import_data, name='sys_import_data'),
     path('sys/import/confirm/', sys.sys_import_data_confirm, name='sys_import_data_confirm'),
     path('sys/import/result/', sys.sys_import_result, name='sys_import_result'),
+    path('sys/fix-attributes/', fix_attrs.fix_production_attributes, name='sys_fix_attributes'),
     
     # Content moderation
     path('sys/content-moderation/', sys.content_moderation_dashboard, name='sys_content_moderation_dashboard'),
