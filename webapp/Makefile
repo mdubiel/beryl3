@@ -582,17 +582,22 @@ dje-prod-migrate: dje-prod-verify-env ## Run Django database migrations on Djang
 
 dje-prod-setup-initial-users: dje-prod-verify-env ## Setup initial users on Django Europe production
 	@echo "👤 Setting up initial users on Django Europe production..."
-	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(is_superuser=True).exists() or User.objects.create_superuser('admin', 'admin@beryl3.mdubiel.org', 'changeme123')\""
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(is_superuser=True).exists() or User.objects.create_superuser('admin', 'admin@beryl3.com', 'changeme123')\""
 	@echo "✅ Initial users configured on Django Europe production!"
 
 dje-prod-setup-site: dje-prod-verify-env ## Setup Django site configuration on Django Europe production
 	@echo "🌐 Setting up Django site configuration on Django Europe production..."
-	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.sites.models import Site; site, created = Site.objects.get_or_create(pk=1); site.domain = 'beryl3.mdubiel.org'; site.name = 'Beryl3 Production'; site.save(); print(f'Site configured: {site.domain}')\""
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.sites.models import Site; site, created = Site.objects.get_or_create(pk=1); site.domain = 'beryl3.com'; site.name = 'Beryl3'; site.save(); print(f'Site configured: {site.domain}')\""
 	@echo "✅ Site configuration completed on Django Europe production!"
 
 dje-prod-seed: dje-prod-verify-env ## Seed initial data on Django Europe production
 	@echo "🌱 Seeding initial data on Django Europe production..."
-	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py loaddata --settings=production_settings fixtures/initial_data.json" || echo "No fixtures found, skipping seed"
+	@echo "Creating groups..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.contrib.auth.models import Group; Group.objects.get_or_create(name='Application admin')\""
+	@echo "Creating item types..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py populate_item_types --settings=production_settings"
+	@echo "Creating link patterns..."
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py populate_link_patterns --settings=production_settings"
 	@echo "✅ Initial data seeded on Django Europe production!"
 
 dje-prod-collectstatic: dje-prod-verify-env ## Collect static files on Django Europe production
@@ -606,7 +611,7 @@ dje-prod-test-email: dje-prod-verify-env ## Send test email on Django Europe pro
 		exit 1; \
 	fi
 	@echo "📧 Sending test email to $(EMAIL) from Django Europe production..."
-	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.core.mail import send_mail; send_mail('Test Email from Beryl3 Production', 'This is a test email from the Django Europe production environment.', 'noreply@beryl3.mdubiel.org', ['$(EMAIL)']); print('Test email sent!')\""
+	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py shell --settings=production_settings -c \"from django.core.mail import send_mail; send_mail('Test Email from Beryl3', 'This is a test email from the Beryl3 production environment.', 'noreply@beryl3.mdubiel.org', ['$(EMAIL)']); print('Test email sent!')\""
 	@echo "✅ Test email sent from Django Europe production!"
 
 dje-prod-send-queued-mail: dje-prod-verify-env ## Process queued emails on Django Europe production
@@ -644,7 +649,7 @@ dje-prod-status: ## Show Django Europe production environment status
 	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "echo '🔧 Service status:' && ls -la $(DJE_PROD_PATH)/RUN 2>/dev/null && echo 'RUN script exists' || echo 'RUN script not found'"
 	@echo ""
 	@echo "🌐 URLs:"
-	@echo "  Production: http://beryl3.mdubiel.org/"
+	@echo "  Production: https://beryl3.com/"
 	@echo "  Direct:     http://148.251.140.153:62079/"
 	@echo "============================================="
 
