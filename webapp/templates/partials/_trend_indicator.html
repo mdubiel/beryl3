@@ -1,0 +1,51 @@
+{% comment %}
+Trend indicator partial template
+Displays change value with directional arrow and color coding
+
+Parameters:
+  - change: Dictionary with keys 'change', 'change_pct', 'direction'
+  - alert_warning: Warning threshold percentage (default: 10)
+  - alert_critical: Critical threshold percentage (default: 25)
+{% endcomment %}
+
+{% if change.change is not None %}
+    {% if change.direction == 1 %}
+        {# Positive change - green #}
+        <span class="text-success">
+            ↑ +{{ change.change }}
+            {% if change.change_pct is not None %}
+                (+{{ change.change_pct|floatformat:1 }}%)
+            {% endif %}
+        </span>
+    {% elif change.direction == -1 %}
+        {# Negative change - red if exceeds critical, yellow if exceeds warning #}
+        {% if change.change_pct|abs >= alert_critical %}
+            <span class="text-error font-bold">
+                ↓ {{ change.change }}
+                {% if change.change_pct is not None %}
+                    ({{ change.change_pct|floatformat:1 }}%)
+                {% endif %}
+            </span>
+        {% elif change.change_pct|abs >= alert_warning %}
+            <span class="text-warning">
+                ↓ {{ change.change }}
+                {% if change.change_pct is not None %}
+                    ({{ change.change_pct|floatformat:1 }}%)
+                {% endif %}
+            </span>
+        {% else %}
+            <span class="text-error">
+                ↓ {{ change.change }}
+                {% if change.change_pct is not None %}
+                    ({{ change.change_pct|floatformat:1 }}%)
+                {% endif %}
+            </span>
+        {% endif %}
+    {% else %}
+        {# No change - neutral #}
+        <span class="text-neutral">—</span>
+    {% endif %}
+{% else %}
+    {# No data available #}
+    <span class="text-neutral opacity-50">N/A</span>
+{% endif %}

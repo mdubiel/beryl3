@@ -124,6 +124,7 @@ These changes will be later replicated to other views, so we need to make them c
 # - number of media files without association to item or collection (preauthorized likt to job to purge that)
 # - 
 
+Task 38: In implementation, not tested
 Create a new Model for collectiong the following metrics:
  Users:
  - Total users
@@ -164,19 +165,6 @@ Update /sys/metrics/prometheus to match this data.
 Review this task first, and propose other reasonable metrics I can review.
 After approval, execute all this tasks locally and update all necessary scripts and make targets if necessary.
 
-Phase 2, point 1: this will be cron job, we do not use Cloud run anymore.
-Phase 4, yes create grafana config for this dashboard
-Timezone: Europe/Zurich always
-
-Questions:
-1. Yes add them
-2. HTML is ok
-3. 10% yellow, 25% red, configurabe in ENV variables
-4. 1 year is ok, configurable in ENV variable
-5. Yes
-6. I'm using Resend to track emails
-
-Go ahead.
 
  When adding item, user should be able to select initial type of item.
 
@@ -211,3 +199,5 @@ Eventually display on top statiscics from attributes (how many read, authors, et
 Thumbnail image (the main image for the item, should be clickable and lead to item details), same for categories
 
 Mobile version of the app need some UI improvements.
+
+Compact all JavaScript to one file and reference JS from there. No inline javascript code if not necessary.

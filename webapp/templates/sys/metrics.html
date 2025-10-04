@@ -4,471 +4,468 @@
 {% block title %}System Metrics - Beryl Admin{% endblock %}
 
 {% block page_title %}System Metrics{% endblock %}
-{% block page_description %}Analytics and performance metrics for the application{% endblock %}
+{% block page_description %}Daily metrics dashboard with trend analysis{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
+<div class="space-y-6">
     <!-- Action Buttons -->
     <div class="px-6 pt-6">
-        <div class="flex flex-wrap gap-4">
-            <a href="{% url 'sys_prometheus_metrics' %}" class="btn btn-primary" target="_blank">
-                {% lucide 'activity' size=16 class='mr-2' %}
-                Prometheus Metrics
-            </a>
-            <a href="{% url 'sys_dashboard' %}" class="btn btn-primary">
-                {% lucide 'arrow-left' size=16 class='mr-2' %}
-                Dashboard
-            </a>
-            <a href="{% url 'sys_users' %}" class="btn btn-primary">
-                {% lucide 'users' size=16 class='mr-2' %}
-                Manage Users
-            </a>
-        </div>
-    </div>
-
-    {# sections container #}
-    <div class="mx-6 mb-6 rounded-lg space-y-3">
-    
-        {# User Metrics Header #}
-        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
-            {% lucide 'users' size=18 class='text-primary mr-2' %}
-            USER METRICS
-        </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'users' size=18 class='text-primary' %}
-                        <div class="stat-title">Total Users</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ user_metrics.total }}</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'activity' size=18 class='text-primary' %}
-                        <div class="stat-title">Active (30d)</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ user_metrics.active_30d }}</div>
-                    <div class="stat-desc">{{ user_metrics.active_7d }} in 7d</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'user-plus' size=18 class='text-primary' %}
-                        <div class="stat-title">New (30d)</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ user_metrics.new_30d }}</div>
-                    <div class="stat-desc">{{ user_metrics.new_7d }} in 7d</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'trending-up' size=18 class='text-primary' %}
-                        <div class="stat-title">Growth Rate</div>
-                    </div>
-                    <div class="stat-value text-primary">
-                        {% if user_metrics.total > 0 %}
-                            {% widthratio user_metrics.new_30d user_metrics.total 100 %}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="stat-desc">Monthly</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'zap' size=18 class='text-primary' %}
-                        <div class="stat-title">Retention</div>
-                    </div>
-                    <div class="stat-value text-primary">
-                        {% if user_metrics.total > 0 %}
-                            {% widthratio user_metrics.active_30d user_metrics.total 100 %}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="stat-desc">30-day</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Collection & Item Metrics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Collection Metrics -->
-        <div class="terminal-bg">
-            <div class="p-6">
-                <h4 class="text-lg font-bold terminal-accent mb-4">
-                    <span class="terminal-text">></span> COLLECTION METRICS
-                </h4>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Total</div>
-                        <div class="stat-value text-primary">{{ collection_metrics.total }}</div>
-                    </div>
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Public</div>
-                        <div class="stat-value text-primary">{{ collection_metrics.public }}</div>
-                    </div>
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Private</div>
-                        <div class="stat-value text-primary">{{ collection_metrics.private }}</div>
-                    </div>
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Unlisted</div>
-                        <div class="stat-value text-primary">{{ collection_metrics.unlisted }}</div>
-                    </div>
-                </div>
-                <div class="mt-4 text-sm terminal-text">
-                    <div>Created (30d): <span class="terminal-accent">{{ collection_metrics.created_30d }}</span></div>
-                    <div>Created (7d): <span class="terminal-accent">{{ collection_metrics.created_7d }}</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Item Metrics -->
-        <div class="terminal-bg">
-            <div class="p-6">
-                <h4 class="text-lg font-bold terminal-accent mb-4">
-                    <span class="terminal-text">></span> ITEM METRICS
-                </h4>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Total Items</div>
-                        <div class="stat-value text-primary">{{ item_metrics.total }}</div>
-                    </div>
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Favorites</div>
-                        <div class="stat-value text-primary">{{ item_metrics.favorites }}</div>
-                    </div>
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Reserved</div>
-                        <div class="stat-value text-primary">{{ item_metrics.reserved }}</div>
-                    </div>
-                    <div class="stat border border-primary shadow-sm">
-                        <div class="stat-title">Wanted</div>
-                        <div class="stat-value text-primary">{{ item_metrics.wanted }}</div>
-                    </div>
-                </div>
-                <div class="mt-4 text-sm terminal-text">
-                    <div>Created (30d): <span class="terminal-accent">{{ item_metrics.created_30d }}</span></div>
-                    <div>Created (7d): <span class="terminal-accent">{{ item_metrics.created_7d }}</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Activity & Distribution Metrics -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Activity Metrics -->
-        <div class="terminal-bg">
-            <div class="p-6">
-                <h4 class="text-lg font-bold terminal-accent mb-4">
-                    <span class="terminal-text">></span> ACTIVITY METRICS
-                </h4>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="terminal-text">Total Events</span>
-                        <span class="terminal-accent font-mono">{{ activity_metrics.total }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="terminal-text">Last 30 Days</span>
-                        <span class="terminal-accent font-mono">{{ activity_metrics.last_30d }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="terminal-text">Last 7 Days</span>
-                        <span class="terminal-accent font-mono">{{ activity_metrics.last_7d }}</span>
-                    </div>
-                </div>
-                
-                <div class="mt-6">
-                    <h5 class="terminal-accent text-sm mb-3">Top Actions:</h5>
-                    <div class="space-y-2">
-                        {% for action in activity_metrics.top_actions %}
-                        <div class="flex justify-between items-center">
-                            <span class="terminal-text text-sm">{{ action.name }}</span>
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 bg-primary bg-opacity-20 h-1">
-                                    <div class="bg-primary h-1" 
-                                         style="width: {% widthratio action.count activity_metrics.top_actions.0.count 100 %}%"></div>
-                                </div>
-                                <span class="terminal-accent text-xs font-mono">{{ action.count }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Item Type Distribution -->
-        <div class="terminal-bg">
-            <div class="p-6">
-                <h4 class="text-lg font-bold terminal-accent mb-4">
-                    <span class="terminal-text">></span> ITEM TYPE DISTRIBUTION
-                </h4>
-                <div class="space-y-3">
-                    {% for type_data in item_type_distribution %}
-                    <div class="flex justify-between items-center">
-                        <span class="terminal-text text-sm">
-                            {% if type_data.item_type__display_name %}
-                                {{ type_data.item_type__display_name }}
-                            {% else %}
-                                Generic
-                            {% endif %}
-                        </span>
-                        <div class="flex items-center gap-2">
-                            <div class="w-24 bg-primary bg-opacity-20 h-2">
-                                <div class="bg-primary h-2" 
-                                     style="width: {% widthratio type_data.count item_metrics.total 100 %}%"></div>
-                            </div>
-                            <span class="terminal-accent text-xs font-mono">{{ type_data.count }}</span>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="terminal-text opacity-60 text-center">// No item type data available</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Media Storage Metrics -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="text-lg font-bold terminal-accent mb-4">
-                <span class="terminal-text">></span> MEDIA STORAGE METRICS
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'database' size=18 class='text-primary' %}
-                        <div class="stat-title">Total Files</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ media_metrics.total_files }}</div>
-                    <div class="stat-desc">{{ media_metrics.active_files }} active</div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'hard-drive' size=18 class='text-primary' %}
-                        <div class="stat-title">Storage Used</div>
-                    </div>
-                    <div class="stat-value text-primary text-sm">
-                        {% if media_metrics.total_size %}
-                            {{ media_metrics.total_size|filesizeformat }}
-                        {% else %}
-                            0 B
-                        {% endif %}
-                    </div>
-                    <div class="stat-desc">
-                        Avg: {% if media_metrics.average_size %}{{ media_metrics.average_size|filesizeformat }}{% else %}N/A{% endif %}
-                    </div>
-                </div>
-                
-                <div class="stat border border-primary shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'upload' size=18 class='text-primary' %}
-                        <div class="stat-title">Recent Uploads</div>
-                    </div>
-                    <div class="stat-value text-primary">{{ media_metrics.recent_uploads }}</div>
-                    <div class="stat-desc">Last 7 days</div>
-                </div>
-                
-                {% if media_metrics.missing_files > 0 %}
-                <div class="stat border border-error shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'triangle-alert' size=18 class='text-error' %}
-                        <div class="stat-title">Missing Files</div>
-                    </div>
-                    <div class="stat-value text-error">{{ media_metrics.missing_files }}</div>
-                    <div class="stat-desc">Requires attention</div>
-                </div>
-                {% else %}
-                <div class="stat border border-success shadow-sm">
-                    <div class="flex items-center gap-2 mb-2">
-                        {% lucide 'check' size=18 class='text-success' %}
-                        <div class="stat-title">File Integrity</div>
-                    </div>
-                    <div class="stat-value text-success">100%</div>
-                    <div class="stat-desc">All files present</div>
-                </div>
-                {% endif %}
-            </div>
-            
-            <!-- Storage Distribution -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Storage Backends -->
-                <div>
-                    <h5 class="terminal-accent text-sm mb-3">Storage Backends:</h5>
-                    <div class="space-y-2">
-                        {% for storage in media_metrics.storage_distribution %}
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                {% if storage.storage_backend == "GCS" %}
-                                    {% lucide 'cloud' size=14 class='text-primary' %}
-                                {% elif storage.storage_backend == "S3" %}
-                                    {% lucide 'cloud' size=14 class='text-accent' %}
-                                {% else %}
-                                    {% lucide 'hard-drive' size=14 class='text-secondary' %}
-                                {% endif %}
-                                <span class="terminal-text text-sm">{{ storage.storage_backend }}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 bg-primary bg-opacity-20 h-2">
-                                    <div class="bg-primary h-2" 
-                                         style="width: {% if media_metrics.total_files > 0 %}{% widthratio storage.count media_metrics.total_files 100 %}{% else %}0{% endif %}%"></div>
-                                </div>
-                                <span class="terminal-accent text-xs font-mono">{{ storage.count }}</span>
-                                {% if storage.total_size %}
-                                <span class="terminal-text text-xs">({{ storage.total_size|filesizeformat }})</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="terminal-text opacity-60 text-center">// No storage data available</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <!-- Media Types -->
-                <div>
-                    <h5 class="terminal-accent text-sm mb-3">Media Types:</h5>
-                    <div class="space-y-2">
-                        {% for type_data in media_metrics.type_distribution %}
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                {% if type_data.media_type == "COLLECTION_HEADER" %}
-                                    {% lucide 'image' size=14 class='text-primary' %}
-                                    <span class="terminal-text text-sm">Headers</span>
-                                {% elif type_data.media_type == "COLLECTION_ITEM" %}
-                                    {% lucide 'archive' size=14 class='text-secondary' %}
-                                    <span class="terminal-text text-sm">Items</span>
-                                {% elif type_data.media_type == "AVATAR" %}
-                                    {% lucide 'user' size=14 class='text-accent' %}
-                                    <span class="terminal-text text-sm">Avatars</span>
-                                {% else %}
-                                    {% lucide 'file' size=14 class='text-base-content/50' %}
-                                    <span class="terminal-text text-sm">Other</span>
-                                {% endif %}
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="w-16 bg-primary bg-opacity-20 h-2">
-                                    <div class="bg-primary h-2" 
-                                         style="width: {% if media_metrics.total_files > 0 %}{% widthratio type_data.count media_metrics.total_files 100 %}{% else %}0{% endif %}%"></div>
-                                </div>
-                                <span class="terminal-accent text-xs font-mono">{{ type_data.count }}</span>
-                                {% if type_data.total_size %}
-                                <span class="terminal-text text-xs">({{ type_data.total_size|filesizeformat }})</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="terminal-text opacity-60 text-center">// No media type data available</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Performance Indicators -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="text-lg font-bold terminal-accent mb-4">
-                <span class="terminal-text">></span> PERFORMANCE INDICATORS
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="text-center">
-                    <div class="text-2xl terminal-accent font-mono">
-                        {% if collection_metrics.total > 0 %}
-                            {% widthratio item_metrics.total collection_metrics.total 1 %}
-                        {% else %}
-                            0
-                        {% endif %}
-                    </div>
-                    <div class="text-sm terminal-text">Avg Items/Collection</div>
-                </div>
-                
-                <div class="text-center">
-                    <div class="text-2xl terminal-accent font-mono">
-                        {% if item_metrics.total > 0 %}
-                            {% widthratio item_metrics.favorites item_metrics.total 100 %}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="text-sm terminal-text">Favorite Rate</div>
-                </div>
-                
-                <div class="text-center">
-                    <div class="text-2xl terminal-accent font-mono">
-                        {% if item_metrics.total > 0 %}
-                            {% widthratio item_metrics.reserved item_metrics.total 100 %}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="text-sm terminal-text">Reservation Rate</div>
-                </div>
-                
-                <div class="text-center">
-                    <div class="text-2xl terminal-accent font-mono">
-                        {% if user_metrics.total > 0 %}
-                            {% widthratio collection_metrics.public user_metrics.total 100 %}%
-                        {% else %}
-                            0%
-                        {% endif %}
-                    </div>
-                    <div class="text-sm terminal-text">Sharing Rate</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Export and Actions -->
-    <div class="terminal-bg">
-        <div class="p-6">
-            <h4 class="text-lg font-bold terminal-accent mb-4">
-                <span class="terminal-text">></span> EXPORT & ACTIONS
-            </h4>
+        <div class="flex flex-wrap gap-4 items-center justify-between">
             <div class="flex flex-wrap gap-4">
-                <button class="btn btn-primary" onclick="exportMetrics('json')">
-                    {% lucide 'download' size=14 class='mr-2' %}
-                    Export JSON
-                </button>
-                <button class="btn btn-primary" onclick="exportMetrics('csv')">
-                    {% lucide 'file-text' size=14 class='mr-2' %}
-                    Export CSV
-                </button>
-                <button class="btn btn-outline border-blue-500 text-blue-500" onclick="refreshMetrics()">
-                    {% lucide 'rotate-cw' size=14 class='mr-2' %}
-                    Refresh
-                </button>
+                <a href="{% url 'sys_prometheus_metrics' %}" class="btn btn-primary btn-sm" target="_blank">
+                    {% lucide 'activity' size=16 class='mr-2' %}
+                    Prometheus Metrics
+                </a>
+                <a href="{% url 'sys_dashboard' %}" class="btn btn-primary btn-sm">
+                    {% lucide 'arrow-left' size=16 class='mr-2' %}
+                    Dashboard
+                </a>
             </div>
-            <div class="mt-4 text-sm terminal-text text-neutral">
-                Last updated: <span id="last-updated">{{ now|date:"Y-m-d H:i:s" }}</span>
+
+            {% if latest_metrics %}
+            <div class="text-sm text-gray-600">
+                Last collection: {{ latest_metrics.collected_at|date:"Y-m-d H:i:s" }} ({{ latest_metrics.collection_duration_seconds }}s)
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if no_metrics %}
+    <!-- No Metrics Available -->
+    <div class="mx-6 mb-6 terminal-bg p-6">
+        <div class="text-center py-8">
+            <div class="text-yellow-500 mb-4">
+                {% lucide 'triangle-alert' size=48 class='mx-auto' %}
+            </div>
+            <h3 class="text-lg font-bold terminal-accent mb-2">No Metrics Available</h3>
+            <p class="terminal-text mb-4">Daily metrics have not been collected yet.</p>
+            <p class="text-sm terminal-text opacity-60">
+                Run: <code class="terminal-accent">python manage.py collect_daily_metrics</code>
+            </p>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Alert Threshold Legend -->
+    <div class="mx-6 mb-4">
+        <div class="text-sm terminal-text opacity-70">
+            Trend indicators:
+            <span class="text-success">↑ Increase</span> |
+            <span class="text-error">↓ Decrease</span> |
+            <span class="text-warning">⚠ {{ alert_warning }}% warning</span> |
+            <span class="text-error font-bold">🔴 {{ alert_critical }}% critical</span>
+        </div>
+    </div>
+
+    <!-- User Metrics -->
+    <div class="mx-6 mb-6 terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                {% lucide 'users' size=18 class='text-primary mr-2' %}
+                USER METRICS
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Metric</th>
+                            <th class="text-right terminal-text">Current</th>
+                            <th class="text-right terminal-text">vs Yesterday</th>
+                            <th class="text-right terminal-text">vs 7 Days</th>
+                            <th class="text-right terminal-text">vs 30 Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="terminal-text">Total Users</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.total_users.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Active Users (24h)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.active_users_24h.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Active Users (7d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.active_users_7d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Active Users (30d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.active_users_30d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">New Users (24h)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.new_users_24h.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">New Users (7d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.new_users_7d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">New Users (30d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.new_users_30d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_30d %}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        
     </div>
-    {# / sections container #}
+
+    <!-- Collection Metrics -->
+    <div class="mx-6 mb-6 terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                {% lucide 'archive' size=18 class='text-primary mr-2' %}
+                COLLECTION METRICS
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Metric</th>
+                            <th class="text-right terminal-text">Current</th>
+                            <th class="text-right terminal-text">vs Yesterday</th>
+                            <th class="text-right terminal-text">vs 7 Days</th>
+                            <th class="text-right terminal-text">vs 30 Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="terminal-text">Total Collections</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.total_collections.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Private Collections</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_private.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Public Collections</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_public.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Unlisted Collections</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_unlisted.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Created (24h)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_created_24h.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Created (7d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_created_7d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Created (30d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_created_30d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_30d %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Metrics -->
+    <div class="mx-6 mb-6 terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                {% lucide 'package' size=18 class='text-primary mr-2' %}
+                ITEM METRICS
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Metric</th>
+                            <th class="text-right terminal-text">Current</th>
+                            <th class="text-right terminal-text">vs Yesterday</th>
+                            <th class="text-right terminal-text">vs 7 Days</th>
+                            <th class="text-right terminal-text">vs 30 Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="terminal-text">Total Items</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.total_items.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">In Collection</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_in_collection.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Wanted</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_wanted.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Reserved</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_reserved.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Favorites</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.favorite_items_total.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Created (24h)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_created_24h.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Created (7d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_created_7d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Created (30d)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_created_30d.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_30d %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storage Metrics -->
+    <div class="mx-6 mb-6 terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                {% lucide 'hard-drive' size=18 class='text-primary mr-2' %}
+                STORAGE METRICS
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Metric</th>
+                            <th class="text-right terminal-text">Current</th>
+                            <th class="text-right terminal-text">vs Yesterday</th>
+                            <th class="text-right terminal-text">vs 7 Days</th>
+                            <th class="text-right terminal-text">vs 30 Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="terminal-text">Total Media Files</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.total_media_files.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Total Storage</td>
+                            <td class="text-right font-bold terminal-accent">{{ latest_metrics.total_storage_bytes|filesizeformat }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Uploads (24h)</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.recent_uploads_24h.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Orphaned Files</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.orphaned_files.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Corrupted Files</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.corrupted_files.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_30d %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Engagement Metrics -->
+    <div class="mx-6 mb-6 terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                {% lucide 'trending-up' size=18 class='text-primary mr-2' %}
+                ENGAGEMENT METRICS
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Metric</th>
+                            <th class="text-right terminal-text">Current</th>
+                            <th class="text-right terminal-text">vs Yesterday</th>
+                            <th class="text-right terminal-text">vs 7 Days</th>
+                            <th class="text-right terminal-text">vs 30 Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="terminal-text">Items with Images</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_with_images_pct.current }}%</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Items with Attributes</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_with_attributes_pct.current }}%</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Items with Links</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.items_with_links_pct.current }}%</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Avg Attributes per Item</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.avg_attributes_per_item.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Avg Items per Collection</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.avg_items_per_collection.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_30d %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Moderation Metrics -->
+    <div class="mx-6 mb-6 terminal-bg">
+        <div class="p-6">
+            <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+                {% lucide 'shield' size=18 class='text-primary mr-2' %}
+                CONTENT MODERATION
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm w-full">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Metric</th>
+                            <th class="text-right terminal-text">Current</th>
+                            <th class="text-right terminal-text">vs Yesterday</th>
+                            <th class="text-right terminal-text">vs 7 Days</th>
+                            <th class="text-right terminal-text">vs 30 Days</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="terminal-text">Flagged Content</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.flagged_content.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Pending Review</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.pending_review.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">User Violations</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.user_violations.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_30d %}</td>
+                        </tr>
+                        <tr>
+                            <td class="terminal-text">Banned Users</td>
+                            <td class="text-right font-bold terminal-accent">{{ metrics_data.banned_users.current }}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_1d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_7d %}</td>
+                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_30d %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
 </div>
 
 <script>
-function exportMetrics(format) {
-    // Placeholder for export functionality
-    alert(`Export to ${format.toUpperCase()} not yet implemented`);
-}
-
-function refreshMetrics() {
-    window.location.reload();
-}
-
-// Auto-update timestamp
+// Auto-refresh metrics every 5 minutes
 setInterval(() => {
-    document.getElementById('last-updated').textContent = new Date().toLocaleString();
-}, 60000);
+    window.location.reload();
+}, 300000);
 </script>
 {% endblock %}

@@ -264,81 +264,64 @@ def sys_user_profile(request, user_id):
 @application_admin_required
 @log_execution_time
 def sys_metrics(request):
-    """System metrics and analytics"""
+    """System metrics dashboard using DailyMetrics model"""
+    from web.models import DailyMetrics
+
     logger.info("System metrics accessed by admin user '%s' [%s]", request.user.username, request.user.id)
-    
-    # Time-based metrics
-    now = timezone.now()
-    last_30_days = now - timedelta(days=30)
-    last_7_days = now - timedelta(days=7)
-    
-    # User metrics
-    user_metrics = {
-        'total': User.objects.count(),
-        'active_30d': User.objects.filter(last_login__gte=last_30_days).count(),
-        'active_7d': User.objects.filter(last_login__gte=last_7_days).count(),
-        'new_30d': User.objects.filter(date_joined__gte=last_30_days).count(),
-        'new_7d': User.objects.filter(date_joined__gte=last_7_days).count(),
-    }
-    
-    # Collection metrics
-    collection_metrics = {
-        'total': Collection.objects.count(),
-        'public': Collection.objects.filter(visibility='PUBLIC').count(),
-        'private': Collection.objects.filter(visibility='PRIVATE').count(),
-        'unlisted': Collection.objects.filter(visibility='UNLISTED').count(),
-        'created_30d': Collection.objects.filter(created__gte=last_30_days).count(),
-        'created_7d': Collection.objects.filter(created__gte=last_7_days).count(),
-    }
-    
-    # Item metrics
-    item_metrics = {
-        'total': CollectionItem.objects.count(),
-        'favorites': CollectionItem.objects.filter(is_favorite=True).count(),
-        'reserved': CollectionItem.objects.filter(status='RESERVED').count(),
-        'wanted': CollectionItem.objects.filter(status='WANTED').count(),
-        'created_30d': CollectionItem.objects.filter(created__gte=last_30_days).count(),
-        'created_7d': CollectionItem.objects.filter(created__gte=last_7_days).count(),
-    }
-    
-    # Activity metrics
-    activity_metrics = {
-        'total': RecentActivity.objects.count(),
-        'last_30d': RecentActivity.objects.filter(created__gte=last_30_days).count(),
-        'last_7d': RecentActivity.objects.filter(created__gte=last_7_days).count(),
-        'top_actions': RecentActivity.objects.values('name').annotate(
-            count=Count('id')
-        ).order_by('-count')[:5]
-    }
-    
-    # Item type distribution
-    item_type_distribution = CollectionItem.objects.values(
-        'item_type__display_name'
-    ).annotate(count=Count('id')).order_by('-count')
-    
-    # Media storage metrics
-    media_stats = MediaFile.get_storage_statistics()
-    media_metrics = {
-        'total_files': media_stats.get('total_files', 0),
-        'active_files': media_stats.get('active_files', 0),
-        'missing_files': media_stats.get('missing_files', 0),
-        'recent_uploads': media_stats.get('recent_uploads', 0),
-        'total_size': media_stats.get('size_statistics', {}).get('total_size', 0),
-        'average_size': media_stats.get('size_statistics', {}).get('average_size', 0),
-        'storage_distribution': media_stats.get('storage_distribution', []),
-        'type_distribution': media_stats.get('type_distribution', []),
-    }
-    
+
+    # Get latest metrics
+    latest_metrics = DailyMetrics.objects.order_by('-collection_date').first()
+
+    if not latest_metrics:
+        return render(request, 'sys/metrics.html', {'no_metrics': True})
+
+    # Get historical for charts (last 30 days)
+    historical = list(DailyMetrics.objects.order_by('-collection_date')[:30])
+    historical.reverse()  # Oldest first for charts
+
+    # Get threshold settings from environment
+    alert_warning = int(os.environ.get('METRICS_ALERT_THRESHOLD_WARNING', 10))
+    alert_critical = int(os.environ.get('METRICS_ALERT_THRESHOLD_CRITICAL', 25))
+
+    # Pre-compute all metrics with their trend data
+    # Define all metric fields we want to display
+    metric_fields = [
+        # User metrics
+        'total_users', 'active_users_24h', 'active_users_7d', 'active_users_30d',
+        'new_users_24h', 'new_users_7d', 'new_users_30d',
+        # Collection metrics
+        'total_collections', 'collections_private', 'collections_public', 'collections_unlisted',
+        'collections_created_24h', 'collections_created_7d', 'collections_created_30d',
+        # Item metrics
+        'total_items', 'items_in_collection', 'items_wanted', 'items_reserved', 'favorite_items_total',
+        'items_created_24h', 'items_created_7d', 'items_created_30d',
+        # Storage metrics
+        'total_media_files', 'total_storage_bytes', 'recent_uploads_24h', 'orphaned_files', 'corrupted_files',
+        # Engagement metrics
+        'items_with_images_pct', 'items_with_attributes_pct', 'items_with_links_pct',
+        'avg_attributes_per_item', 'avg_items_per_collection',
+        # Moderation metrics
+        'flagged_content', 'pending_review', 'user_violations', 'banned_users',
+    ]
+
+    # Build metrics_data dict with current value and trends
+    metrics_data = {}
+    for field in metric_fields:
+        metrics_data[field] = {
+            'current': getattr(latest_metrics, field),
+            'change_1d': latest_metrics.get_change(field, 1),
+            'change_7d': latest_metrics.get_change(field, 7),
+            'change_30d': latest_metrics.get_change(field, 30),
+        }
+
     context = {
-        'user_metrics': user_metrics,
-        'collection_metrics': collection_metrics,
-        'item_metrics': item_metrics,
-        'activity_metrics': activity_metrics,
-        'item_type_distribution': item_type_distribution,
-        'media_metrics': media_metrics,
-        'debug': settings.DEBUG,
+        'latest_metrics': latest_metrics,
+        'metrics_data': metrics_data,
+        'historical': historical,
+        'alert_warning': alert_warning,
+        'alert_critical': alert_critical,
     }
-    
+
     return render(request, 'sys/metrics.html', context)
 
 

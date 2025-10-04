@@ -25,10 +25,30 @@ def admin_media_url(media_file):
     """
     Always get the actual file URL regardless of moderation status.
     Use this in admin/SYS templates where you want to see the actual content.
-    
+
     Usage: {% admin_media_url image %}
     """
     if not media_file:
         return ""
-    
+
     return media_file.file_url
+
+
+@register.filter
+def get_item(dictionary, key):
+    """
+    Template filter to get item from dictionary by key.
+    Used for accessing nested dictionaries in templates.
+
+    Usage: {{ my_dict|get_item:'key_name' }}
+    """
+    if dictionary is None:
+        return None
+    if isinstance(dictionary, dict):
+        return dictionary.get(key)
+    # Handle methods that return dictionaries
+    if callable(dictionary):
+        result = dictionary()
+        if isinstance(result, dict):
+            return result.get(key)
+    return None
