@@ -124,30 +124,59 @@ These changes will be later replicated to other views, so we need to make them c
 # - number of media files without association to item or collection (preauthorized likt to job to purge that)
 # - 
 
-Metrics:
+Create a new Model for collectiong the following metrics:
  Users:
  - Total users
  - Active (24h, 7d, 30d)
  - New (24h, 7d, 30d)
- - Collections
+ Collections:
  - Items
  - Item type distribution
  - Collection Visibility (Private/Public/Unlisted)
  - Item Status (In collection, lent out, ordered, previously owned, reserved, wanted)
- - Item Types and attributes
- - Link patterns (matching and not matching)
+ - Item Types and attributes usage and distribution
+ Other:
+ - Link patterns (matching and not matching) used by all links in collections and items
+ Storage:
  - Media storage
  - total files
  - Storage used
  - Recent Uploads (24h, 7d, 30d)
  - file integrity
+ Email:
  - Total emails
  - Pending
  - Sent
  - Failed
  - Marketing consent (opt-in, opt-out)
  - Synced with resend
- - Content moderation: flagged, pending review, user violations, banned users
+ Content moderation: 
+ - flagged
+ - pending review
+ - user violations
+ - banned users
+
+These metrics should be collected once per day, preferably around midnight and another entry should be created.
+I want to receive email (on superuser registered email) with a current value, change from day before and change from 1 week before. The execution of that should be done by management command, update deployment scripts (preproduction, production) to deploy this job.
+Also, in SYS panel compltelly redesign /sys/metrics and include only these mentioned data from new Model. Make it as a table - first column: metric name followed by: current value, change from yesterday, change from 1 week, change in 30d (use colors and arrows: green up, red down).
+Indicate the date (below action buttons) of last metrics collection.
+Update /sys/metrics/prometheus to match this data.
+Review this task first, and propose other reasonable metrics I can review.
+After approval, execute all this tasks locally and update all necessary scripts and make targets if necessary.
+
+Phase 2, point 1: this will be cron job, we do not use Cloud run anymore.
+Phase 4, yes create grafana config for this dashboard
+Timezone: Europe/Zurich always
+
+Questions:
+1. Yes add them
+2. HTML is ok
+3. 10% yellow, 25% red, configurabe in ENV variables
+4. 1 year is ok, configurable in ENV variable
+5. Yes
+6. I'm using Resend to track emails
+
+Go ahead.
 
  When adding item, user should be able to select initial type of item.
 
@@ -174,3 +203,11 @@ When item has attributes which do not belong to current item type, there should 
 Add grouping and "sort by this attribute (or name, or status or...)"
 
 Add a field for item "Your Id" and "location"
+
+(Item) move dialog to another colelction need some UI improvements.
+
+Eventually display on top statiscics from attributes (how many read, authors, etc.) and let filter with that values.
+
+Thumbnail image (the main image for the item, should be clickable and lead to item details), same for categories
+
+Mobile version of the app need some UI improvements.

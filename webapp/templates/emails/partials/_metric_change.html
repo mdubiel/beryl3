@@ -1,0 +1,17 @@
+{% if change.change is not None %}
+    {% if change.direction == 1 %}
+        <span class="change {% if change.change_pct >= threshold_critical %}change-critical{% elif change.change_pct >= threshold_warning %}change-warning{% else %}change-up{% endif %}">
+            <span class="arrow arrow-up">↑</span>
+            +{{ change.change }} (+{{ change.change_pct }}%)
+        </span>
+    {% elif change.direction == -1 %}
+        <span class="change change-down">
+            <span class="arrow arrow-down">↓</span>
+            {{ change.change }} ({{ change.change_pct }}%)
+        </span>
+    {% else %}
+        <span class="change change-neutral">—</span>
+    {% endif %}
+{% else %}
+    <span class="change change-neutral">N/A</span>
+{% endif %}

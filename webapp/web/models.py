@@ -1263,3 +1263,6 @@ class CollectionItemImage(BerylModel):
 
 # Import user profile models
 from .models_user_profile import UserProfile
+
+# Import metrics models
+from .models_metrics import DailyMetrics
