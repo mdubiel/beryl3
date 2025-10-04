@@ -37,7 +37,7 @@ GAR_IMAGE_LATEST = $(GAR_REGISTRY)/$(GCP_PROJECT_ID)/$(GAR_REPOSITORY)/$(DOCKER_
 
 # Phony targets: these targets do not produce an output file with the same name.
 # This prevents conflicts if a file with the same name as the target exists.
-.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services dje-pre-git-deploy dje-pre-git-deploy-release dje-prod-git-deploy dje-prod-git-deploy-release dje-prod-verify-env dje-prod-migrate dje-prod-setup-initial-users dje-prod-setup-site dje-prod-seed dje-prod-collectstatic dje-prod-test-email dje-prod-send-queued-mail dje-prod-deploy-all dje-prod-status dje-prod-setup-logrotate dje-prod-setup-cron dje-prod-setup-services
+.PHONY: all build-css run-dev-server clean makemigrations migrate help docker-build version-info bump-build bump-minor bump-major gcp-auth gcp-push gcp-deploy gcp-info qa-db-setup qa-db-status qa-start qa-shutdown qa-deploy qa-deploy-with-probe qa-cloudrun-deploy qa-cloudrun-update qa-cloudrun-logs qa-cloudrun-info qa-cloudrun-scale qa-cloudrun-traffic qa-cloudrun-rollback qa-cloudrun-delete qa-status dje-pre-verify-env dje-pre-migrate dje-pre-setup-initial-users dje-pre-setup-site dje-pre-seed dje-pre-collectstatic dje-pre-test-email dje-pre-send-queued-mail dje-pre-deploy-all dje-pre-status dje-pre-setup-logrotate dje-pre-setup-cron dje-pre-setup-services dje-pre-git-deploy dje-pre-git-deploy-release dje-prod-git-deploy dje-prod-git-deploy-release dje-prod-verify-env dje-prod-migrate dje-prod-setup-initial-users dje-prod-setup-site dje-prod-seed dje-prod-collectstatic dje-prod-test-email dje-prod-send-queued-mail dje-prod-deploy-all dje-prod-status dje-prod-setup-logrotate dje-prod-setup-cron dje-prod-setup-services collect-metrics collect-metrics-email view-metrics
 
 # Default target: executed when you run 'make' without specifying a target.
 # It depends on 'build-css', so it will build the CSS.
@@ -699,3 +699,19 @@ dje-prod-setup-services: dje-prod-setup-logrotate dje-prod-setup-cron ## Setup a
 	@echo "  - Log files: $(DJE_PROD_PATH)/logs/*.log and *.jsonl"
 	@echo "  - Manual execution: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"
 	@echo "🎉 All background services configured successfully!"
+
+# ==============================================================================
+# METRICS COLLECTION
+# ==============================================================================
+
+collect-metrics: ## Collect daily metrics (verbose output)
+	@echo "📊 Collecting daily metrics..."
+	$(MANAGE_PY) collect_daily_metrics --verbose
+
+collect-metrics-email: ## Collect daily metrics and send email report to superusers
+	@echo "📊 Collecting daily metrics and sending email report..."
+	$(MANAGE_PY) collect_daily_metrics --verbose --send-email
+
+view-metrics: ## View latest metrics in terminal
+	@echo "📊 Latest metrics snapshot:"
+	@$(MANAGE_PY) shell -c "from web.models import DailyMetrics; m = DailyMetrics.objects.order_by('-collection_date').first(); print(f'\\n📅 Date: {m.collection_date}\\n👥 Users: {m.total_users}\\n📦 Collections: {m.total_collections}\\n📝 Items: {m.total_items}\\n💾 Storage: {m.total_storage_bytes / 1024 / 1024:.2f} MB\\n⏱️  Collection took: {m.collection_duration_seconds}s\\n') if m else print('\\n⚠️  No metrics collected yet. Run: make collect-metrics\\n')"
