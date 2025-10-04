@@ -326,285 +326,274 @@ def sys_metrics(request):
 
 
 def sys_prometheus_metrics(request):
-    """Prometheus-compatible metrics endpoint for Grafana"""
+    """Prometheus-compatible metrics endpoint for Grafana using DailyMetrics"""
+    from web.models import DailyMetrics
+    from django.http import HttpResponse
+
     logger.info("Prometheus metrics accessed")
-    
-    # Time-based metrics
-    now = timezone.now()
-    last_30_days = now - timedelta(days=30)
-    last_7_days = now - timedelta(days=7)
-    last_24_hours = now - timedelta(hours=24)
-    
+
+    # Get latest metrics from DailyMetrics
+    latest = DailyMetrics.objects.order_by('-collection_date').first()
+
+    if not latest:
+        return HttpResponse('# No metrics available\n', content_type='text/plain; version=0.0.4; charset=utf-8')
+
     # Collect all metrics
     metrics = []
-    
+
     # User metrics
-    total_users = User.objects.count()
-    active_users_30d = User.objects.filter(last_login__gte=last_30_days).count()
-    active_users_7d = User.objects.filter(last_login__gte=last_7_days).count()
-    active_users_24h = User.objects.filter(last_login__gte=last_24_hours).count()
-    new_users_30d = User.objects.filter(date_joined__gte=last_30_days).count()
-    new_users_7d = User.objects.filter(date_joined__gte=last_7_days).count()
-    superusers = User.objects.filter(is_superuser=True).count()
-    staff_users = User.objects.filter(is_staff=True).count()
-    app_admin_users = User.objects.filter(groups__name='Application admin').count()
-    
     metrics.extend([
         f'# HELP beryl_users_total Total number of users',
         f'# TYPE beryl_users_total gauge',
-        f'beryl_users_total {total_users}',
+        f'beryl_users_total {latest.total_users}',
         f'',
         f'# HELP beryl_users_active Active users by time period',
         f'# TYPE beryl_users_active gauge',
-        f'beryl_users_active{{period="24h"}} {active_users_24h}',
-        f'beryl_users_active{{period="7d"}} {active_users_7d}',
-        f'beryl_users_active{{period="30d"}} {active_users_30d}',
+        f'beryl_users_active{{period="24h"}} {latest.active_users_24h}',
+        f'beryl_users_active{{period="7d"}} {latest.active_users_7d}',
+        f'beryl_users_active{{period="30d"}} {latest.active_users_30d}',
         f'',
         f'# HELP beryl_users_new New users by time period',
         f'# TYPE beryl_users_new gauge',
-        f'beryl_users_new{{period="7d"}} {new_users_7d}',
-        f'beryl_users_new{{period="30d"}} {new_users_30d}',
-        f'',
-        f'# HELP beryl_users_permissions Users by permission level',
-        f'# TYPE beryl_users_permissions gauge',
-        f'beryl_users_permissions{{type="superuser"}} {superusers}',
-        f'beryl_users_permissions{{type="staff"}} {staff_users}',
-        f'beryl_users_permissions{{type="application_admin"}} {app_admin_users}',
+        f'beryl_users_new{{period="24h"}} {latest.new_users_24h}',
+        f'beryl_users_new{{period="7d"}} {latest.new_users_7d}',
+        f'beryl_users_new{{period="30d"}} {latest.new_users_30d}',
         f'',
     ])
-    
+
     # Collection metrics
-    total_collections = Collection.objects.count()
-    public_collections = Collection.objects.filter(visibility='PUBLIC').count()
-    private_collections = Collection.objects.filter(visibility='PRIVATE').count()
-    unlisted_collections = Collection.objects.filter(visibility='UNLISTED').count()
-    collections_30d = Collection.objects.filter(created__gte=last_30_days).count()
-    collections_7d = Collection.objects.filter(created__gte=last_7_days).count()
-    
     metrics.extend([
         f'# HELP beryl_collections_total Total number of collections',
         f'# TYPE beryl_collections_total gauge',
-        f'beryl_collections_total {total_collections}',
+        f'beryl_collections_total {latest.total_collections}',
         f'',
         f'# HELP beryl_collections_by_visibility Collections by visibility type',
         f'# TYPE beryl_collections_by_visibility gauge',
-        f'beryl_collections_by_visibility{{visibility="public"}} {public_collections}',
-        f'beryl_collections_by_visibility{{visibility="private"}} {private_collections}',
-        f'beryl_collections_by_visibility{{visibility="unlisted"}} {unlisted_collections}',
+        f'beryl_collections_by_visibility{{visibility="public"}} {latest.collections_public}',
+        f'beryl_collections_by_visibility{{visibility="private"}} {latest.collections_private}',
+        f'beryl_collections_by_visibility{{visibility="unlisted"}} {latest.collections_unlisted}',
         f'',
-        f'# HELP beryl_collections_new New collections by time period',
-        f'# TYPE beryl_collections_new gauge',
-        f'beryl_collections_new{{period="7d"}} {collections_7d}',
-        f'beryl_collections_new{{period="30d"}} {collections_30d}',
+        f'# HELP beryl_collections_created Collections created by time period',
+        f'# TYPE beryl_collections_created gauge',
+        f'beryl_collections_created{{period="24h"}} {latest.collections_created_24h}',
+        f'beryl_collections_created{{period="7d"}} {latest.collections_created_7d}',
+        f'beryl_collections_created{{period="30d"}} {latest.collections_created_30d}',
         f'',
     ])
-    
+
     # Item metrics
-    total_items = CollectionItem.objects.count()
-    favorite_items = CollectionItem.objects.filter(is_favorite=True).count()
-    items_30d = CollectionItem.objects.filter(created__gte=last_30_days).count()
-    items_7d = CollectionItem.objects.filter(created__gte=last_7_days).count()
-    
-    # Items by status
-    status_counts = CollectionItem.objects.values('status').annotate(count=Count('id'))
-    status_metrics = []
-    for status_data in status_counts:
-        status = status_data['status'].lower() if status_data['status'] else 'unknown'
-        count = status_data['count']
-        status_metrics.append(f'beryl_items_by_status{{status="{status}"}} {count}')
-    
     metrics.extend([
         f'# HELP beryl_items_total Total number of items',
         f'# TYPE beryl_items_total gauge',
-        f'beryl_items_total {total_items}',
-        f'',
-        f'# HELP beryl_items_favorites Total favorite items',
-        f'# TYPE beryl_items_favorites gauge',
-        f'beryl_items_favorites {favorite_items}',
-        f'',
-        f'# HELP beryl_items_new New items by time period',
-        f'# TYPE beryl_items_new gauge',
-        f'beryl_items_new{{period="7d"}} {items_7d}',
-        f'beryl_items_new{{period="30d"}} {items_30d}',
+        f'beryl_items_total {latest.total_items}',
         f'',
         f'# HELP beryl_items_by_status Items grouped by status',
         f'# TYPE beryl_items_by_status gauge',
-    ])
-    metrics.extend(status_metrics)
-    metrics.append('')
-    
-    # Activity metrics
-    total_activities = RecentActivity.objects.count()
-    activities_24h = RecentActivity.objects.filter(created__gte=last_24_hours).count()
-    activities_7d = RecentActivity.objects.filter(created__gte=last_7_days).count()
-    activities_30d = RecentActivity.objects.filter(created__gte=last_30_days).count()
-    
-    # Top activities
-    top_activities = RecentActivity.objects.values('name').annotate(
-        count=Count('id')
-    ).order_by('-count')[:10]
-    
-    activity_metrics = []
-    for activity in top_activities:
-        name = activity['name'].replace(' ', '_').lower() if activity['name'] else 'unknown'
-        count = activity['count']
-        activity_metrics.append(f'beryl_activities_by_type{{type="{name}"}} {count}')
-    
-    metrics.extend([
-        f'# HELP beryl_activities_total Total number of activities',
-        f'# TYPE beryl_activities_total gauge',
-        f'beryl_activities_total {total_activities}',
+        f'beryl_items_by_status{{status="in_collection"}} {latest.items_in_collection}',
+        f'beryl_items_by_status{{status="wanted"}} {latest.items_wanted}',
+        f'beryl_items_by_status{{status="reserved"}} {latest.items_reserved}',
+        f'beryl_items_by_status{{status="ordered"}} {latest.items_ordered}',
+        f'beryl_items_by_status{{status="lent"}} {latest.items_lent}',
+        f'beryl_items_by_status{{status="previously_owned"}} {latest.items_previously_owned}',
+        f'beryl_items_by_status{{status="sold"}} {latest.items_sold}',
+        f'beryl_items_by_status{{status="given_away"}} {latest.items_given_away}',
         f'',
-        f'# HELP beryl_activities_recent Recent activities by time period',
-        f'# TYPE beryl_activities_recent gauge',
-        f'beryl_activities_recent{{period="24h"}} {activities_24h}',
-        f'beryl_activities_recent{{period="7d"}} {activities_7d}',
-        f'beryl_activities_recent{{period="30d"}} {activities_30d}',
+        f'# HELP beryl_items_favorites Total favorite items',
+        f'# TYPE beryl_items_favorites gauge',
+        f'beryl_items_favorites {latest.favorite_items_total}',
         f'',
-        f'# HELP beryl_activities_by_type Activities grouped by type',
-        f'# TYPE beryl_activities_by_type gauge',
+        f'# HELP beryl_items_created Items created by time period',
+        f'# TYPE beryl_items_created gauge',
+        f'beryl_items_created{{period="24h"}} {latest.items_created_24h}',
+        f'beryl_items_created{{period="7d"}} {latest.items_created_7d}',
+        f'beryl_items_created{{period="30d"}} {latest.items_created_30d}',
+        f'',
     ])
-    metrics.extend(activity_metrics)
-    metrics.append('')
-    
-    # Item type distribution
-    item_type_distribution = CollectionItem.objects.values(
-        'item_type__display_name'
-    ).annotate(count=Count('id')).order_by('-count')
-    
-    type_metrics = []
-    for type_data in item_type_distribution:
-        type_name = type_data['item_type__display_name']
-        if type_name:
-            type_name = type_name.replace(' ', '_').lower()
-            count = type_data['count']
-            type_metrics.append(f'beryl_items_by_type{{type="{type_name}"}} {count}')
-    
-    if type_metrics:
+
+    # Item type distribution (from JSON field)
+    if latest.item_type_distribution:
         metrics.extend([
             f'# HELP beryl_items_by_type Items grouped by type',
             f'# TYPE beryl_items_by_type gauge',
         ])
-        metrics.extend(type_metrics)
+        for type_name, count in latest.item_type_distribution.items():
+            safe_name = type_name.replace(' ', '_').replace('-', '_').lower()
+            metrics.append(f'beryl_items_by_type{{type="{safe_name}"}} {count}')
         metrics.append('')
-    
-    # Media storage metrics
-    media_stats = MediaFile.get_storage_statistics()
-    
-    # Basic media file counts
+
+    # Link metrics
     metrics.extend([
-        f'# HELP beryl_media_files_total Total number of media files',
-        f'# TYPE beryl_media_files_total gauge',
-        f'beryl_media_files_total {media_stats.get("total_files", 0)}',
+        f'# HELP beryl_links_total Total links in items and collections',
+        f'# TYPE beryl_links_total gauge',
+        f'beryl_links_total {latest.total_links}',
         f'',
-        f'# HELP beryl_media_files_active Active media files in storage',
-        f'# TYPE beryl_media_files_active gauge',
-        f'beryl_media_files_active {media_stats.get("active_files", 0)}',
+        f'# HELP beryl_links_matched Links matching defined patterns',
+        f'# TYPE beryl_links_matched gauge',
+        f'beryl_links_matched {latest.matched_link_patterns}',
         f'',
-        f'# HELP beryl_media_files_missing Missing media files',
-        f'# TYPE beryl_media_files_missing gauge',
-        f'beryl_media_files_missing {media_stats.get("missing_files", 0)}',
-        f'',
-        f'# HELP beryl_media_uploads_recent Recent media uploads (7 days)',
-        f'# TYPE beryl_media_uploads_recent gauge',
-        f'beryl_media_uploads_recent {media_stats.get("recent_uploads", 0)}',
+        f'# HELP beryl_links_unmatched Links not matching any pattern',
+        f'# TYPE beryl_links_unmatched gauge',
+        f'beryl_links_unmatched {latest.unmatched_link_patterns}',
         f'',
     ])
-    
-    # Storage size metrics
-    size_stats = media_stats.get('size_statistics', {})
-    if size_stats.get('total_size'):
+
+    # Link pattern distribution (from JSON field)
+    if latest.link_pattern_distribution:
         metrics.extend([
-            f'# HELP beryl_media_storage_bytes Total storage used by media files',
-            f'# TYPE beryl_media_storage_bytes gauge',
-            f'beryl_media_storage_bytes {size_stats.get("total_size", 0)}',
-            f'',
-            f'# HELP beryl_media_average_size_bytes Average media file size',
-            f'# TYPE beryl_media_average_size_bytes gauge',
-            f'beryl_media_average_size_bytes {size_stats.get("average_size", 0)}',
-            f'',
+            f'# HELP beryl_links_by_pattern Link usage by pattern',
+            f'# TYPE beryl_links_by_pattern gauge',
         ])
-    
-    # Storage distribution by backend
-    storage_metrics = []
-    for storage_data in media_stats.get('storage_distribution', []):
-        backend = storage_data.get('storage_backend', '').lower()
-        count = storage_data.get('count', 0)
-        total_size = storage_data.get('total_size', 0)
-        if backend:
-            storage_metrics.append(f'beryl_media_files_by_storage{{backend="{backend}"}} {count}')
-            if total_size:
-                storage_metrics.append(f'beryl_media_storage_by_backend{{backend="{backend}"}} {total_size}')
-    
-    if storage_metrics:
-        metrics.extend([
-            f'# HELP beryl_media_files_by_storage Media files by storage backend',
-            f'# TYPE beryl_media_files_by_storage gauge',
-        ])
-        # Add file count metrics
-        for metric in storage_metrics:
-            if 'beryl_media_files_by_storage' in metric:
-                metrics.append(metric)
-        metrics.extend([
-            f'',
-            f'# HELP beryl_media_storage_by_backend Storage usage by backend',
-            f'# TYPE beryl_media_storage_by_backend gauge',
-        ])
-        # Add storage size metrics
-        for metric in storage_metrics:
-            if 'beryl_media_storage_by_backend' in metric:
-                metrics.append(metric)
+        for pattern_name, count in latest.link_pattern_distribution.items():
+            safe_name = pattern_name.replace(' ', '_').replace('-', '_').lower()
+            metrics.append(f'beryl_links_by_pattern{{pattern="{safe_name}"}} {count}')
         metrics.append('')
-    
-    # Media type distribution
-    media_type_metrics = []
-    for type_data in media_stats.get('type_distribution', []):
-        media_type = type_data.get('media_type', '').lower()
-        count = type_data.get('count', 0)
-        total_size = type_data.get('total_size', 0)
-        if media_type:
-            media_type_metrics.append(f'beryl_media_files_by_type{{type="{media_type}"}} {count}')
-            if total_size:
-                media_type_metrics.append(f'beryl_media_storage_by_type{{type="{media_type}"}} {total_size}')
-    
-    if media_type_metrics:
-        metrics.extend([
-            f'# HELP beryl_media_files_by_type Media files by media type',
-            f'# TYPE beryl_media_files_by_type gauge',
-        ])
-        # Add file count metrics
-        for metric in media_type_metrics:
-            if 'beryl_media_files_by_type' in metric:
-                metrics.append(metric)
-        metrics.extend([
-            f'',
-            f'# HELP beryl_media_storage_by_type Storage usage by media type',
-            f'# TYPE beryl_media_storage_by_type gauge',
-        ])
-        # Add storage size metrics
-        for metric in media_type_metrics:
-            if 'beryl_media_storage_by_type' in metric:
-                metrics.append(metric)
-        metrics.append('')
-    
-    # System timestamp
+
+    # Storage metrics
     metrics.extend([
-        f'# HELP beryl_metrics_timestamp_seconds Timestamp when metrics were generated',
-        f'# TYPE beryl_metrics_timestamp_seconds gauge',
-        f'beryl_metrics_timestamp_seconds {int(now.timestamp())}',
+        f'# HELP beryl_storage_files_total Total media files',
+        f'# TYPE beryl_storage_files_total gauge',
+        f'beryl_storage_files_total {latest.total_media_files}',
+        f'',
+        f'# HELP beryl_storage_bytes_total Total storage used in bytes',
+        f'# TYPE beryl_storage_bytes_total gauge',
+        f'beryl_storage_bytes_total {latest.total_storage_bytes}',
+        f'',
+        f'# HELP beryl_storage_uploads_recent Recent uploads by time period',
+        f'# TYPE beryl_storage_uploads_recent gauge',
+        f'beryl_storage_uploads_recent{{period="24h"}} {latest.recent_uploads_24h}',
+        f'beryl_storage_uploads_recent{{period="7d"}} {latest.recent_uploads_7d}',
+        f'beryl_storage_uploads_recent{{period="30d"}} {latest.recent_uploads_30d}',
+        f'',
+        f'# HELP beryl_storage_orphaned_files Media files not linked to items/collections',
+        f'# TYPE beryl_storage_orphaned_files gauge',
+        f'beryl_storage_orphaned_files {latest.orphaned_files}',
+        f'',
+        f'# HELP beryl_storage_corrupted_files Media files that failed integrity check',
+        f'# TYPE beryl_storage_corrupted_files gauge',
+        f'beryl_storage_corrupted_files {latest.corrupted_files}',
         f'',
     ])
-    
+
+    # Storage by type distribution (from JSON field)
+    if latest.storage_by_type:
+        metrics.extend([
+            f'# HELP beryl_storage_by_type Storage distribution by file type',
+            f'# TYPE beryl_storage_by_type gauge',
+        ])
+        for file_ext, size_bytes in latest.storage_by_type.items():
+            safe_ext = file_ext.replace('.', '').lower()
+            metrics.append(f'beryl_storage_by_type{{extension="{safe_ext}"}} {size_bytes}')
+        metrics.append('')
+
+    # Attribute metrics
+    metrics.extend([
+        f'# HELP beryl_attributes_total Total attribute definitions',
+        f'# TYPE beryl_attributes_total gauge',
+        f'beryl_attributes_total {latest.total_attributes}',
+        f'',
+    ])
+
+    # Attribute usage distribution (from JSON field)
+    if latest.attribute_usage:
+        metrics.extend([
+            f'# HELP beryl_attributes_usage Attribute usage statistics',
+            f'# TYPE beryl_attributes_usage gauge',
+        ])
+        for attr_name, count in latest.attribute_usage.items():
+            safe_name = attr_name.replace(' ', '_').replace('-', '_').lower()
+            metrics.append(f'beryl_attributes_usage{{attribute="{safe_name}"}} {count}')
+        metrics.append('')
+
+    # Email metrics (if available)
+    if latest.total_emails is not None:
+        metrics.extend([
+            f'# HELP beryl_emails_total Total emails tracked',
+            f'# TYPE beryl_emails_total gauge',
+            f'beryl_emails_total {latest.total_emails}',
+            f'',
+            f'# HELP beryl_emails_by_status Emails by delivery status',
+            f'# TYPE beryl_emails_by_status gauge',
+            f'beryl_emails_by_status{{status="pending"}} {latest.emails_pending or 0}',
+            f'beryl_emails_by_status{{status="sent"}} {latest.emails_sent or 0}',
+            f'beryl_emails_by_status{{status="failed"}} {latest.emails_failed or 0}',
+            f'',
+            f'# HELP beryl_emails_marketing_opt Marketing email preferences',
+            f'# TYPE beryl_emails_marketing_opt gauge',
+            f'beryl_emails_marketing_opt{{status="opted_in"}} {latest.marketing_opt_in or 0}',
+            f'beryl_emails_marketing_opt{{status="opted_out"}} {latest.marketing_opt_out or 0}',
+            f'',
+        ])
+
+    # Content moderation metrics
+    metrics.extend([
+        f'# HELP beryl_moderation_flagged Content items flagged for review',
+        f'# TYPE beryl_moderation_flagged gauge',
+        f'beryl_moderation_flagged {latest.flagged_content}',
+        f'',
+        f'# HELP beryl_moderation_pending Content items pending moderation',
+        f'# TYPE beryl_moderation_pending gauge',
+        f'beryl_moderation_pending {latest.pending_review}',
+        f'',
+        f'# HELP beryl_moderation_violations Total user violations',
+        f'# TYPE beryl_moderation_violations gauge',
+        f'beryl_moderation_violations {latest.user_violations}',
+        f'',
+        f'# HELP beryl_moderation_banned_users Currently banned users',
+        f'# TYPE beryl_moderation_banned_users gauge',
+        f'beryl_moderation_banned_users {latest.banned_users}',
+        f'',
+    ])
+
+    # Engagement metrics
+    metrics.extend([
+        f'# HELP beryl_engagement_items_with_images_pct Percentage of items with images',
+        f'# TYPE beryl_engagement_items_with_images_pct gauge',
+        f'beryl_engagement_items_with_images_pct {float(latest.items_with_images_pct)}',
+        f'',
+        f'# HELP beryl_engagement_items_with_attributes_pct Percentage of items with custom attributes',
+        f'# TYPE beryl_engagement_items_with_attributes_pct gauge',
+        f'beryl_engagement_items_with_attributes_pct {float(latest.items_with_attributes_pct)}',
+        f'',
+        f'# HELP beryl_engagement_items_with_links_pct Percentage of items with links',
+        f'# TYPE beryl_engagement_items_with_links_pct gauge',
+        f'beryl_engagement_items_with_links_pct {float(latest.items_with_links_pct)}',
+        f'',
+        f'# HELP beryl_engagement_avg_attributes_per_item Average attributes per item',
+        f'# TYPE beryl_engagement_avg_attributes_per_item gauge',
+        f'beryl_engagement_avg_attributes_per_item {float(latest.avg_attributes_per_item)}',
+        f'',
+        f'# HELP beryl_engagement_avg_items_per_collection Average items per collection',
+        f'# TYPE beryl_engagement_avg_items_per_collection gauge',
+        f'beryl_engagement_avg_items_per_collection {float(latest.avg_items_per_collection)}',
+        f'',
+    ])
+
+    # Item type counts
+    metrics.extend([
+        f'# HELP beryl_item_types_count Total item types defined',
+        f'# TYPE beryl_item_types_count gauge',
+        f'beryl_item_types_count {latest.item_types_count}',
+        f'',
+    ])
+
+    # Metadata
+    metrics.extend([
+        f'# HELP beryl_metrics_collection_duration_seconds How long metrics collection took',
+        f'# TYPE beryl_metrics_collection_duration_seconds gauge',
+        f'beryl_metrics_collection_duration_seconds {latest.collection_duration_seconds}',
+        f'',
+        f'# HELP beryl_metrics_collection_timestamp_seconds When metrics were collected',
+        f'# TYPE beryl_metrics_collection_timestamp_seconds gauge',
+        f'beryl_metrics_collection_timestamp_seconds {int(latest.collected_at.timestamp())}',
+        f'',
+    ])
+
     # Join all metrics with newlines
     response_content = '\n'.join(metrics)
-    
+
     return HttpResponse(response_content, content_type='text/plain; version=0.0.4; charset=utf-8')
 
 
-
-
-@application_admin_required
-@require_http_methods(["POST"])
 def sys_user_toggle_active(request, user_id):
     """Toggle user active status via HTMX"""
     user = get_object_or_404(User, id=user_id)
