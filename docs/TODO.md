@@ -148,3 +148,29 @@ Metrics:
  - Marketing consent (opt-in, opt-out)
  - Synced with resend
  - Content moderation: flagged, pending review, user violations, banned users
+
+ When adding item, user should be able to select initial type of item.
+
+ Item type popup is too large, it has to be splitted into 3 or 4 columns to fit all elements without need to scroll the page.
+
+ When adding attribute type boolean, user should be presented with checkbox with a label not input form. This has to be loaded dynamically with HX.
+
+ In add link modal the text " Custom Display Name (Optional) Leave empty to auto-detect from URL" should wrap, it is too long.
+
+ After editing or adding new item user should be redirected to that item, not to the collection.
+
+ On item details page add extra button to add attrinute and add link in the attributes and links table in addition to action buttons on top.
+
+ Add filtering options in collection view to limit number of displayed items.
+
+ Add pagination to collection.
+
+ Cannot add two attributes with same key (eg.: two authors of the same book).
+
+When collection has a "series" of some attribute, eg. there is "series of diskworl noveles" (items sharing the same attribute key and value), they could be grupped. It can be enabled per collection via checkbox "enable grouping". It can be sen only by owners, and all llist displays needs to respect that.
+
+When item has attributes which do not belong to current item type, there should be some hint that there are hidden attributes.
+
+Add grouping and "sort by this attribute (or name, or status or...)"
+
+Add a field for item "Your Id" and "location"

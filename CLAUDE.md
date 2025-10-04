@@ -28,6 +28,26 @@ When user says "process TODO", execute the following workflow:
 - Commit message format: "task: [Task number] - [Brief description]"
 - Include all related changes in single commit
 
+### Pre-Commit Validation:
+Before creating any commit, **ALWAYS** run the Lucide icon validator to ensure all icons are valid:
+
+```bash
+python workflows/bin/validate_lucide.py
+```
+
+This prevents runtime errors caused by invalid Lucide icon names. The validator checks:
+- All `{% lucide 'icon-name' %}` tags in Django templates
+- Hardcoded `icon="name"` values in Python code
+- Icon arrays in JavaScript (e.g., `commonIcons`)
+- Database-stored icons in RecentActivity, ItemType, and LinkPattern models
+
+If validation fails, fix the issues or run with `--fix` flag to auto-correct known issues:
+```bash
+python workflows/bin/validate_lucide.py --fix
+```
+
+**IMPORTANT**: Never commit code with invalid Lucide icons. All commits must pass icon validation.
+
 This workflow ensures systematic completion of all TODO items with proper documentation, version control, and verification.
 
 ## Environment Configuration Standards

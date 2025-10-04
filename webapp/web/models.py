@@ -923,7 +923,7 @@ class RecentActivity(BerylModel):
         RecentActivity.objects.create(
             created_by=user,
             message=f"Added **{item_name}** to collection **{collection_name}**",
-            icon="plus-circle"
+            icon="circle-plus"
         )
     
     @staticmethod
@@ -957,7 +957,7 @@ class RecentActivity(BerylModel):
         RecentActivity.objects.create(
             created_by=user,
             message=status_messages.get(new_status, f"Changed **{item_name}** status to **{new_status}**"),
-            icon=status_icons.get(new_status, 'edit')
+            icon=status_icons.get(new_status, 'pencil')
         )
     
     @staticmethod
