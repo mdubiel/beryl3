@@ -1,0 +1,618 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "beryl-daily-metrics",
+    "title": "Beryl - Daily Metrics",
+    "tags": ["beryl", "metrics", "daily"],
+    "timezone": "Europe/Zurich",
+    "schemaVersion": 27,
+    "version": 0,
+    "refresh": "5m",
+    "time": {
+      "from": "now-30d",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5m", "15m", "30m", "1h", "6h", "12h", "24h"]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "type": "graph",
+        "title": "Total Users",
+        "targets": [
+          {
+            "expr": "beryl_users_total",
+            "legendFormat": "Total Users",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Users"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "pointradius": 2,
+        "points": false,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 2,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "type": "graph",
+        "title": "Active Users by Period",
+        "targets": [
+          {
+            "expr": "beryl_users_active{period=\"24h\"}",
+            "legendFormat": "24 hours",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_users_active{period=\"7d\"}",
+            "legendFormat": "7 days",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_users_active{period=\"30d\"}",
+            "legendFormat": "30 days",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Active Users"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 3,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "type": "graph",
+        "title": "New Users by Period",
+        "targets": [
+          {
+            "expr": "beryl_users_new{period=\"24h\"}",
+            "legendFormat": "24 hours",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_users_new{period=\"7d\"}",
+            "legendFormat": "7 days",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_users_new{period=\"30d\"}",
+            "legendFormat": "30 days",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "New Users"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "bars": false,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 4,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "type": "graph",
+        "title": "Collections Total",
+        "targets": [
+          {
+            "expr": "beryl_collections_total",
+            "legendFormat": "Total Collections",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Collections"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 5,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "type": "graph",
+        "title": "Collections by Visibility",
+        "targets": [
+          {
+            "expr": "beryl_collections_by_visibility{visibility=\"public\"}",
+            "legendFormat": "Public",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_collections_by_visibility{visibility=\"private\"}",
+            "legendFormat": "Private",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_collections_by_visibility{visibility=\"unlisted\"}",
+            "legendFormat": "Unlisted",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Collections"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "stack": true,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 6,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "type": "graph",
+        "title": "Collections Created by Period",
+        "targets": [
+          {
+            "expr": "beryl_collections_created{period=\"24h\"}",
+            "legendFormat": "24 hours",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_collections_created{period=\"7d\"}",
+            "legendFormat": "7 days",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_collections_created{period=\"30d\"}",
+            "legendFormat": "30 days",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Created"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "bars": false,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 7,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "type": "graph",
+        "title": "Items Total",
+        "targets": [
+          {
+            "expr": "beryl_items_total",
+            "legendFormat": "Total Items",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Items"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 8,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "type": "graph",
+        "title": "Items by Status",
+        "targets": [
+          {
+            "expr": "beryl_items_by_status{status=\"in_collection\"}",
+            "legendFormat": "In Collection",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_items_by_status{status=\"wanted\"}",
+            "legendFormat": "Wanted",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_items_by_status{status=\"reserved\"}",
+            "legendFormat": "Reserved",
+            "refId": "C"
+          },
+          {
+            "expr": "beryl_items_by_status{status=\"ordered\"}",
+            "legendFormat": "Ordered",
+            "refId": "D"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Items"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "stack": true,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 9,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+        "type": "graph",
+        "title": "Items Created by Period",
+        "targets": [
+          {
+            "expr": "beryl_items_created{period=\"24h\"}",
+            "legendFormat": "24 hours",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_items_created{period=\"7d\"}",
+            "legendFormat": "7 days",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_items_created{period=\"30d\"}",
+            "legendFormat": "30 days",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Created"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "bars": false,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 10,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+        "type": "graph",
+        "title": "Favorite Items",
+        "targets": [
+          {
+            "expr": "beryl_items_favorites",
+            "legendFormat": "Favorites",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Items"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 11,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
+        "type": "graph",
+        "title": "Storage - Total Files",
+        "targets": [
+          {
+            "expr": "beryl_storage_files_total",
+            "legendFormat": "Total Files",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Files"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 12,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 40},
+        "type": "graph",
+        "title": "Storage - Total Bytes",
+        "targets": [
+          {
+            "expr": "beryl_storage_bytes_total",
+            "legendFormat": "Storage Used",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Storage"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 13,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 48},
+        "type": "graph",
+        "title": "Storage - Recent Uploads",
+        "targets": [
+          {
+            "expr": "beryl_storage_uploads_recent{period=\"24h\"}",
+            "legendFormat": "24 hours",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_storage_uploads_recent{period=\"7d\"}",
+            "legendFormat": "7 days",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_storage_uploads_recent{period=\"30d\"}",
+            "legendFormat": "30 days",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Uploads"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "bars": false,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 14,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 48},
+        "type": "graph",
+        "title": "Storage - File Issues",
+        "targets": [
+          {
+            "expr": "beryl_storage_orphaned_files",
+            "legendFormat": "Orphaned Files",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_storage_corrupted_files",
+            "legendFormat": "Corrupted Files",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Files"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true},
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [0], "type": "gt"},
+              "operator": {"type": "or"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "last"},
+              "type": "query"
+            }
+          ],
+          "name": "Storage File Issues Alert"
+        }
+      },
+      {
+        "id": 15,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 56},
+        "type": "graph",
+        "title": "Content Moderation",
+        "targets": [
+          {
+            "expr": "beryl_moderation_flagged",
+            "legendFormat": "Flagged",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_moderation_pending",
+            "legendFormat": "Pending Review",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_moderation_violations",
+            "legendFormat": "Violations",
+            "refId": "C"
+          },
+          {
+            "expr": "beryl_moderation_banned_users",
+            "legendFormat": "Banned Users",
+            "refId": "D"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Count"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 16,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 56},
+        "type": "graph",
+        "title": "Links - Total and Patterns",
+        "targets": [
+          {
+            "expr": "beryl_links_total",
+            "legendFormat": "Total Links",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_links_matched",
+            "legendFormat": "Matched Patterns",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_links_unmatched",
+            "legendFormat": "Unmatched",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Links"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 17,
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 64},
+        "type": "graph",
+        "title": "Engagement - Items with Content (%)",
+        "targets": [
+          {
+            "expr": "beryl_engagement_items_with_images_pct",
+            "legendFormat": "With Images",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_engagement_items_with_attributes_pct",
+            "legendFormat": "With Attributes",
+            "refId": "B"
+          },
+          {
+            "expr": "beryl_engagement_items_with_links_pct",
+            "legendFormat": "With Links",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Percentage", "max": 100, "min": 0},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 18,
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 64},
+        "type": "graph",
+        "title": "Engagement - Averages",
+        "targets": [
+          {
+            "expr": "beryl_engagement_avg_attributes_per_item",
+            "legendFormat": "Avg Attributes/Item",
+            "refId": "A"
+          },
+          {
+            "expr": "beryl_engagement_avg_items_per_collection",
+            "legendFormat": "Avg Items/Collection",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Average"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true}
+      },
+      {
+        "id": 19,
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 72},
+        "type": "singlestat",
+        "title": "Total Users",
+        "targets": [
+          {
+            "expr": "beryl_users_total",
+            "refId": "A"
+          }
+        ],
+        "format": "short",
+        "sparkline": {"show": true, "full": false},
+        "gauge": {"show": false}
+      },
+      {
+        "id": 20,
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 72},
+        "type": "singlestat",
+        "title": "Total Collections",
+        "targets": [
+          {
+            "expr": "beryl_collections_total",
+            "refId": "A"
+          }
+        ],
+        "format": "short",
+        "sparkline": {"show": true, "full": false}
+      },
+      {
+        "id": 21,
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 72},
+        "type": "singlestat",
+        "title": "Total Items",
+        "targets": [
+          {
+            "expr": "beryl_items_total",
+            "refId": "A"
+          }
+        ],
+        "format": "short",
+        "sparkline": {"show": true, "full": false}
+      },
+      {
+        "id": 22,
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 72},
+        "type": "singlestat",
+        "title": "Storage Used",
+        "targets": [
+          {
+            "expr": "beryl_storage_bytes_total",
+            "refId": "A"
+          }
+        ],
+        "format": "bytes",
+        "sparkline": {"show": true, "full": false}
+      },
+      {
+        "id": 23,
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 76},
+        "type": "graph",
+        "title": "Metrics Collection Performance",
+        "targets": [
+          {
+            "expr": "beryl_metrics_collection_duration_seconds",
+            "legendFormat": "Collection Duration (seconds)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Duration"},
+          {"format": "short", "show": false}
+        ],
+        "lines": true,
+        "fill": 1,
+        "linewidth": 2,
+        "legend": {"show": true, "values": true, "current": true, "avg": true, "max": true}
+      }
+    ]
+  },
+  "overwrite": false
+}
