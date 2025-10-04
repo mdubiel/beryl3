@@ -27,8 +27,8 @@ from web.models import (
     Collection,
     CollectionItem,
     ItemType,
-    Attribute,
-    Link,
+    ItemAttribute,
+    CollectionItemLink,
     LinkPattern,
     MediaFile,
     RecentActivity,
@@ -246,10 +246,10 @@ class Command(BaseCommand):
         }
 
         # Attributes
-        metrics['total_attributes'] = Attribute.objects.count()
+        metrics['total_attributes'] = ItemAttribute.objects.count()
 
         # Attribute usage (top 20)
-        attr_usage = Attribute.objects.values('display_name').annotate(
+        attr_usage = ItemAttribute.objects.values('display_name').annotate(
             count=Count('id')
         ).order_by('-count')[:20]
         metrics['attribute_usage'] = {
@@ -274,18 +274,18 @@ class Command(BaseCommand):
         if verbose:
             self.stdout.write("  Collecting link metrics...")
 
-        metrics['total_links'] = Link.objects.count()
+        metrics['total_links'] = CollectionItemLink.objects.count()
 
         # Links with/without patterns
-        metrics['matched_link_patterns'] = Link.objects.filter(
+        metrics['matched_link_patterns'] = CollectionItemLink.objects.filter(
             link_pattern__isnull=False
         ).count()
-        metrics['unmatched_link_patterns'] = Link.objects.filter(
+        metrics['unmatched_link_patterns'] = CollectionItemLink.objects.filter(
             link_pattern__isnull=True
         ).count()
 
         # Link pattern distribution
-        pattern_dist = Link.objects.filter(
+        pattern_dist = CollectionItemLink.objects.filter(
             link_pattern__isnull=False
         ).values('link_pattern__display_name').annotate(
             count=Count('id')
@@ -321,23 +321,25 @@ class Command(BaseCommand):
         ).count()
 
         # Orphaned files (files not linked to collections or items)
+        # Count files that are not linked to any collection or item image
         orphaned = MediaFile.objects.filter(
-            Q(related_object_type='') | Q(related_object_type__isnull=True)
+            collection_images__isnull=True,
+            item_images__isnull=True
         ).count()
         metrics['orphaned_files'] = orphaned
 
         # Corrupted files (files with integrity issues)
         corrupted = MediaFile.objects.filter(
-            integrity_status='FAILED'
-        ).count() if hasattr(MediaFile, 'integrity_status') else 0
+            file_exists=False
+        ).count()
         metrics['corrupted_files'] = corrupted
 
         # Storage by type
-        storage_by_type = MediaFile.objects.values('mime_type').annotate(
+        storage_by_type = MediaFile.objects.values('media_type').annotate(
             total_size=Sum('file_size')
         ).order_by('-total_size')[:10]
         metrics['storage_by_type'] = {
-            s['mime_type'] or 'unknown': s['total_size']
+            s['media_type'] or 'unknown': s['total_size']
             for s in storage_by_type
         }
 
