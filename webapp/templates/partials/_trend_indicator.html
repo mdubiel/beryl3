@@ -7,6 +7,7 @@ Parameters:
   - alert_warning: Warning threshold percentage (default: 10)
   - alert_critical: Critical threshold percentage (default: 25)
 {% endcomment %}
+{% load media_tags %}
 
 {% if change.change is not None %}
     {% if change.direction == 1 %}

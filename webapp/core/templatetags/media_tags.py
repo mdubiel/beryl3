@@ -52,3 +52,17 @@ def get_item(dictionary, key):
         if isinstance(result, dict):
             return result.get(key)
     return None
+
+
+@register.filter(name='abs')
+def absolute_value(value):
+    """
+    Template filter to get absolute value of a number.
+
+    Usage: {{ number|abs }}
+    """
+    try:
+        from builtins import abs as builtin_abs
+        return builtin_abs(float(value))
+    except (ValueError, TypeError):
+        return value
