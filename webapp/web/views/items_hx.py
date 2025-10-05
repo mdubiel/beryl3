@@ -746,9 +746,16 @@ def item_toggle_boolean_attribute(request, hash, attr_value_hash):
                          'new_value': str(new_value), 'result': 'success',
                          'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
 
+        # Log to user activity timeline
+        RecentActivity.objects.create(
+            created_by=request.user,
+            activity_type='item_attribute_changed',
+            message=f"Changed **{attr_value.item_attribute.display_name}** from **{old_value}** to **{new_value}** for **{item.name}**"
+        )
+
         # Show success message
         from django.contrib import messages
-        messages.success(request, f"'{attribute_name}' changed from {old_value} to {new_value}")
+        messages.success(request, f"Attribute '{attr_value.item_attribute.display_name}' for item '{item.name}' changed from {old_value} to {new_value}")
 
     except CollectionItemAttributeValue.DoesNotExist:
         # Log attempt to toggle non-existent attribute value
