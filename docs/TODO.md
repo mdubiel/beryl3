@@ -810,7 +810,7 @@ After 30-90 days of successful operation:
 
 ### Task 38: Item Type Popup Layout
 - Status: ⏳ pending
-- Description: Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page
+- Description: Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page. Use TailwindCSS and DaisyUI components. 
 
 ### Task 39: Boolean Attribute UI
 - Status: ⏳ pending
@@ -881,6 +881,13 @@ After 30-90 days of successful operation:
 - Status: ⏳ pending
 - Description: Compact all JavaScript to one file and reference JS from there. No inline javascript code if not necessary
 
+### Task 56: Implement error pages
+ - Status: pending
+ - Description: currently error pages (40x, 50x and similar) are not handled. Implement handling of all this kind of error pages, with same styling like other viewes.
+
+### Task 57: Autocompletion for Item Attributes
+ - Status: pending
+ - Description: when adding or editing item attribute the system (with HX) should try to autocomplete that information (min. 3 characters, search anywhere in the string). For autocmplete data you need to query CollectionItemAttributeValue for the items user own, and are the same type. Example, when I'm trying to add to the 'book' the 'Author' attribute it should look up for all CollectionItemAttributeValue recored where user is an owner, and are the records are type 'Author' refernced to book item attribute.
 ---
 
 ## Task 33 Additional Requirements (Part of original Task 34)

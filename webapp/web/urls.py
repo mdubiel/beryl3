@@ -58,10 +58,8 @@ urlpatterns = [
     path('items/<str:hash>/toggle-favorite/', items_hx.toggle_item_favorite, name='item_toggle_favorite'),
     path('items/<str:hash>/change-type/', items_hx.change_item_type, name='item_change_type'),
     path('items/<str:hash>/add-attribute/', items_hx.item_add_attribute, name='item_add_attribute'),
-    path('items/<str:hash>/edit-attribute/<str:attribute_name>/', items_hx.item_edit_attribute, name='item_edit_attribute'),
     path('items/<str:hash>/edit-attribute-value/<str:attr_value_hash>/', items_hx.item_edit_attribute_value, name='item_edit_attribute_value'),
     path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
-    path('items/<str:hash>/remove-attribute/<str:attribute_name>/', items_hx.item_remove_attribute, name='item_remove_attribute'),
     path('items/<str:hash>/remove-attribute-value/<str:attr_value_hash>/', items_hx.item_remove_attribute_value, name='item_remove_attribute_value'),
     
     # Item link management
