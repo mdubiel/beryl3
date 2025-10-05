@@ -9,7 +9,7 @@
                 <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
                     <span class="text-xs flex items-center gap-2" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
                         <span class="inline-flex items-center">
-                            {{ attr_data.attribute.display_name }}{% if attr_data.attribute.help_text %}<span class="tooltip tooltip-right" data-tip="{{ attr_data.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
+                            {{ attr_data.attribute.display_name }}{% if attr_data.attribute.help_text %}<span class="tooltip tooltip-right ml-1" data-tip="{{ attr_data.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
                         </span>
                         {% if attr_data.attribute.attribute_type == 'BOOLEAN' %}
                             {% if attr_data.value %}
