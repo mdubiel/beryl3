@@ -749,7 +749,7 @@ def item_toggle_boolean_attribute(request, hash, attr_value_hash):
         # Log to user activity timeline
         RecentActivity.objects.create(
             created_by=request.user,
-            activity_type='item_attribute_changed',
+            icon='arrow-left-right',
             message=f"Changed **{attr_value.item_attribute.display_name}** from **{old_value}** to **{new_value}** for **{item.name}**"
         )
 
