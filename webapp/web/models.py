@@ -837,7 +837,7 @@ class CollectionItem(BerylModel):
         """
         if value is None:
             return ""
-        
+
         if attribute.attribute_type == ItemAttribute.AttributeType.BOOLEAN:
             return "Yes" if value else "No"
         elif attribute.attribute_type == ItemAttribute.AttributeType.URL:
@@ -850,7 +850,243 @@ class CollectionItem(BerylModel):
                 return str(value)
         else:
             return str(value)
-    
+
+    # ========================================================================
+    # DUAL-MODE ATTRIBUTE SUPPORT (JSON + Relational)
+    # ========================================================================
+
+    def get_all_attributes(self):
+        """
+        Get all attributes from both JSON and relational sources combined.
+        Relational attributes take precedence over JSON for same attribute name.
+
+        Returns:
+            dict: {attribute_name: value} for all attributes
+        """
+        result = {}
+
+        # Start with JSON attributes (legacy)
+        if self.attributes:
+            result.update(self.attributes)
+
+        # Override with relational attributes (take precedence)
+        # Group by item_attribute to handle multiple values
+        from collections import defaultdict
+        relational_attrs = defaultdict(list)
+
+        for attr_value in self.attribute_values.select_related('item_attribute').all():
+            attr_name = attr_value.item_attribute.name
+            typed_value = attr_value.get_typed_value()
+            relational_attrs[attr_name].append(typed_value)
+
+        # Add relational attributes to result
+        for attr_name, values in relational_attrs.items():
+            if len(values) == 1:
+                # Single value - just use it
+                result[attr_name] = values[0]
+            else:
+                # Multiple values - return as list
+                result[attr_name] = values
+
+        return result
+
+    def get_all_attributes_detailed(self):
+        """
+        Get detailed attribute information including source (JSON vs relational).
+        Useful for migration UI and debugging.
+
+        Returns:
+            list of dicts with keys:
+                - name: attribute name
+                - value: attribute value (or list for multiple)
+                - source: 'json' or 'relational'
+                - is_legacy: True if from JSON
+                - item_attribute: ItemAttribute object (if relational)
+                - count: number of values (for relational with multiple)
+        """
+        result = []
+        processed_names = set()
+
+        # Get relational attributes first (they take precedence)
+        from collections import defaultdict
+        relational_attrs = defaultdict(list)
+
+        for attr_value in self.attribute_values.select_related('item_attribute').order_by('order').all():
+            attr_name = attr_value.item_attribute.name
+            relational_attrs[attr_name].append(attr_value)
+
+        # Add relational attributes
+        for attr_name, attr_values in relational_attrs.items():
+            if len(attr_values) == 1:
+                # Single value
+                attr_val = attr_values[0]
+                result.append({
+                    'name': attr_name,
+                    'value': attr_val.get_typed_value(),
+                    'display_value': attr_val.get_display_value(),
+                    'source': 'relational',
+                    'is_legacy': False,
+                    'item_attribute': attr_val.item_attribute,
+                    'count': 1,
+                    'attribute_value_id': attr_val.id
+                })
+            else:
+                # Multiple values
+                values = [av.get_typed_value() for av in attr_values]
+                display_values = [av.get_display_value() for av in attr_values]
+                result.append({
+                    'name': attr_name,
+                    'value': values,
+                    'display_value': display_values,
+                    'source': 'relational',
+                    'is_legacy': False,
+                    'item_attribute': attr_values[0].item_attribute,
+                    'count': len(values),
+                    'attribute_value_ids': [av.id for av in attr_values]
+                })
+            processed_names.add(attr_name)
+
+        # Add JSON attributes that haven't been migrated
+        if self.attributes:
+            for attr_name, attr_value in self.attributes.items():
+                if attr_name not in processed_names:
+                    # Find ItemAttribute if it exists
+                    item_attribute = None
+                    if self.item_type:
+                        try:
+                            item_attribute = self.item_type.attributes.get(name=attr_name)
+                        except ItemAttribute.DoesNotExist:
+                            pass
+
+                    result.append({
+                        'name': attr_name,
+                        'value': attr_value,
+                        'display_value': str(attr_value),
+                        'source': 'json',
+                        'is_legacy': True,
+                        'item_attribute': item_attribute,
+                        'count': 1
+                    })
+
+        return result
+
+    def is_legacy_attribute(self, attribute_name):
+        """
+        Check if an attribute is stored in JSON (legacy) format.
+
+        Args:
+            attribute_name: Name of the attribute to check
+
+        Returns:
+            bool: True if attribute is in JSON and not migrated to relational
+        """
+        # Check if exists in relational
+        has_relational = self.attribute_values.filter(
+            item_attribute__name=attribute_name
+        ).exists()
+
+        if has_relational:
+            return False
+
+        # Check if exists in JSON
+        if self.attributes and attribute_name in self.attributes:
+            return True
+
+        return False
+
+    def get_legacy_attributes(self):
+        """
+        Get list of attribute names that are still in JSON (not migrated).
+
+        Returns:
+            list: Attribute names that are legacy (JSON-based)
+        """
+        if not self.attributes:
+            return []
+
+        # Get all relational attribute names
+        relational_names = set(
+            self.attribute_values.values_list('item_attribute__name', flat=True)
+        )
+
+        # Return JSON attribute names that aren't in relational
+        return [
+            name for name in self.attributes.keys()
+            if name not in relational_names
+        ]
+
+    def migrate_attribute_to_relational(self, attribute_name):
+        """
+        Migrate a single attribute from JSON to relational format.
+
+        Args:
+            attribute_name: Name of the attribute to migrate
+
+        Returns:
+            tuple: (success: bool, message: str, attribute_value: CollectionItemAttributeValue or None)
+
+        Raises:
+            ValueError: If attribute doesn't exist in JSON or ItemAttribute not found
+        """
+        # Check if attribute exists in JSON
+        if not self.attributes or attribute_name not in self.attributes:
+            return (False, f"Attribute '{attribute_name}' not found in JSON", None)
+
+        # Check if already migrated
+        if self.attribute_values.filter(item_attribute__name=attribute_name).exists():
+            return (False, f"Attribute '{attribute_name}' already migrated", None)
+
+        # Find ItemAttribute definition
+        if not self.item_type:
+            return (False, "Item has no item_type set", None)
+
+        try:
+            item_attribute = self.item_type.attributes.get(name=attribute_name)
+        except ItemAttribute.DoesNotExist:
+            return (False, f"No ItemAttribute definition found for '{attribute_name}'", None)
+
+        # Get value from JSON
+        json_value = self.attributes[attribute_name]
+
+        # Create relational attribute value
+        try:
+            from web.models import CollectionItemAttributeValue
+
+            attr_value = CollectionItemAttributeValue(
+                item=self,
+                item_attribute=item_attribute,
+                order=0
+            )
+            attr_value.set_typed_value(json_value)
+            attr_value.save()
+
+            return (True, f"Attribute '{attribute_name}' migrated successfully", attr_value)
+
+        except Exception as e:
+            return (False, f"Error migrating '{attribute_name}': {str(e)}", None)
+
+    def get_attribute_count(self):
+        """
+        Get total count of all attributes (JSON + relational, deduplicated).
+
+        Returns:
+            int: Total number of unique attributes
+        """
+        return len(self.get_all_attributes())
+
+    def has_legacy_attributes(self):
+        """
+        Check if this item has any legacy (JSON) attributes.
+
+        Returns:
+            bool: True if there are unmigrated JSON attributes
+        """
+        return len(self.get_legacy_attributes()) > 0
+
+    # ========================================================================
+    # END DUAL-MODE ATTRIBUTE SUPPORT
+    # ========================================================================
+
     @property
     def default_image(self):
         """Get the default image for this collection item"""
