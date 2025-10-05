@@ -802,8 +802,39 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Completed as part of Task 37 refactoring
 
 ### Task 41: Item Type Selection on Creation
-- Status: ⏳ pending
-- Description: When adding item, user should be able to select initial type of item. In addition, if this item type has definied attributes, they should show up and user can optionally fill them. Display also at least optional item link.
+- Status: ✅ completed
+- Verified: yes
+
+#### Task description
+When adding item, user should be able to select initial type of item. In addition, if this item type has defined attributes, they should show up and user can optionally fill them. Display also at least optional item link.
+
+#### Implementation summary
+- Added item type dropdown selector to item creation form (optional)
+- Implemented HTMX-based dynamic attribute field loading when item type is selected
+- All attribute types supported: TEXT, NUMBER, DATE, URL, BOOLEAN with appropriate input fields
+- Boolean attributes use toggle UI (consistent with existing UI)
+- Added optional link URL field to creation form
+- Attributes and link automatically created with new item on form submission
+- Help text tooltips displayed for attributes (where defined)
+- Comprehensive logging for attribute and link creation
+- URL routing fixed to prevent pattern matching conflicts
+
+**User flow:**
+1. User navigates to "Add Item" form
+2. Fills in item name (required)
+3. Optionally selects item type from dropdown
+4. Attribute fields appear dynamically below (via HTMX)
+5. User fills in desired attributes (all optional)
+6. User can add a link URL (optional)
+7. Submits form - item created with all data in one step
+
+**File changes:**
+- `web/forms.py:33-53` - Added item_type and link_url fields to CollectionItemForm
+- `templates/items/item_form.html:41-81` - Added type selector, dynamic attributes container, link field
+- `templates/partials/_item_create_attributes.html` - New template for dynamic attribute rendering
+- `web/views/items_hx.py:1028-1054` - HTMX endpoint for loading attribute fields
+- `web/views/items.py:59-96` - Process attributes and link on item creation
+- `web/urls.py:42` - URL route for get-type-attributes (positioned before generic routes)
 
 ### Task 42: Link Modal Text Wrapping
 - Status: ✅ completed
