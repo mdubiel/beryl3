@@ -509,12 +509,14 @@ dje-pre-setup-logrotate: dje-pre-verify-env ## Setup local logrotate configurati
 	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "/usr/sbin/logrotate -d $(DJE_PRE_PATH)/workflows/logrotate.conf" || echo "⚠️ Logrotate test failed, but configuration was created"
 	@echo "✅ Logrotate setup completed for Django Europe preprod!"
 
-dje-pre-setup-cron: dje-pre-verify-env ## Setup crontab for email queue processing and log rotation on Django Europe preprod
+dje-pre-setup-cron: dje-pre-verify-env ## Setup crontab for email queue processing, daily metrics, and log rotation on Django Europe preprod
 	@echo "⏰ Setting up crontab for Django Europe preprod..."
 	@ssh $(DJE_PRE_USER)@$(DJE_PRE_HOST) "\
 	(crontab -l 2>/dev/null | grep -v 'beryl3.*preprod' || true; \
 	echo '# Beryl3 Django Europe Preprod - Email queue processing every 5 minutes'; \
 	echo '*/5 * * * * cd $(DJE_PRE_PATH) && source $(DJE_PRE_VENV)/bin/activate && python manage.py send_queued_mail --settings=production_settings >> $(DJE_PRE_PATH)/logs/cron_email.log 2>&1'; \
+	echo '# Beryl3 Django Europe Preprod - Daily metrics collection at midnight Europe/Zurich'; \
+	echo '0 0 * * * cd $(DJE_PRE_PATH) && source $(DJE_PRE_VENV)/bin/activate && python manage.py collect_daily_metrics --send-email --settings=production_settings >> $(DJE_PRE_PATH)/logs/cron_metrics.log 2>&1'; \
 	echo '# Beryl3 Django Europe Preprod - Log rotation every 6 hours'; \
 	echo '0 */6 * * * /usr/sbin/logrotate -s $(DJE_PRE_PATH)/workflows/logrotate.state $(DJE_PRE_PATH)/workflows/logrotate.conf >> $(DJE_PRE_PATH)/logs/cron_logrotate.log 2>&1') | crontab -"
 	@echo "✅ Crontab configured for Django Europe preprod!"
@@ -524,10 +526,11 @@ dje-pre-setup-cron: dje-pre-verify-env ## Setup crontab for email queue processi
 dje-pre-setup-services: dje-pre-setup-logrotate dje-pre-setup-cron ## Setup all background services (logrotate + cron) for Django Europe preprod
 	@echo "🛠️  Setting up all background services for Django Europe preprod..."
 	@echo "✅ Local logrotate configuration created and tested"
-	@echo "✅ Crontab configured for email queue processing and log rotation"
+	@echo "✅ Crontab configured for email queue processing, daily metrics, and log rotation"
 	@echo "📊 Service summary:"
 	@echo "  - Log rotation: Every 5MB, keep 5 files, compressed (via cron every 6 hours)"
 	@echo "  - Email queue: Processed every 5 minutes via cron"
+	@echo "  - Daily metrics: Collected at midnight Europe/Zurich with email report"
 	@echo "  - Configuration: $(DJE_PRE_PATH)/workflows/logrotate.conf"
 	@echo "  - Log files: $(DJE_PRE_PATH)/logs/*.log and *.jsonl"
 	@echo "  - Manual execution: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"
@@ -676,12 +679,14 @@ dje-prod-setup-logrotate: dje-prod-verify-env ## Setup local logrotate configura
 	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "/usr/sbin/logrotate -d $(DJE_PROD_PATH)/workflows/logrotate.conf" || echo "⚠️ Logrotate test failed, but configuration was created"
 	@echo "✅ Logrotate setup completed for Django Europe production!"
 
-dje-prod-setup-cron: dje-prod-verify-env ## Setup crontab for email queue processing and log rotation on Django Europe production
+dje-prod-setup-cron: dje-prod-verify-env ## Setup crontab for email queue processing, daily metrics, and log rotation on Django Europe production
 	@echo "⏰ Setting up crontab for Django Europe production..."
 	@ssh $(DJE_PROD_USER)@$(DJE_PROD_HOST) "\
 	(crontab -l 2>/dev/null | grep -v 'beryl3.*production' || true; \
 	echo '# Beryl3 Django Europe Production - Email queue processing every 5 minutes'; \
 	echo '*/5 * * * * cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py send_queued_mail --settings=production_settings >> $(DJE_PROD_PATH)/logs/cron_email.log 2>&1'; \
+	echo '# Beryl3 Django Europe Production - Daily metrics collection at midnight Europe/Zurich'; \
+	echo '0 0 * * * cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python manage.py collect_daily_metrics --send-email --settings=production_settings >> $(DJE_PROD_PATH)/logs/cron_metrics.log 2>&1'; \
 	echo '# Beryl3 Django Europe Production - Log rotation every 6 hours'; \
 	echo '0 */6 * * * /usr/sbin/logrotate -s $(DJE_PROD_PATH)/workflows/logrotate.state $(DJE_PROD_PATH)/workflows/logrotate.conf >> $(DJE_PROD_PATH)/logs/cron_logrotate.log 2>&1') | crontab -"
 	@echo "✅ Crontab configured for Django Europe production!"
@@ -691,10 +696,11 @@ dje-prod-setup-cron: dje-prod-verify-env ## Setup crontab for email queue proces
 dje-prod-setup-services: dje-prod-setup-logrotate dje-prod-setup-cron ## Setup all background services (logrotate + cron) for Django Europe production
 	@echo "🛠️  Setting up all background services for Django Europe production..."
 	@echo "✅ Local logrotate configuration created and tested"
-	@echo "✅ Crontab configured for email queue processing and log rotation"
+	@echo "✅ Crontab configured for email queue processing, daily metrics, and log rotation"
 	@echo "📊 Service summary:"
 	@echo "  - Log rotation: Every 5MB, keep 5 files, compressed (via cron every 6 hours)"
 	@echo "  - Email queue: Processed every 5 minutes via cron"
+	@echo "  - Daily metrics: Collected at midnight Europe/Zurich with email report"
 	@echo "  - Configuration: $(DJE_PROD_PATH)/workflows/logrotate.conf"
 	@echo "  - Log files: $(DJE_PROD_PATH)/logs/*.log and *.jsonl"
 	@echo "  - Manual execution: /usr/sbin/logrotate -s workflows/logrotate.state workflows/logrotate.conf"
