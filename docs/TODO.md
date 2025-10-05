@@ -762,7 +762,7 @@ Implement daily metrics collection system with comprehensive tracking and report
 ### Task 38: Item Type Popup Layout
 - Status: ✅ completed
 - Verified: ✅ yes
-- Commit ID: pending
+- Commit ID: 5266501
 - Description: Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page. Use TailwindCSS and DaisyUI components.
 
 #### Implementation Summary
@@ -776,7 +776,7 @@ Implement daily metrics collection system with comprehensive tracking and report
 ### Task 39: Boolean Attribute UI
 - Status: ✅ completed
 - Verified: ✅ yes
-- Commit ID: pending
+- Commit ID: 5266501
 - Description: When adding attribute type boolean, user should be presented with checkbox with a label not input form. This has to be loaded dynamically with HTMX
 
 #### Implementation Summary
