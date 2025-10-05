@@ -806,16 +806,41 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Description: When adding item, user should be able to select initial type of item. In addition, if this item type has definied attributes, they should show up and user can optionally fill them. Display also at least optional item link.
 
 ### Task 42: Link Modal Text Wrapping
-- Status: ⏳ pending
+- Status: ✅ completed
+- Verified: ✅ yes
+- Commit ID: 67822f7
 - Description: In add link modal the text "Custom Display Name (Optional) Leave empty to auto-detect from URL" should wrap, it is too long
 
+#### Implementation Summary
+- Changed label to flex-col with items-start for vertical stacking
+- Added whitespace-normal to label-text-alt for text wrapping
+- Text now wraps properly in narrow modals
+
 ### Task 43: Item Redirect After Edit
-- Status: ⏳ pending
+- Status: ✅ completed
+- Verified: ✅ yes
+- Commit ID: 67822f7
 - Description: After editing or adding new item user should be redirected to that item, not to the collection
 
+#### Implementation Summary
+- Changed redirect in collection_item_create_view from collection to item
+- Changed redirect in collection_item_update_view from collection to item
+- Users now land on item detail page after create/edit
+- Better UX for immediate viewing and further editing
+
 ### Task 44: Extra Add Buttons
-- Status: ⏳ pending
+- Status: ✅ completed
+- Verified: ✅ yes
+- Commit ID: 67822f7
 - Description: On item details page add extra button to add attribute and add link in the attributes and links table in addition to action buttons on top
+
+#### Implementation Summary
+- Added "+ Add Attribute" button at bottom of attributes table (item detail view only)
+- Added "+ Add Link" button at bottom of links table (item detail view only)
+- Buttons use btn-ghost btn-xs styling for subtle appearance
+- Only show for item owners with appropriate item types
+- Collection list view kept compact (no extra buttons)
+- Provides quick access without scrolling to top action buttons
 
 ### Task 45: Collection Filtering
 - Status: ⏳ pending
