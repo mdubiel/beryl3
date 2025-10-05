@@ -158,8 +158,7 @@ class Command(BaseCommand):
                             with transaction.atomic():
                                 attr_value_obj = CollectionItemAttributeValue(
                                     item=item,
-                                    item_attribute=item_attribute,
-                                    order=0
+                                    item_attribute=item_attribute
                                 )
                                 attr_value_obj.set_typed_value(attr_value)
                                 attr_value_obj.save()

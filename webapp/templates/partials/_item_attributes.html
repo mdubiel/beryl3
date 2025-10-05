@@ -18,7 +18,11 @@
                         <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-50">
                             <li>
                                 <a class="text-xs py-1 px-2"
+                                   {% if attr_data.attr_value_hash %}
+                                   hx-get="{% url 'item_edit_attribute_value' item.hash attr_data.attr_value_hash %}"
+                                   {% else %}
                                    hx-get="{% url 'item_edit_attribute' item.hash attr_data.attribute.name %}"
+                                   {% endif %}
                                    hx-target="#attribute-edit-modal-content"
                                    hx-trigger="click"
                                    onclick="document.getElementById('attribute-edit-modal').showModal()">
@@ -28,10 +32,14 @@
                             </li>
                             <li>
                                 <a class="text-xs py-1 px-2 text-error"
+                                   {% if attr_data.attr_value_hash %}
+                                   hx-delete="{% url 'item_remove_attribute_value' item.hash attr_data.attr_value_hash %}"
+                                   {% else %}
                                    hx-delete="{% url 'item_remove_attribute' item.hash attr_data.attribute.name %}"
+                                   {% endif %}
                                    hx-target="#item-attributes-{{ item.hash }}"
                                    hx-swap="outerHTML"
-                                   hx-confirm="Remove {{ attr_data.attribute.display_name }}?"
+                                   hx-confirm="Remove {{ attr_data.attribute.display_name }}{% if attr_data.is_multiple %} ({{ attr_data.display_value }}){% endif %}?"
                                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                                     {% lucide 'trash-2' size=12 %}
                                     Delete

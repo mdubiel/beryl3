@@ -842,6 +842,7 @@ class CollectionItem(BerylModel):
                     # Multiple values - create entry for each
                     for idx, value in enumerate(attr_data['value']):
                         display_value = attr_data['display_value'][idx] if isinstance(attr_data['display_value'], list) else str(value)
+                        attr_value_hash = attr_data.get('attribute_value_hashes', [None])[idx] if 'attribute_value_hashes' in attr_data else None
                         result.append({
                             'attribute': item_attr,
                             'value': value,
@@ -849,16 +850,19 @@ class CollectionItem(BerylModel):
                             'is_legacy': attr_data['is_legacy'],
                             'is_multiple': True,
                             'multiple_index': idx,
-                            'multiple_count': len(attr_data['value'])
+                            'multiple_count': len(attr_data['value']),
+                            'attr_value_hash': attr_value_hash
                         })
                 else:
                     # Single value
+                    attr_value_hash = attr_data.get('attribute_value_hash', None)
                     result.append({
                         'attribute': item_attr,
                         'value': attr_data['value'],
                         'display_value': attr_data['display_value'],
                         'is_legacy': attr_data['is_legacy'],
-                        'is_multiple': False
+                        'is_multiple': False,
+                        'attr_value_hash': attr_value_hash
                     })
 
         return result
@@ -943,7 +947,7 @@ class CollectionItem(BerylModel):
         from collections import defaultdict
         relational_attrs = defaultdict(list)
 
-        for attr_value in self.attribute_values.select_related('item_attribute').order_by('order').all():
+        for attr_value in self.attribute_values.select_related('item_attribute').all():
             attr_name = attr_value.item_attribute.name
             relational_attrs[attr_name].append(attr_value)
 
@@ -960,7 +964,7 @@ class CollectionItem(BerylModel):
                     'is_legacy': False,
                     'item_attribute': attr_val.item_attribute,
                     'count': 1,
-                    'attribute_value_id': attr_val.id
+                    'attribute_value_hash': attr_val.hash
                 })
             else:
                 # Multiple values
@@ -974,7 +978,7 @@ class CollectionItem(BerylModel):
                     'is_legacy': False,
                     'item_attribute': attr_values[0].item_attribute,
                     'count': len(values),
-                    'attribute_value_ids': [av.id for av in attr_values]
+                    'attribute_value_hashes': [av.hash for av in attr_values]
                 })
             processed_names.add(attr_name)
 
@@ -1415,19 +1419,14 @@ class CollectionItemAttributeValue(BerylModel):
         verbose_name=_("Value"),
         help_text=_("Stored as text, converted to appropriate type on retrieval")
     )
-    order = models.IntegerField(
-        default=0,
-        verbose_name=_("Display Order"),
-        help_text=_("For multiple values of the same attribute (e.g., multiple authors)")
-    )
 
     class Meta:
         verbose_name = _("Collection Item Attribute Value")
         verbose_name_plural = _("Collection Item Attribute Values")
-        ordering = ["item", "item_attribute", "order"]
+        ordering = ["item", "item_attribute", "value", "created"]
         indexes = [
             models.Index(fields=["item", "item_attribute"]),
-            models.Index(fields=["item", "order"]),
+            models.Index(fields=["item", "item_attribute", "value"]),
         ]
 
     def __str__(self):

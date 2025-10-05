@@ -34,7 +34,10 @@
     {% else %}
         {# Edit mode #}
         <input type="hidden" name="attribute_name" value="{{ attribute.name }}">
-        
+        {% if attr_value_id %}
+        <input type="hidden" name="attr_value_id" value="{{ attr_value_id }}">
+        {% endif %}
+
         <div class="form-control">
             <label class="label">
                 <span class="label-text">{{ attribute.display_name }}</span>

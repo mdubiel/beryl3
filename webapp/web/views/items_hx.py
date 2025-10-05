@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST, require_http_methods
 
 from web.decorators import log_execution_time
-from web.models import CollectionItem, RecentActivity, ItemType, ItemAttribute, CollectionItemLink, LinkPattern
+from web.models import CollectionItem, RecentActivity, ItemType, ItemAttribute, CollectionItemLink, LinkPattern, CollectionItemAttributeValue
 
 logger = logging.getLogger('webapp')
 
@@ -313,23 +313,26 @@ def item_add_attribute(request, hash):
 @log_execution_time
 def item_edit_attribute(request, hash, attribute_name):
     """
-    Handles GET request to show edit attribute form for an item.
+    Handles GET request to show edit attribute form for an item (JSON/legacy attributes only).
+    For relational attributes, use item_edit_attribute_value instead.
     """
-    logger.info("Edit attribute form requested for item hash '%s' attribute '%s' by user '%s' [%s]", hash, attribute_name, request.user.username, request.user.id)
+    logger.info("Edit attribute form requested for item hash '%s' attribute '%s' by user '%s' [%s]",
+                hash, attribute_name, request.user.username, request.user.id)
     item = get_object_or_404(CollectionItem, hash=hash)
 
     # Check if user owns the collection
     if item.collection.created_by != request.user:
-        logger.error("User '%s' [%s] attempted to edit attribute on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
-        
+        logger.error("User '%s' [%s] attempted to edit attribute on item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+
         # Log unauthorized access attempt
-        logger.warning("item_edit_attribute: Unauthorized attempt to edit attribute on item '%s' by user '%s' [%s] - access denied", 
+        logger.warning("item_edit_attribute: Unauthorized attempt to edit attribute on item '%s' by user '%s' [%s] - access denied",
                       item.name, request.user.username, request.user.id,
-                      extra={'function': 'item_edit_attribute', 'action': 'unauthorized_access', 
-                            'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                            'object_name': item.name, 'result': 'access_denied', 
+                      extra={'function': 'item_edit_attribute', 'action': 'unauthorized_access',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'result': 'access_denied',
                             'function_args': {'hash': hash, 'attribute_name': attribute_name}})
-        
+
         raise Http404("You do not have permission to edit this item.")
 
     # Get the attribute definition
@@ -339,36 +342,93 @@ def item_edit_attribute(request, hash, attribute_name):
             attribute = item.item_type.attributes.get(name=attribute_name)
         except ItemAttribute.DoesNotExist:
             logger.error("Attribute '%s' not found for item type '%s'", attribute_name, item.item_type.name)
-            
+
             # Log attribute not found error
-            logger.error("item_edit_attribute: Attribute '%s' not found for item '%s' with type '%s' by user '%s' [%s]", 
+            logger.error("item_edit_attribute: Attribute '%s' not found for item '%s' with type '%s' by user '%s' [%s]",
                         attribute_name, item.name, item.item_type.name, request.user.username, request.user.id,
-                        extra={'function': 'item_edit_attribute', 'action': 'edit_form_failed', 
-                              'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                              'object_name': item.name, 'attribute_name': attribute_name, 
-                              'error': 'attribute_not_found', 'result': 'not_found', 
+                        extra={'function': 'item_edit_attribute', 'action': 'edit_form_failed',
+                              'object_type': 'CollectionItem', 'object_hash': item.hash,
+                              'object_name': item.name, 'attribute_name': attribute_name,
+                              'error': 'attribute_not_found', 'result': 'not_found',
                               'function_args': {'hash': hash, 'attribute_name': attribute_name}})
-            
+
             raise Http404("Attribute not found.")
 
+    # Get from JSON (legacy attributes)
     current_value = item.attributes.get(attribute_name, "")
 
     # Log edit attribute form access
-    logger.info("item_edit_attribute: Edit attribute form accessed for item '%s' attribute '%s' by user '%s' [%s]", 
+    logger.info("item_edit_attribute: Edit attribute form accessed for item '%s' attribute '%s' by user '%s' [%s]",
                item.name, attribute_name, request.user.username, request.user.id,
-               extra={'function': 'item_edit_attribute', 'action': 'edit_form_access', 
-                     'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                     'object_name': item.name, 'attribute_name': attribute_name, 
-                     'current_value': str(current_value), 
+               extra={'function': 'item_edit_attribute', 'action': 'edit_form_access',
+                     'object_type': 'CollectionItem', 'object_hash': item.hash,
+                     'object_name': item.name, 'attribute_name': attribute_name,
+                     'current_value': str(current_value),
                      'function_args': {'hash': hash, 'attribute_name': attribute_name}})
-    
+
     context = {
         'item': item,
         'attribute': attribute,
         'current_value': current_value,
+        'attr_value_id': None,
         'mode': 'edit'
     }
-    
+
+    return render(request, 'partials/_attribute_form.html', context)
+
+
+@login_required
+@log_execution_time
+def item_edit_attribute_value(request, hash, attr_value_hash):
+    """
+    Handles GET request to show edit attribute form for a specific relational attribute value.
+    """
+    logger.info("Edit attribute value form requested for item hash '%s' attr_value_hash '%s' by user '%s' [%s]",
+                hash, attr_value_hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to edit attribute value on item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+
+        # Log unauthorized access attempt
+        logger.warning("item_edit_attribute_value: Unauthorized attempt to edit attribute value on item '%s' by user '%s' [%s] - access denied",
+                      item.name, request.user.username, request.user.id,
+                      extra={'function': 'item_edit_attribute_value', 'action': 'unauthorized_access',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'result': 'access_denied',
+                            'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+        raise Http404("You do not have permission to edit this item.")
+
+    # Get the attribute value
+    try:
+        attr_value = CollectionItemAttributeValue.objects.get(hash=attr_value_hash, item=item)
+    except CollectionItemAttributeValue.DoesNotExist:
+        logger.error("Attribute value with hash '%s' not found for item '%s'", attr_value_hash, item.hash)
+        raise Http404("Attribute value not found.")
+
+    attribute = attr_value.item_attribute
+    current_value = attr_value.get_typed_value()
+
+    # Log edit attribute value form access
+    logger.info("item_edit_attribute_value: Edit attribute value form accessed for item '%s' attribute '%s' (hash: %s) by user '%s' [%s]",
+               item.name, attribute.name, attr_value_hash, request.user.username, request.user.id,
+               extra={'function': 'item_edit_attribute_value', 'action': 'edit_form_access',
+                     'object_type': 'CollectionItem', 'object_hash': item.hash,
+                     'object_name': item.name, 'attribute_name': attribute.name,
+                     'attr_value_hash': attr_value_hash, 'current_value': str(current_value),
+                     'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+    context = {
+        'item': item,
+        'attribute': attribute,
+        'current_value': current_value,
+        'attr_value_hash': attr_value_hash,
+        'mode': 'edit'
+    }
+
     return render(request, 'partials/_attribute_form.html', context)
 
 
@@ -378,6 +438,7 @@ def item_edit_attribute(request, hash, attribute_name):
 def item_save_attribute(request, hash):
     """
     Handles POST request to save an attribute for an item.
+    Can create new attribute values or update existing ones (when attr_value_id is provided).
     """
     logger.info("Save attribute requested for item hash '%s' by user '%s' [%s]", hash, request.user.username, request.user.id)
     item = get_object_or_404(CollectionItem, hash=hash)
@@ -385,58 +446,175 @@ def item_save_attribute(request, hash):
     # Check if user owns the collection
     if item.collection.created_by != request.user:
         logger.error("User '%s' [%s] attempted to save attribute on item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
-        
+
         # Log unauthorized access attempt
-        logger.warning("item_save_attribute: Unauthorized attempt to save attribute on item '%s' by user '%s' [%s] - access denied", 
+        logger.warning("item_save_attribute: Unauthorized attempt to save attribute on item '%s' by user '%s' [%s] - access denied",
                       item.name, request.user.username, request.user.id,
-                      extra={'function': 'item_save_attribute', 'action': 'unauthorized_access', 
-                            'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                            'object_name': item.name, 'result': 'access_denied', 
+                      extra={'function': 'item_save_attribute', 'action': 'unauthorized_access',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'result': 'access_denied',
                             'function_args': {'hash': hash}})
-        
+
         raise Http404("You do not have permission to edit this item.")
 
     attribute_name = request.POST.get('attribute_name')
     attribute_value = request.POST.get('attribute_value')
+    attr_value_hash = request.POST.get('attr_value_hash')  # For editing existing values
 
     if not attribute_name:
         logger.error("No attribute name provided")
-        
+
         # Log missing attribute name
-        logger.error("item_save_attribute: Attribute save failed for item '%s' - missing attribute name by user '%s' [%s]", 
+        logger.error("item_save_attribute: Attribute save failed for item '%s' - missing attribute name by user '%s' [%s]",
                     item.name, request.user.username, request.user.id,
-                    extra={'function': 'item_save_attribute', 'action': 'attribute_save_failed', 
-                          'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                          'object_name': item.name, 'error': 'missing_attribute_name', 
+                    extra={'function': 'item_save_attribute', 'action': 'attribute_save_failed',
+                          'object_type': 'CollectionItem', 'object_hash': item.hash,
+                          'object_name': item.name, 'error': 'missing_attribute_name',
                           'result': 'validation_error', 'function_args': {'hash': hash}})
-        
+
         raise Http404("Attribute name is required.")
 
-    # Validate and save the attribute
+    # Check if this is an update to an existing relational attribute value
+    if attr_value_hash:
+        try:
+            attr_value_obj = CollectionItemAttributeValue.objects.get(
+                hash=attr_value_hash,
+                item=item
+            )
+            # Get the attribute definition for validation
+            attribute = attr_value_obj.item_attribute
+            validated_value = attribute.validate_value(attribute_value)
+            attr_value_obj.set_typed_value(validated_value)
+            attr_value_obj.save()
+
+            logger.info("User '%s' [%s] updated relational attribute '%s' (hash: %s) = '%s' for CollectionItem '%s' [%s]",
+                       request.user.username, request.user.id, attribute_name, attr_value_hash, validated_value, item.name, item.hash)
+
+            # Log successful attribute update
+            logger.info("item_save_attribute: Relational attribute '%s' updated for item '%s' with value '%s' by user '%s' [%s]",
+                       attribute_name, item.name, validated_value, request.user.username, request.user.id,
+                       extra={'function': 'item_save_attribute', 'action': 'relational_attribute_updated',
+                             'object_type': 'CollectionItem', 'object_hash': item.hash,
+                             'object_name': item.name, 'attribute_name': attribute_name,
+                             'attr_value_hash': attr_value_hash, 'attribute_value': str(validated_value), 'result': 'success',
+                             'function_args': {'hash': hash, 'attribute_name': attribute_name}})
+
+            # Check if this is coming from item detail page
+            referer = request.META.get('HTTP_REFERER', '')
+            is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+
+            if is_item_detail_page:
+                # Use HTMX redirect for item detail page
+                from django.http import HttpResponse
+                response = HttpResponse()
+                response['HX-Redirect'] = item.get_absolute_url()
+                return response
+
+            # Return the updated attributes section for collection detail
+            return render(request, 'partials/_item_attributes.html', {
+                'item': item,
+                'item_types': ItemType.objects.all()
+            })
+
+        except CollectionItemAttributeValue.DoesNotExist:
+            logger.error("Attribute value with hash '%s' not found for item '%s'", attr_value_hash, item.hash)
+            return JsonResponse({'error': 'Attribute value not found'}, status=404)
+        except ValidationError as e:
+            logger.error("Validation error updating attribute '%s' for CollectionItem '%s' [%s]: %s", attribute_name, item.name, item.hash, str(e))
+            return JsonResponse({'error': str(e)}, status=400)
+
+    # Validate and save the attribute using relational model
     try:
         if item.item_type:
             try:
                 attribute = item.item_type.attributes.get(name=attribute_name)
                 validated_value = attribute.validate_value(attribute_value)
-                item.attributes[attribute_name] = validated_value
             except ItemAttribute.DoesNotExist:
-                # Custom attribute not defined in item type
+                # Custom attribute not defined in item type - skip relational storage
+                logger.warning("Attribute '%s' not defined in item type '%s', skipping relational storage",
+                             attribute_name, item.item_type.name)
                 item.attributes[attribute_name] = attribute_value
-        else:
-            # No item type, just store the value
-            item.attributes[attribute_name] = attribute_value
+                item.save(update_fields=['attributes'])
+                logger.info("User '%s' [%s] saved custom attribute '%s' = '%s' to JSON for CollectionItem '%s' [%s]",
+                           request.user.username, request.user.id, attribute_name, attribute_value, item.name, item.hash)
 
-        item.save(update_fields=['attributes'])
-        logger.info("User '%s' [%s] saved attribute '%s' = '%s' for CollectionItem '%s' [%s]", 
-                    request.user.username, request.user.id, attribute_name, attribute_value, item.name, item.hash)
-        
+                # Log successful custom attribute save
+                logger.info("item_save_attribute: Custom attribute '%s' saved to JSON for item '%s' with value '%s' by user '%s' [%s]",
+                           attribute_name, item.name, attribute_value, request.user.username, request.user.id,
+                           extra={'function': 'item_save_attribute', 'action': 'custom_attribute_saved',
+                                 'object_type': 'CollectionItem', 'object_hash': item.hash,
+                                 'object_name': item.name, 'attribute_name': attribute_name,
+                                 'attribute_value': str(attribute_value), 'result': 'success',
+                                 'function_args': {'hash': hash, 'attribute_name': attribute_name}})
+
+                # Check if this is coming from item detail page
+                referer = request.META.get('HTTP_REFERER', '')
+                is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+
+                if is_item_detail_page:
+                    # Use HTMX redirect for item detail page
+                    from django.http import HttpResponse
+                    response = HttpResponse()
+                    response['HX-Redirect'] = item.get_absolute_url()
+                    return response
+
+                # Return the updated attributes section for collection detail
+                return render(request, 'partials/_item_attributes.html', {
+                    'item': item,
+                    'item_types': ItemType.objects.all()
+                })
+        else:
+            # No item type, store in JSON
+            item.attributes[attribute_name] = attribute_value
+            item.save(update_fields=['attributes'])
+            logger.info("User '%s' [%s] saved attribute '%s' = '%s' to JSON for CollectionItem '%s' [%s] (no item type)",
+                       request.user.username, request.user.id, attribute_name, attribute_value, item.name, item.hash)
+
+            # Log successful attribute save
+            logger.info("item_save_attribute: Attribute '%s' saved to JSON for item '%s' with value '%s' by user '%s' [%s] (no item type)",
+                       attribute_name, item.name, attribute_value, request.user.username, request.user.id,
+                       extra={'function': 'item_save_attribute', 'action': 'attribute_saved',
+                             'object_type': 'CollectionItem', 'object_hash': item.hash,
+                             'object_name': item.name, 'attribute_name': attribute_name,
+                             'attribute_value': str(attribute_value), 'result': 'success',
+                             'function_args': {'hash': hash, 'attribute_name': attribute_name}})
+
+            # Check if this is coming from item detail page
+            referer = request.META.get('HTTP_REFERER', '')
+            is_item_detail_page = '/items/' in referer and referer.endswith('/') and not '/collections/' in referer
+
+            if is_item_detail_page:
+                # Use HTMX redirect for item detail page
+                from django.http import HttpResponse
+                response = HttpResponse()
+                response['HX-Redirect'] = item.get_absolute_url()
+                return response
+
+            # Return the updated attributes section for collection detail
+            return render(request, 'partials/_item_attributes.html', {
+                'item': item,
+                'item_types': ItemType.objects.all()
+            })
+
+        # Create relational attribute value (when item type and attribute definition exist)
+        attr_value_obj = CollectionItemAttributeValue(
+            item=item,
+            item_attribute=attribute,
+            created_by=request.user
+        )
+        attr_value_obj.set_typed_value(validated_value)
+        attr_value_obj.save()
+
+        logger.info("User '%s' [%s] saved relational attribute '%s' = '%s' for CollectionItem '%s' [%s]",
+                    request.user.username, request.user.id, attribute_name, validated_value, item.name, item.hash)
+
         # Log successful attribute save
-        logger.info("item_save_attribute: Attribute '%s' saved for item '%s' with value '%s' by user '%s' [%s]", 
-                   attribute_name, item.name, attribute_value, request.user.username, request.user.id,
-                   extra={'function': 'item_save_attribute', 'action': 'attribute_saved', 
-                         'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                         'object_name': item.name, 'attribute_name': attribute_name, 
-                         'attribute_value': str(attribute_value), 'result': 'success', 
+        logger.info("item_save_attribute: Relational attribute '%s' saved for item '%s' with value '%s' by user '%s' [%s]",
+                   attribute_name, item.name, validated_value, request.user.username, request.user.id,
+                   extra={'function': 'item_save_attribute', 'action': 'relational_attribute_saved',
+                         'object_type': 'CollectionItem', 'object_hash': item.hash,
+                         'object_name': item.name, 'attribute_name': attribute_name,
+                         'attribute_value': str(validated_value), 'result': 'success',
                          'function_args': {'hash': hash, 'attribute_name': attribute_name}})
 
         # Check if this is coming from item detail page
@@ -476,50 +654,121 @@ def item_save_attribute(request, hash):
 @log_execution_time
 def item_remove_attribute(request, hash, attribute_name):
     """
-    Handles DELETE request to remove an attribute from an item.
+    Handles DELETE request to remove an attribute from an item (JSON/legacy attributes only).
+    For relational attributes, use item_remove_attribute_value instead.
     """
-    logger.info("Remove attribute requested for item hash '%s' attribute '%s' by user '%s' [%s]", hash, attribute_name, request.user.username, request.user.id)
+    logger.info("Remove attribute requested for item hash '%s' attribute '%s' by user '%s' [%s]",
+                hash, attribute_name, request.user.username, request.user.id)
     item = get_object_or_404(CollectionItem, hash=hash)
 
     # Check if user owns the collection
     if item.collection.created_by != request.user:
-        logger.error("User '%s' [%s] attempted to remove attribute from item '%s' [%s] they do not own", request.user.username, request.user.id, item.name, item.hash)
-        
+        logger.error("User '%s' [%s] attempted to remove attribute from item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+
         # Log unauthorized access attempt
-        logger.warning("item_remove_attribute: Unauthorized attempt to remove attribute from item '%s' by user '%s' [%s] - access denied", 
+        logger.warning("item_remove_attribute: Unauthorized attempt to remove attribute from item '%s' by user '%s' [%s] - access denied",
                       item.name, request.user.username, request.user.id,
-                      extra={'function': 'item_remove_attribute', 'action': 'unauthorized_access', 
-                            'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                            'object_name': item.name, 'result': 'access_denied', 
+                      extra={'function': 'item_remove_attribute', 'action': 'unauthorized_access',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'result': 'access_denied',
                             'function_args': {'hash': hash, 'attribute_name': attribute_name}})
-        
+
         raise Http404("You do not have permission to edit this item.")
 
-    # Remove the attribute
+    # Remove from JSON (legacy attributes)
+    removed = False
+    old_value = None
+
     if attribute_name in item.attributes:
         old_value = item.attributes[attribute_name]
         del item.attributes[attribute_name]
         item.save(update_fields=['attributes'])
-        logger.info("User '%s' [%s] removed attribute '%s' from CollectionItem '%s' [%s]", 
+        removed = True
+
+        logger.info("User '%s' [%s] removed JSON attribute '%s' from CollectionItem '%s' [%s]",
                     request.user.username, request.user.id, attribute_name, item.name, item.hash)
-        
+
         # Log successful attribute removal
-        logger.info("item_remove_attribute: Attribute '%s' removed from item '%s' by user '%s' [%s]", 
+        logger.info("item_remove_attribute: JSON attribute '%s' removed from item '%s' by user '%s' [%s]",
                    attribute_name, item.name, request.user.username, request.user.id,
-                   extra={'function': 'item_remove_attribute', 'action': 'attribute_removed', 
-                         'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                         'object_name': item.name, 'attribute_name': attribute_name, 
-                         'old_value': str(old_value), 'result': 'success', 
+                   extra={'function': 'item_remove_attribute', 'action': 'json_attribute_removed',
+                         'object_type': 'CollectionItem', 'object_hash': item.hash,
+                         'object_name': item.name, 'attribute_name': attribute_name,
+                         'old_value': str(old_value), 'result': 'success',
                          'function_args': {'hash': hash, 'attribute_name': attribute_name}})
-    else:
+
+    if not removed:
         # Log attempt to remove non-existent attribute
-        logger.warning("item_remove_attribute: Attempted to remove non-existent attribute '%s' from item '%s' by user '%s' [%s]", 
+        logger.warning("item_remove_attribute: Attempted to remove non-existent attribute '%s' from item '%s' by user '%s' [%s]",
                       attribute_name, item.name, request.user.username, request.user.id,
-                      extra={'function': 'item_remove_attribute', 'action': 'attribute_remove_failed', 
-                            'object_type': 'CollectionItem', 'object_hash': item.hash, 
-                            'object_name': item.name, 'attribute_name': attribute_name, 
-                            'error': 'attribute_not_found', 'result': 'not_found', 
+                      extra={'function': 'item_remove_attribute', 'action': 'attribute_remove_failed',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'attribute_name': attribute_name,
+                            'error': 'attribute_not_found', 'result': 'not_found',
                             'function_args': {'hash': hash, 'attribute_name': attribute_name}})
+
+    # Return the updated attributes section
+    return render(request, 'partials/_item_attributes.html', {
+        'item': item,
+        'item_types': ItemType.objects.all()
+    })
+
+
+@login_required
+@require_http_methods(["DELETE"])
+@log_execution_time
+def item_remove_attribute_value(request, hash, attr_value_hash):
+    """
+    Handles DELETE request to remove a specific relational attribute value from an item.
+    """
+    logger.info("Remove attribute value requested for item hash '%s' attr_value_hash '%s' by user '%s' [%s]",
+                hash, attr_value_hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to remove attribute value from item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+
+        # Log unauthorized access attempt
+        logger.warning("item_remove_attribute_value: Unauthorized attempt to remove attribute value from item '%s' by user '%s' [%s] - access denied",
+                      item.name, request.user.username, request.user.id,
+                      extra={'function': 'item_remove_attribute_value', 'action': 'unauthorized_access',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'result': 'access_denied',
+                            'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+        raise Http404("You do not have permission to edit this item.")
+
+    # Remove the attribute value
+    try:
+        attr_value = CollectionItemAttributeValue.objects.get(hash=attr_value_hash, item=item)
+        attribute_name = attr_value.item_attribute.name
+        old_value = attr_value.get_typed_value()
+        attr_value.delete()
+
+        logger.info("User '%s' [%s] removed relational attribute value '%s' = '%s' (hash: %s) from CollectionItem '%s' [%s]",
+                   request.user.username, request.user.id, attribute_name, old_value, attr_value_hash, item.name, item.hash)
+
+        # Log successful attribute value removal
+        logger.info("item_remove_attribute_value: Relational attribute value '%s' (hash: %s) removed from item '%s' by user '%s' [%s]",
+                   attribute_name, attr_value_hash, item.name, request.user.username, request.user.id,
+                   extra={'function': 'item_remove_attribute_value', 'action': 'relational_attribute_value_removed',
+                         'object_type': 'CollectionItem', 'object_hash': item.hash,
+                         'object_name': item.name, 'attribute_name': attribute_name,
+                         'attr_value_hash': attr_value_hash, 'old_value': str(old_value), 'result': 'success',
+                         'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+    except CollectionItemAttributeValue.DoesNotExist:
+        # Log attempt to remove non-existent attribute value
+        logger.warning("item_remove_attribute_value: Attempted to remove non-existent attribute value (hash: %s) from item '%s' by user '%s' [%s]",
+                      attr_value_hash, item.name, request.user.username, request.user.id,
+                      extra={'function': 'item_remove_attribute_value', 'action': 'attribute_value_remove_failed',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'attr_value_hash': attr_value_hash,
+                            'error': 'attribute_value_not_found', 'result': 'not_found',
+                            'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
 
     # Return the updated attributes section
     return render(request, 'partials/_item_attributes.html', {
