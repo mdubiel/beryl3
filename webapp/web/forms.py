@@ -14,7 +14,7 @@ import os
 from PIL import Image
 from io import BytesIO
 
-from .models import Collection, CollectionItem, MediaFile
+from .models import Collection, CollectionItem, MediaFile, ItemType
 
 class CollectionForm(forms.ModelForm):
     class Meta:
@@ -30,9 +30,22 @@ class CollectionForm(forms.ModelForm):
         }
 
 class CollectionItemForm(forms.ModelForm):
+    item_type = forms.ModelChoiceField(
+        queryset=ItemType.objects.all(),
+        required=False,
+        empty_label="(No Type)",
+        label="Item Type (Optional)"
+    )
+
+    link_url = forms.URLField(
+        required=False,
+        label="Link URL (Optional)",
+        help_text="Add a related link for this item"
+    )
+
     class Meta:
         model = CollectionItem
-        fields = ['name', 'status', 'description', 'image_url']
+        fields = ['name', 'item_type', 'status', 'description', 'image_url']
 
         labels = {
             'name': 'Item Name',

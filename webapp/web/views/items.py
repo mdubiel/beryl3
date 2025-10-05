@@ -55,16 +55,55 @@ def collection_item_create_view(request, collection_hash):
                     "User '%s [%s]' created new item '%s' in collection '%s' [%s]",
                     request.user.username, request.user.id, new_item.name, collection.name, collection.hash
                 )
-                
+
+                # Handle attributes if item type was selected
+                if new_item.item_type:
+                    from web.models import CollectionItemAttributeValue
+                    attributes_created = []
+                    for key, value in request.POST.items():
+                        if key.startswith('attr_') and value:
+                            attr_name = key[5:]  # Remove 'attr_' prefix
+                            try:
+                                attribute = new_item.item_type.attributes.get(name=attr_name)
+                                validated_value = attribute.validate_value(value)
+
+                                # Create attribute value
+                                attr_value_obj = CollectionItemAttributeValue(
+                                    item=new_item,
+                                    item_attribute=attribute,
+                                    created_by=request.user
+                                )
+                                attr_value_obj.set_typed_value(validated_value)
+                                attr_value_obj.save()
+                                attributes_created.append(f"{attribute.display_name}: {validated_value}")
+                            except Exception as e:
+                                logger.warning("Failed to save attribute '%s' for new item '%s': %s",
+                                             attr_name, new_item.name, str(e))
+
+                    if attributes_created:
+                        logger.info("Created %d attributes for new item '%s': %s",
+                                   len(attributes_created), new_item.name, ', '.join(attributes_created))
+
+                # Handle link if provided
+                link_url = form.cleaned_data.get('link_url')
+                if link_url:
+                    from web.models import CollectionItemLink
+                    link = CollectionItemLink.objects.create(
+                        item=new_item,
+                        url=link_url,
+                        created_by=request.user
+                    )
+                    logger.info("Created link '%s' for new item '%s'", link_url, new_item.name)
+
                 # Log successful creation
                 logger.info('collection_item_create_view: Item "%s" created in collection "%s" by user %s [%s]',
                            new_item.name, collection.name, request.user.username, request.user.id,
-                           extra={'function': 'collection_item_create_view', 'action': 'created', 
-                                 'object_type': 'CollectionItem', 'object_hash': new_item.hash, 
-                                 'object_name': new_item.name, 'collection_hash': collection.hash, 
-                                 'collection_name': collection.name, 'status': new_item.status, 
+                           extra={'function': 'collection_item_create_view', 'action': 'created',
+                                 'object_type': 'CollectionItem', 'object_hash': new_item.hash,
+                                 'object_name': new_item.name, 'collection_hash': collection.hash,
+                                 'collection_name': collection.name, 'status': new_item.status,
                                  'result': 'success', 'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
-                
+
                 # Log user activity
                 RecentActivity.log_item_added(
                     user=request.user,

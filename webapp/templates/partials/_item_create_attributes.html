@@ -1,0 +1,48 @@
+{% load lucide %}
+
+{# Dynamic attributes for item creation form - loaded via HTMX based on selected item type #}
+{% if attributes %}
+<div class="space-y-4">
+    <div class="text-sm font-semibold opacity-70">Attributes for {{ item_type_name }}</div>
+    {% for attribute in attributes %}
+    <div class="form-control w-full">
+        {% if attribute.attribute_type == 'TEXT' %}
+            <label class="label">
+                <span class="label-text">{{ attribute.display_name }}{% if attribute.help_text %} <span class="tooltip tooltip-right" data-tip="{{ attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60 inline' %}</span>{% endif %}</span>
+            </label>
+            <input type="text" name="attr_{{ attribute.name }}" class="input input-bordered w-full" placeholder="{{ attribute.display_name }}">
+        
+        {% elif attribute.attribute_type == 'NUMBER' %}
+            <label class="label">
+                <span class="label-text">{{ attribute.display_name }}{% if attribute.help_text %} <span class="tooltip tooltip-right" data-tip="{{ attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60 inline' %}</span>{% endif %}</span>
+            </label>
+            <input type="number" name="attr_{{ attribute.name }}" class="input input-bordered w-full" placeholder="{{ attribute.display_name }}">
+        
+        {% elif attribute.attribute_type == 'DATE' %}
+            <label class="label">
+                <span class="label-text">{{ attribute.display_name }}{% if attribute.help_text %} <span class="tooltip tooltip-right" data-tip="{{ attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60 inline' %}</span>{% endif %}</span>
+            </label>
+            <input type="date" name="attr_{{ attribute.name }}" class="input input-bordered w-full">
+        
+        {% elif attribute.attribute_type == 'URL' %}
+            <label class="label">
+                <span class="label-text">{{ attribute.display_name }}{% if attribute.help_text %} <span class="tooltip tooltip-right" data-tip="{{ attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60 inline' %}</span>{% endif %}</span>
+            </label>
+            <input type="url" name="attr_{{ attribute.name }}" class="input input-bordered w-full" placeholder="https://">
+        
+        {% elif attribute.attribute_type == 'BOOLEAN' %}
+            <fieldset class="border border-base-300 rounded-lg p-4">
+                <legend class="text-sm font-semibold px-2">{{ attribute.display_name }}{% if attribute.help_text %} <span class="tooltip tooltip-right" data-tip="{{ attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60 inline' %}</span>{% endif %}</legend>
+                <div class="flex items-center justify-center gap-4">
+                    <span class="label-text text-error">No</span>
+                    <input type="checkbox" class="toggle toggle-success" id="attr-toggle-{{ attribute.name }}" onchange="document.getElementById('attr-{{ attribute.name }}').value = this.checked ? '1' : '0'" />
+                    <input type="hidden" name="attr_{{ attribute.name }}" id="attr-{{ attribute.name }}" value="0" />
+                    <span class="label-text text-success">Yes</span>
+                </div>
+            </fieldset>
+        
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

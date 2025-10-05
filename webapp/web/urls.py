@@ -63,6 +63,7 @@ urlpatterns = [
     path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
     path('items/<str:hash>/remove-attribute-value/<str:attr_value_hash>/', items_hx.item_remove_attribute_value, name='item_remove_attribute_value'),
     path('items/<str:hash>/toggle-boolean-attribute/<str:attr_value_hash>/', items_hx.item_toggle_boolean_attribute, name='item_toggle_boolean_attribute'),
+    path('items/get-type-attributes/', items_hx.get_type_attributes_for_create, name='get_type_attributes_for_create'),
 
     # Item link management
     path('items/<str:hash>/add-link/', items_hx.item_add_link, name='item_add_link'),

@@ -38,6 +38,17 @@
                 {% if form.name.errors %}<div class="text-error text-sm mt-1">{{ form.name.errors.as_text }}</div>{% endif %}
             </div>
 
+            {% if not item %}
+            <div class="form-control w-full mb-4">
+                <label class="label" for="{{ form.item_type.id_for_label }}"><span class="label-text">{{ form.item_type.label }}</span></label>
+                {% render_field form.item_type class="select select-bordered w-full" hx-get="/items/get-type-attributes/" hx-target="#dynamic-attributes-container" hx-trigger="change" hx-swap="innerHTML" %}
+                {% if form.item_type.errors %}<div class="text-error text-sm mt-1">{{ form.item_type.errors.as_text }}</div>{% endif %}
+            </div>
+
+            {# Dynamic attributes container - populated via HTMX when item type is selected #}
+            <div id="dynamic-attributes-container" class="mb-4"></div>
+            {% endif %}
+
             <div class="form-control w-full mb-4">
                 <label class="label" for="{{ form.status.id_for_label }}"><span class="label-text">{{ form.status.label }}</span></label>
                 {% render_field form.status class="select select-bordered w-full" %}
@@ -55,6 +66,19 @@
                 {% render_field form.image_url class="input input-bordered w-full" placeholder="https://" %}
                 {% if form.image_url.errors %}<div class="text-error text-sm mt-1">{{ form.image_url.errors.as_text }}</div>{% endif %}
             </div>
+
+            {% if not item %}
+            <div class="form-control w-full mb-4">
+                <label class="label" for="{{ form.link_url.id_for_label }}">
+                    <span class="label-text">{{ form.link_url.label }}</span>
+                </label>
+                {% render_field form.link_url class="input input-bordered w-full" placeholder="https://example.com" %}
+                <label class="label">
+                    <span class="label-text-alt">{{ form.link_url.help_text }}</span>
+                </label>
+                {% if form.link_url.errors %}<div class="text-error text-sm mt-1">{{ form.link_url.errors.as_text }}</div>{% endif %}
+            </div>
+            {% endif %}
 
             <button type="submit" class="btn btn-primary">
                 {% if form.instance.pk %}

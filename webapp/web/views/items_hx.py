@@ -1022,3 +1022,33 @@ def item_remove_link(request, hash, link_id):
     return render(request, 'partials/_item_links.html', {
         'item': item
     })
+
+@login_required
+@log_execution_time
+def get_type_attributes_for_create(request):
+    """
+    HTMX endpoint to get attribute fields for a selected item type during item creation.
+    Returns HTML form fields for all attributes of the selected type.
+    """
+    item_type_id = request.GET.get('item_type')
+    
+    if not item_type_id:
+        return HttpResponse('')  # Return empty if no type selected
+    
+    try:
+        item_type = ItemType.objects.get(id=item_type_id)
+        attributes = item_type.attributes.all().order_by('display_name')
+        
+        logger.info("get_type_attributes_for_create: Loading %d attributes for item type '%s' by user '%s' [%s]",
+                   attributes.count(), item_type.display_name, request.user.username, request.user.id,
+                   extra={'function': 'get_type_attributes_for_create', 'action': 'attributes_loaded',
+                         'item_type_id': item_type_id, 'item_type_name': item_type.display_name,
+                         'attribute_count': attributes.count()})
+        
+        return render(request, 'partials/_item_create_attributes.html', {
+            'attributes': attributes,
+            'item_type_name': item_type.display_name
+        })
+    except ItemType.DoesNotExist:
+        logger.warning("get_type_attributes_for_create: Item type %s not found", item_type_id)
+        return HttpResponse('')
