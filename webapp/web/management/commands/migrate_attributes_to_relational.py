@@ -117,6 +117,20 @@ class Command(BaseCommand):
                 )
 
                 for attr_name, attr_value in item.attributes.items():
+                    # Apply attribute name mappings for specific item types
+                    original_attr_name = attr_name
+                    if item.item_type and item.item_type.name == 'comic_book':
+                        # Map old attribute names to new ones for comic books
+                        attr_name_map = {
+                            'volume': 'issue_number',
+                            'author': 'artist'
+                        }
+                        if attr_name in attr_name_map:
+                            new_attr_name = attr_name_map[attr_name]
+                            if verbose:
+                                self.stdout.write(f'    🔄 Renaming {attr_name} → {new_attr_name} for comic_book')
+                            attr_name = new_attr_name
+
                     # Skip if already migrated to relational
                     if attr_name in existing_attr_names:
                         if verbose:
@@ -164,21 +178,24 @@ class Command(BaseCommand):
                                 attr_value_obj.save()
 
                                 if verbose:
+                                    display_name = f'{original_attr_name} → {attr_name}' if original_attr_name != attr_name else attr_name
                                     self.stdout.write(
-                                        self.style.SUCCESS(f'    ✅ {attr_name}: migrated')
+                                        self.style.SUCCESS(f'    ✅ {display_name}: migrated')
                                     )
                                 stats['attributes_migrated'] += 1
 
                         except Exception as e:
-                            error_msg = f'Error migrating {item.name} - {attr_name}: {str(e)}'
+                            display_name = f'{original_attr_name} → {attr_name}' if original_attr_name != attr_name else attr_name
+                            error_msg = f'Error migrating {item.name} - {display_name}: {str(e)}'
                             self.stdout.write(self.style.ERROR(f'    ❌ {error_msg}'))
                             stats['errors'] += 1
                             stats['error_details'].append(error_msg)
                             continue
                     else:
                         if verbose:
+                            display_name = f'{original_attr_name} → {attr_name}' if original_attr_name != attr_name else attr_name
                             self.stdout.write(
-                                self.style.SUCCESS(f'    ✓ {attr_name}: would migrate')
+                                self.style.SUCCESS(f'    ✓ {display_name}: would migrate')
                             )
                         stats['attributes_migrated'] += 1
 
