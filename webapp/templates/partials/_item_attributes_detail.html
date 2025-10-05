@@ -29,9 +29,15 @@
                                 <a href="{{ attr_data.value }}" target="_blank" class="link link-primary">{{ attr_data.value }}</a>
                             {% elif attr_data.attribute.attribute_type == 'BOOLEAN' %}
                                 {% if attr_data.value %}
-                                    <span class="badge badge-success badge-sm">Yes</span>
+                                    <span class="flex items-center gap-1 text-success font-semibold">
+                                        {% lucide 'circle-check' size=16 %}
+                                        Yes
+                                    </span>
                                 {% else %}
-                                    <span class="badge badge-error badge-sm">No</span>
+                                    <span class="flex items-center gap-1 text-error font-semibold">
+                                        {% lucide 'circle-x' size=16 %}
+                                        No
+                                    </span>
                                 {% endif %}
                             {% else %}
                                 {{ attr_data.value }}

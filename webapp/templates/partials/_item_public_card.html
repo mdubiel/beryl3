@@ -67,21 +67,31 @@
                             <div class="space-y-1">
                                 {% for attr_data in attributes %}
                                 <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
-                                    <span class="text-xs flex items-center gap-1" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
+                                    <span class="text-xs flex items-center gap-2" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
                                         <span class="inline-flex items-center gap-1">
-                                            <strong>{{ attr_data.attribute.display_name }}:</strong>
+                                            <strong>{{ attr_data.attribute.display_name }}
                                             {% if attr_data.attribute.help_text %}
                                                 <span class="tooltip tooltip-right" data-tip="{{ attr_data.attribute.help_text }}">
                                                     {% lucide 'info' size=12 class='text-neutral opacity-60' %}
                                                 </span>
-                                            {% endif %}
+                                            {% endif %}:</strong>
                                         </span>
                                         {% if attr_data.attribute.attribute_type == 'URL' %}
                                             <a href="{{ attr_data.value }}" target="_blank" class="link link-hover text-primary">
                                                 {{ attr_data.value }}
                                             </a>
                                         {% elif attr_data.attribute.attribute_type == 'BOOLEAN' %}
-                                            {% if attr_data.value %}Yes{% else %}No{% endif %}
+                                            {% if attr_data.value %}
+                                                <span class="flex items-center gap-1 text-success font-semibold">
+                                                    {% lucide 'circle-check' size=14 %}
+                                                    Yes
+                                                </span>
+                                            {% else %}
+                                                <span class="flex items-center gap-1 text-error font-semibold">
+                                                    {% lucide 'circle-x' size=14 %}
+                                                    No
+                                                </span>
+                                            {% endif %}
                                         {% elif attr_data.attribute.attribute_type == 'DATE' %}
                                             {{ attr_data.display_value }}
                                         {% else %}
