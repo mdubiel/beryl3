@@ -1448,10 +1448,12 @@ class CollectionItemAttributeValue(BerylModel):
 
         if attr_type == ItemAttribute.AttributeType.NUMBER:
             try:
-                # Try int first, then float
-                if '.' not in self.value:
-                    return int(self.value)
-                return float(self.value)
+                # Convert to float first
+                float_value = float(self.value)
+                # If it's a whole number, return as int
+                if float_value.is_integer():
+                    return int(float_value)
+                return float_value
             except (ValueError, TypeError):
                 return self.value  # Return as-is if conversion fails
 
