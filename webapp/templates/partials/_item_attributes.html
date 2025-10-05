@@ -7,8 +7,23 @@
             <div class="space-y-1">
                 {% for attr_data in attributes %}
                 <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
-                    <span class="text-xs" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
-                        {{ attr_data.attribute.display_name }}: {{ attr_data.value }}
+                    <span class="text-xs flex items-center gap-2" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
+                        <span>{{ attr_data.attribute.display_name }}:</span>
+                        {% if attr_data.attribute.attribute_type == 'BOOLEAN' %}
+                            {% if attr_data.value %}
+                                <span class="flex items-center gap-1 text-success">
+                                    {% lucide 'circle-check' size=14 %}
+                                    Yes
+                                </span>
+                            {% else %}
+                                <span class="flex items-center gap-1 text-error">
+                                    {% lucide 'circle-x' size=14 %}
+                                    No
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span>{{ attr_data.display_value }}</span>
+                        {% endif %}
                     </span>
                     {% if request.user == item.collection.created_by %}
                     <div class="dropdown dropdown-end dropdown-top flex-shrink-0">

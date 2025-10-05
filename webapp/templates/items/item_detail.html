@@ -33,18 +33,17 @@
                             {% lucide 'package' size=18 %}
                         {% endif %}
                     </button>
-                    <div tabindex="0" class="dropdown-content shadow bg-base-100 rounded-box p-4 z-10" style="width: 42rem; max-height: 32rem; overflow-y: auto;">
+                    <div tabindex="0" class="dropdown-content shadow bg-base-100 rounded-box p-4 z-10 w-screen max-w-5xl">
                         <div class="mb-2 px-2 font-semibold text-sm">Item Type</div>
-                        <div class="grid grid-cols-3 gap-1">
+                        <div class="flex flex-wrap gap-1">
                             {% for item_type in item_types %}
-                            <div>
                                 {% if item.item_type == item_type %}
-                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-not-allowed opacity-50 font-bold text-sm">
+                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-not-allowed opacity-50 font-bold text-sm w-60">
                                         {% lucide item_type.icon size=16 %}
                                         <span class="truncate">{{ item_type.display_name }}</span>
                                     </a>
                                 {% else %}
-                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-base-200 cursor-pointer text-sm"
+                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-base-200 cursor-pointer text-sm w-60"
                                        hx-post="{% url 'item_change_type' item.hash %}"
                                        hx-vals='{"item_type_id": "{{ item_type.id }}"}'
                                        hx-target="body"
@@ -54,7 +53,6 @@
                                         <span class="truncate">{{ item_type.display_name }}</span>
                                     </a>
                                 {% endif %}
-                            </div>
                             {% endfor %}
                         </div>
                     </div>

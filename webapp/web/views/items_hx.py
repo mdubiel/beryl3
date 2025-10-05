@@ -561,6 +561,17 @@ def item_save_attribute(request, hash):
                 'item_types': ItemType.objects.all()
             })
 
+        # For boolean attributes, delete any existing values (only one instance allowed)
+        if attribute.attribute_type == 'BOOLEAN':
+            existing_values = CollectionItemAttributeValue.objects.filter(
+                item=item,
+                item_attribute=attribute
+            )
+            if existing_values.exists():
+                logger.info("Deleting %d existing boolean attribute value(s) for '%s' on item '%s'",
+                           existing_values.count(), attribute_name, item.name)
+                existing_values.delete()
+
         # Create relational attribute value (when item type and attribute definition exist)
         attr_value_obj = CollectionItemAttributeValue(
             item=item,

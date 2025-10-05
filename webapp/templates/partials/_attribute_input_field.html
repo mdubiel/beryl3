@@ -6,10 +6,15 @@
 </label>
 
 {% if attribute.attribute_type == 'BOOLEAN' %}
-    <label class="label cursor-pointer justify-start gap-3">
-        <input type="checkbox" name="attribute_value" class="checkbox checkbox-primary" value="true">
-        <span class="label-text">{{ attribute.display_name }}</span>
-    </label>
+    <fieldset class="border border-base-300 rounded-lg p-4">
+        <legend class="text-sm font-semibold px-2">{{ attribute.display_name }}</legend>
+        <div class="flex items-center justify-center gap-4">
+            <span class="label-text text-error">No</span>
+            <input type="checkbox" class="toggle toggle-success" id="attr-toggle" onchange="document.getElementById('attr-value-hidden').value = this.checked ? '1' : '0'" />
+            <input type="hidden" name="attribute_value" id="attr-value-hidden" value="0" />
+            <span class="label-text text-success">Yes</span>
+        </div>
+    </fieldset>
 {% elif attribute.attribute_type == 'LONG_TEXT' %}
     <textarea name="attribute_value" class="textarea textarea-bordered w-full" rows="3"
               {% if attribute.required %}required{% endif %}></textarea>

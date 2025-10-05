@@ -592,6 +592,14 @@ class ItemAttribute(BerylModel):
             return str(value)
             
         elif self.attribute_type == self.AttributeType.BOOLEAN:
+            # Handle string values from form inputs
+            if isinstance(value, str):
+                value_lower = value.lower().strip()
+                if value_lower in ('true', '1', 'yes', 'on'):
+                    return True
+                elif value_lower in ('false', '0', 'no', 'off', ''):
+                    return False
+            # Handle boolean/int values directly
             return bool(value)
             
         elif self.attribute_type == self.AttributeType.CHOICE:

@@ -41,8 +41,8 @@
     {% else %}
         {# Edit mode #}
         <input type="hidden" name="attribute_name" value="{{ attribute.name }}">
-        {% if attr_value_id %}
-        <input type="hidden" name="attr_value_id" value="{{ attr_value_id }}">
+        {% if attr_value_hash %}
+        <input type="hidden" name="attr_value_hash" value="{{ attr_value_hash }}">
         {% endif %}
 
         <div class="form-control">
@@ -54,8 +54,15 @@
             </label>
             
             {% if attribute.attribute_type == 'BOOLEAN' %}
-                <input type="checkbox" name="attribute_value" class="checkbox checkbox-primary" 
-                       {% if current_value %}checked{% endif %} value="true">
+                <fieldset class="border border-base-300 rounded-lg p-4">
+                    <legend class="text-sm font-semibold px-2">{{ attribute.display_name }}</legend>
+                    <div class="flex items-center justify-center gap-4">
+                        <span class="label-text text-error">No</span>
+                        <input type="checkbox" class="toggle toggle-success" id="attr-edit-toggle" {% if current_value %}checked{% endif %} onchange="document.getElementById('attr-edit-value-hidden').value = this.checked ? '1' : '0'" />
+                        <input type="hidden" name="attribute_value" id="attr-edit-value-hidden" value="{% if current_value %}1{% else %}0{% endif %}" />
+                        <span class="label-text text-success">Yes</span>
+                    </div>
+                </fieldset>
             {% elif attribute.attribute_type == 'LONG_TEXT' %}
                 <textarea name="attribute_value" class="textarea textarea-bordered w-full" rows="3" 
                           {% if attribute.required %}required{% endif %}>{{ current_value }}</textarea>
