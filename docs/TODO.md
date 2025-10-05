@@ -900,8 +900,26 @@ Implement daily metrics collection system with comprehensive tracking and report
  - Description: when displaying more of one of the same attribute (like many authors), group them. On left side (where now is "Author") display only once name of attribute (aligned top left), and on right side list one per row as it is now.
 
 ### Task 59: Easy change of boolean attribute
- - Status: pending
- - Description: for item attribute boolean, i want an extra action (icon), next to elipsisis (on its right side, two arrows pointing other directions), which will with one clisk (on questions asked!) swap the value of this boolean attribute from Yes to No and other way around. OFC keep all the logs and Messages involved.
+- Status: ✅ completed
+- Verified: pending user verification
+
+#### Task description
+For item attribute boolean, add an extra action icon (next to ellipsis, on its right side, two arrows pointing other directions), which will with one click (no questions asked!) swap the value of this boolean attribute from Yes to No and vice versa. Keep all the logs and messages involved.
+
+#### Implementation summary
+- Added quick toggle button with arrow-left-right icon to the right of ellipsis menu for boolean attributes
+- Button appears only for boolean type attributes in both list and detail views
+- Created `item_toggle_boolean_attribute` HTMX endpoint that toggles boolean values instantly
+- Implemented comprehensive logging for all toggle operations with structured logging
+- Added success messages showing old and new values ("'Read Status' changed from True to False")
+- Toggle works without confirmation as requested
+- Updated templates: `_item_attributes.html` (collection list view) and `_item_attributes_detail.html` (item detail view)
+- Added URL route: `/items/<hash>/toggle-boolean-attribute/<attr_value_hash>/`
+- File changes:
+  - `web/views/items_hx.py:693-767` - Toggle endpoint with validation, logging, and security checks
+  - `web/urls.py:65` - URL route
+  - `templates/partials/_item_attributes.html:31-41` - Toggle button in list view
+  - `templates/partials/_item_attributes_detail.html:42-53` - Toggle button in detail view
 
 ---
 

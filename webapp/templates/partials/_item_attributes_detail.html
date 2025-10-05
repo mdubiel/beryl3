@@ -39,34 +39,46 @@
                             {% endif %}
                         </td>
                         {% if request.user == item.collection.created_by %}
-                        <td class="w-16">
-                            <div class="dropdown dropdown-end dropdown-top">
-                                <button tabindex="0" class="btn btn-ghost btn-xs btn-square" title="Attribute Actions">
-                                    {% lucide 'ellipsis' size=12 %}
+                        <td class="w-20">
+                            <div class="flex items-center gap-1 justify-end">
+                                {% if attr_data.attribute.attribute_type == 'BOOLEAN' %}
+                                <button class="btn btn-ghost btn-xs btn-square"
+                                        title="Toggle value"
+                                        hx-post="{% url 'item_toggle_boolean_attribute' item.hash attr_data.attr_value_hash %}"
+                                        hx-target="#item-attributes-{{ item.hash }}"
+                                        hx-swap="outerHTML"
+                                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                    {% lucide 'arrow-left-right' size=12 %}
                                 </button>
-                                <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-24 z-50">
-                                    <li>
-                                        <a class="text-xs py-1 px-2"
-                                           hx-get="{% url 'item_edit_attribute_value' item.hash attr_data.attr_value_hash %}"
-                                           hx-target="#attribute-edit-modal-content"
-                                           hx-trigger="click"
-                                           onclick="document.getElementById('attribute-edit-modal').showModal()">
-                                            {% lucide 'pencil' size=12 %}
-                                            Edit
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="text-xs py-1 px-2 text-error"
-                                           hx-delete="{% url 'item_remove_attribute_value' item.hash attr_data.attr_value_hash %}"
-                                           hx-target="#item-attributes-{{ item.hash }}"
-                                           hx-swap="outerHTML"
-                                           hx-confirm="Remove {{ attr_data.attribute.display_name }}{% if attr_data.is_multiple %} ({{ attr_data.display_value }}){% endif %}?"
-                                           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                            {% lucide 'trash-2' size=12 %}
-                                            Delete
-                                        </a>
-                                    </li>
-                                </ul>
+                                {% endif %}
+                                <div class="dropdown dropdown-end dropdown-top">
+                                    <button tabindex="0" class="btn btn-ghost btn-xs btn-square" title="Attribute Actions">
+                                        {% lucide 'ellipsis' size=12 %}
+                                    </button>
+                                    <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-24 z-50">
+                                        <li>
+                                            <a class="text-xs py-1 px-2"
+                                               hx-get="{% url 'item_edit_attribute_value' item.hash attr_data.attr_value_hash %}"
+                                               hx-target="#attribute-edit-modal-content"
+                                               hx-trigger="click"
+                                               onclick="document.getElementById('attribute-edit-modal').showModal()">
+                                                {% lucide 'pencil' size=12 %}
+                                                Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="text-xs py-1 px-2 text-error"
+                                               hx-delete="{% url 'item_remove_attribute_value' item.hash attr_data.attr_value_hash %}"
+                                               hx-target="#item-attributes-{{ item.hash }}"
+                                               hx-swap="outerHTML"
+                                               hx-confirm="Remove {{ attr_data.attribute.display_name }}{% if attr_data.is_multiple %} ({{ attr_data.display_value }}){% endif %}?"
+                                               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                                {% lucide 'trash-2' size=12 %}
+                                                Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
                             </div>
                         </td>
                         {% endif %}

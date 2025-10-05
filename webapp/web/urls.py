@@ -62,7 +62,8 @@ urlpatterns = [
     path('items/<str:hash>/edit-attribute-value/<str:attr_value_hash>/', items_hx.item_edit_attribute_value, name='item_edit_attribute_value'),
     path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
     path('items/<str:hash>/remove-attribute-value/<str:attr_value_hash>/', items_hx.item_remove_attribute_value, name='item_remove_attribute_value'),
-    
+    path('items/<str:hash>/toggle-boolean-attribute/<str:attr_value_hash>/', items_hx.item_toggle_boolean_attribute, name='item_toggle_boolean_attribute'),
+
     # Item link management
     path('items/<str:hash>/add-link/', items_hx.item_add_link, name='item_add_link'),
     path('items/<str:hash>/edit-link/<int:link_id>/', items_hx.item_edit_link, name='item_edit_link'),

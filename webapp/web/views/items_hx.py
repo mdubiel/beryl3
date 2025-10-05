@@ -688,6 +688,86 @@ def item_remove_attribute_value(request, hash, attr_value_hash):
 
 
 @login_required
+@require_POST
+@log_execution_time
+def item_toggle_boolean_attribute(request, hash, attr_value_hash):
+    """
+    Handles POST request to toggle a boolean attribute value (True <-> False).
+    No confirmation needed, instant toggle with logging.
+    """
+    logger.info("Toggle boolean attribute requested for item hash '%s' attr_value_hash '%s' by user '%s' [%s]",
+                hash, attr_value_hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to toggle attribute on item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+
+        # Log unauthorized access attempt
+        logger.warning("item_toggle_boolean_attribute: Unauthorized attempt to toggle attribute on item '%s' by user '%s' [%s] - access denied",
+                      item.name, request.user.username, request.user.id,
+                      extra={'function': 'item_toggle_boolean_attribute', 'action': 'unauthorized_access',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'result': 'access_denied',
+                            'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+        raise Http404("You do not have permission to edit this item.")
+
+    # Get the attribute value and toggle it
+    try:
+        attr_value = CollectionItemAttributeValue.objects.get(hash=attr_value_hash, item=item)
+        attribute_name = attr_value.item_attribute.name
+
+        # Verify it's a boolean attribute
+        if attr_value.item_attribute.attribute_type != 'BOOLEAN':
+            logger.error("User '%s' [%s] attempted to toggle non-boolean attribute '%s' on item '%s'",
+                        request.user.username, request.user.id, attribute_name, item.name)
+            raise Http404("Can only toggle boolean attributes.")
+
+        # Get current value and toggle it
+        old_value = attr_value.get_typed_value()
+        new_value = not old_value
+
+        # Update the value
+        attr_value.value = '1' if new_value else '0'
+        attr_value.save()
+
+        logger.info("User '%s' [%s] toggled boolean attribute '%s' from %s to %s on CollectionItem '%s' [%s]",
+                   request.user.username, request.user.id, attribute_name, old_value, new_value, item.name, item.hash)
+
+        # Log successful toggle
+        logger.info("item_toggle_boolean_attribute: Boolean attribute '%s' toggled from %s to %s on item '%s' by user '%s' [%s]",
+                   attribute_name, old_value, new_value, item.name, request.user.username, request.user.id,
+                   extra={'function': 'item_toggle_boolean_attribute', 'action': 'boolean_toggled',
+                         'object_type': 'CollectionItem', 'object_hash': item.hash,
+                         'object_name': item.name, 'attribute_name': attribute_name,
+                         'attr_value_hash': attr_value_hash, 'old_value': str(old_value),
+                         'new_value': str(new_value), 'result': 'success',
+                         'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+        # Show success message
+        from django.contrib import messages
+        messages.success(request, f"'{attribute_name}' changed from {old_value} to {new_value}")
+
+    except CollectionItemAttributeValue.DoesNotExist:
+        # Log attempt to toggle non-existent attribute value
+        logger.warning("item_toggle_boolean_attribute: Attempted to toggle non-existent attribute value (hash: %s) on item '%s' by user '%s' [%s]",
+                      attr_value_hash, item.name, request.user.username, request.user.id,
+                      extra={'function': 'item_toggle_boolean_attribute', 'action': 'toggle_failed',
+                            'object_type': 'CollectionItem', 'object_hash': item.hash,
+                            'object_name': item.name, 'attr_value_hash': attr_value_hash,
+                            'error': 'attribute_value_not_found', 'result': 'not_found',
+                            'function_args': {'hash': hash, 'attr_value_hash': attr_value_hash}})
+
+    # Return the updated attributes section
+    return render(request, 'partials/_item_attributes.html', {
+        'item': item,
+        'item_types': ItemType.objects.all()
+    })
+
+
+@login_required
 @log_execution_time
 def item_add_link(request, hash):
     """
