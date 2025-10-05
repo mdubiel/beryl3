@@ -815,20 +815,52 @@ class CollectionItem(BerylModel):
     
     def get_display_attributes(self):
         """
-        Get all attributes for display, ordered by the attribute definition order
+        Get all attributes for display, ordered by the attribute definition order.
+        Uses dual-mode support - retrieves from relational model first, then JSON fallback.
+        Supports multiple values per attribute (e.g., multiple authors).
         """
         if not self.item_type:
             return []
-        
+
         result = []
-        for attr in self.item_type.attributes.all():
-            value = self.attributes.get(attr.name)
-            if value is not None:
-                result.append({
-                    'attribute': attr,
-                    'value': value,
-                    'display_value': self._format_attribute_value(attr, value)
-                })
+
+        # Get all attributes from dual-mode (relational + JSON)
+        detailed_attrs = self.get_all_attributes_detailed()
+
+        # Create a map for quick lookup
+        attr_map = {attr['name']: attr for attr in detailed_attrs}
+
+        # Order by ItemAttribute definition order
+        for item_attr in self.item_type.attributes.all():
+            attr_name = item_attr.name
+
+            if attr_name in attr_map:
+                attr_data = attr_map[attr_name]
+
+                # Handle multiple values (list)
+                if isinstance(attr_data['value'], list):
+                    # Multiple values - create entry for each
+                    for idx, value in enumerate(attr_data['value']):
+                        display_value = attr_data['display_value'][idx] if isinstance(attr_data['display_value'], list) else str(value)
+                        result.append({
+                            'attribute': item_attr,
+                            'value': value,
+                            'display_value': display_value,
+                            'is_legacy': attr_data['is_legacy'],
+                            'is_multiple': True,
+                            'multiple_index': idx,
+                            'multiple_count': len(attr_data['value'])
+                        })
+                else:
+                    # Single value
+                    result.append({
+                        'attribute': item_attr,
+                        'value': attr_data['value'],
+                        'display_value': attr_data['display_value'],
+                        'is_legacy': attr_data['is_legacy'],
+                        'is_multiple': False
+                    })
+
         return result
     
     def _format_attribute_value(self, attribute, value):
