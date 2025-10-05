@@ -760,12 +760,33 @@ Implement daily metrics collection system with comprehensive tracking and report
 - ✅ Legacy code removed
 
 ### Task 38: Item Type Popup Layout
-- Status: ⏳ pending
-- Description: Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page. Use TailwindCSS and DaisyUI components. 
+- Status: ✅ completed
+- Verified: ✅ yes
+- Commit ID: pending
+- Description: Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page. Use TailwindCSS and DaisyUI components.
+
+#### Implementation Summary
+- Converted single-column dropdown to 3-column grid layout
+- Used Tailwind CSS grid classes (grid-cols-3)
+- Fixed width container (42rem) with max-height and scroll
+- Each item type shows icon + name in compact format
+- Improved hover states and visual feedback
+- Handles 41 item types without scrolling on standard displays
 
 ### Task 39: Boolean Attribute UI
-- Status: ⏳ pending
+- Status: ✅ completed
+- Verified: ✅ yes
+- Commit ID: pending
 - Description: When adding attribute type boolean, user should be presented with checkbox with a label not input form. This has to be loaded dynamically with HTMX
+
+#### Implementation Summary
+- Created new HTMX endpoint: `item_get_attribute_input`
+- Added dynamic form field loading based on selected attribute type
+- Created `_attribute_input_field.html` partial template
+- Boolean attributes display as checkbox with label (not text input)
+- Supports all attribute types: BOOLEAN, TEXT, LONG_TEXT, CHOICE, DATE, NUMBER, URL, EMAIL
+- Form updates dynamically when attribute is selected
+- Proper handling of required fields and placeholders
 
 ### Task 40: Duplicate Attributes
 - Status: already implemented in Task 37

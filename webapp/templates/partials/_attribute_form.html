@@ -17,15 +17,22 @@
             <label class="label">
                 <span class="label-text">Attribute</span>
             </label>
-            <select name="attribute_name" class="select select-bordered w-full" required>
+            <select name="attribute_name"
+                    class="select select-bordered w-full"
+                    required
+                    hx-get="{% url 'item_get_attribute_input' item.hash %}"
+                    hx-target="#attribute-value-input"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="[name='attribute_name']">
                 <option value="">Select an attribute...</option>
                 {% for attr in available_attributes %}
-                    <option value="{{ attr.name }}">{{ attr.display_name }}</option>
+                    <option value="{{ attr.name }}" data-type="{{ attr.attribute_type }}">{{ attr.display_name }}</option>
                 {% endfor %}
             </select>
         </div>
-        
-        <div class="form-control">
+
+        <div id="attribute-value-input" class="form-control">
             <label class="label">
                 <span class="label-text">Value</span>
             </label>

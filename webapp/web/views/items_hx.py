@@ -9,7 +9,7 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST, require_http_methods
 
@@ -307,6 +307,39 @@ def item_add_attribute(request, hash):
     }
     
     return render(request, 'partials/_attribute_form.html', context)
+
+
+@login_required
+@log_execution_time
+def item_get_attribute_input(request, hash):
+    """
+    Handles GET request to return appropriate input field for selected attribute type.
+    Used for dynamic form field rendering based on attribute data type.
+    """
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        return HttpResponse('<input type="text" name="attribute_value" class="input input-bordered w-full" required>', content_type='text/html')
+
+    # Get the selected attribute name from request
+    attribute_name = request.GET.get('attribute_name', '')
+
+    if not attribute_name or not item.item_type:
+        return HttpResponse('<label class="label"><span class="label-text">Value</span></label><input type="text" name="attribute_value" class="input input-bordered w-full" required>', content_type='text/html')
+
+    # Get the attribute definition
+    try:
+        attribute = item.item_type.attributes.get(name=attribute_name)
+    except ItemAttribute.DoesNotExist:
+        return HttpResponse('<label class="label"><span class="label-text">Value</span></label><input type="text" name="attribute_value" class="input input-bordered w-full" required>', content_type='text/html')
+
+    context = {
+        'attribute': attribute,
+        'current_value': None,
+    }
+
+    return render(request, 'partials/_attribute_input_field.html', context)
 
 
 @login_required

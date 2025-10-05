@@ -1,0 +1,42 @@
+<label class="label">
+    <span class="label-text">{{ attribute.display_name }}</span>
+    {% if attribute.help_text %}
+        <span class="label-text-alt">{{ attribute.help_text }}</span>
+    {% endif %}
+</label>
+
+{% if attribute.attribute_type == 'BOOLEAN' %}
+    <label class="label cursor-pointer justify-start gap-3">
+        <input type="checkbox" name="attribute_value" class="checkbox checkbox-primary" value="true">
+        <span class="label-text">{{ attribute.display_name }}</span>
+    </label>
+{% elif attribute.attribute_type == 'LONG_TEXT' %}
+    <textarea name="attribute_value" class="textarea textarea-bordered w-full" rows="3"
+              {% if attribute.required %}required{% endif %}></textarea>
+{% elif attribute.attribute_type == 'CHOICE' %}
+    <select name="attribute_value" class="select select-bordered w-full"
+            {% if attribute.required %}required{% endif %}>
+        <option value="">Select...</option>
+        {% for choice in attribute.choices %}
+            <option value="{{ choice }}">{{ choice }}</option>
+        {% endfor %}
+    </select>
+{% elif attribute.attribute_type == 'DATE' %}
+    <input type="date" name="attribute_value" class="input input-bordered w-full"
+           {% if attribute.required %}required{% endif %}>
+{% elif attribute.attribute_type == 'NUMBER' %}
+    <input type="number" name="attribute_value" class="input input-bordered w-full"
+           {% if attribute.required %}required{% endif %} step="any">
+{% elif attribute.attribute_type == 'URL' %}
+    <input type="url" name="attribute_value" class="input input-bordered w-full"
+           {% if attribute.required %}required{% endif %}
+           placeholder="https://example.com">
+{% elif attribute.attribute_type == 'EMAIL' %}
+    <input type="email" name="attribute_value" class="input input-bordered w-full"
+           {% if attribute.required %}required{% endif %}
+           placeholder="email@example.com">
+{% else %}
+    {# TEXT or fallback #}
+    <input type="text" name="attribute_value" class="input input-bordered w-full"
+           {% if attribute.required %}required{% endif %}>
+{% endif %}
