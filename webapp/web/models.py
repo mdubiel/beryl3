@@ -1121,6 +1121,178 @@ class CollectionItemLink(BerylModel):
         super().save(*args, **kwargs)
 
 
+class CollectionItemAttributeValue(BerylModel):
+    """
+    Stores individual attribute values for collection items in a relational format.
+    This replaces the JSON-based attributes field with proper database relations,
+    allowing for better querying, multiple values per attribute, and data integrity.
+
+    Migration from JSON: Legacy JSON attributes are marked with is_legacy flag
+    and can be individually migrated via the UI.
+    """
+    item = models.ForeignKey(
+        CollectionItem,
+        on_delete=models.CASCADE,
+        related_name="attribute_values",
+        verbose_name=_("Collection Item")
+    )
+    item_attribute = models.ForeignKey(
+        ItemAttribute,
+        on_delete=models.PROTECT,
+        related_name="values",
+        verbose_name=_("Attribute Definition"),
+        help_text=_("The attribute schema this value conforms to")
+    )
+    value = models.TextField(
+        verbose_name=_("Value"),
+        help_text=_("Stored as text, converted to appropriate type on retrieval")
+    )
+    order = models.IntegerField(
+        default=0,
+        verbose_name=_("Display Order"),
+        help_text=_("For multiple values of the same attribute (e.g., multiple authors)")
+    )
+
+    class Meta:
+        verbose_name = _("Collection Item Attribute Value")
+        verbose_name_plural = _("Collection Item Attribute Values")
+        ordering = ["item", "item_attribute", "order"]
+        indexes = [
+            models.Index(fields=["item", "item_attribute"]),
+            models.Index(fields=["item", "order"]),
+        ]
+
+    def __str__(self):
+        return f"{self.item.name} - {self.item_attribute.display_name}: {self.value[:50]}"
+
+    def get_typed_value(self):
+        """
+        Convert the stored string value to the appropriate Python type
+        based on the attribute's type definition.
+
+        Returns:
+            The value converted to int, float, bool, date string, or str
+        """
+        if not self.value:
+            return None
+
+        attr_type = self.item_attribute.attribute_type
+
+        if attr_type == ItemAttribute.AttributeType.NUMBER:
+            try:
+                # Try int first, then float
+                if '.' not in self.value:
+                    return int(self.value)
+                return float(self.value)
+            except (ValueError, TypeError):
+                return self.value  # Return as-is if conversion fails
+
+        elif attr_type == ItemAttribute.AttributeType.BOOLEAN:
+            # Handle various boolean representations
+            if isinstance(self.value, bool):
+                return self.value
+            return self.value.lower() in ('true', '1', 'yes', 'on')
+
+        elif attr_type == ItemAttribute.AttributeType.DATE:
+            # Return as date string in YYYY-MM-DD format
+            # Template will handle formatting
+            return self.value
+
+        elif attr_type in (ItemAttribute.AttributeType.TEXT,
+                          ItemAttribute.AttributeType.LONG_TEXT,
+                          ItemAttribute.AttributeType.URL,
+                          ItemAttribute.AttributeType.CHOICE):
+            return self.value
+
+        return self.value
+
+    def set_typed_value(self, value):
+        """
+        Convert any Python type to string for storage.
+
+        Args:
+            value: The value to store (can be str, int, float, bool, etc.)
+        """
+        if value is None:
+            self.value = ""
+            return
+
+        attr_type = self.item_attribute.attribute_type
+
+        if attr_type == ItemAttribute.AttributeType.BOOLEAN:
+            # Store boolean as 'true' or 'false'
+            self.value = 'true' if value else 'false'
+        elif attr_type == ItemAttribute.AttributeType.NUMBER:
+            # Store numbers as string
+            self.value = str(value)
+        elif attr_type == ItemAttribute.AttributeType.DATE:
+            # Expect YYYY-MM-DD format
+            if isinstance(value, str):
+                self.value = value
+            else:
+                # If it's a date object, convert to string
+                try:
+                    self.value = value.strftime('%Y-%m-%d')
+                except AttributeError:
+                    self.value = str(value)
+        else:
+            # Everything else stored as string
+            self.value = str(value)
+
+    def get_display_value(self):
+        """
+        Get a formatted display value suitable for templates.
+
+        Returns:
+            Formatted string for display
+        """
+        typed_value = self.get_typed_value()
+
+        if typed_value is None or typed_value == "":
+            return ""
+
+        attr_type = self.item_attribute.attribute_type
+
+        if attr_type == ItemAttribute.AttributeType.BOOLEAN:
+            return "Yes" if typed_value else "No"
+
+        elif attr_type == ItemAttribute.AttributeType.DATE:
+            try:
+                date_obj = datetime.strptime(str(typed_value), '%Y-%m-%d')
+                return date_obj.strftime('%B %d, %Y')
+            except (ValueError, TypeError):
+                return str(typed_value)
+
+        elif attr_type == ItemAttribute.AttributeType.URL:
+            # Return as-is, template will handle link rendering
+            return str(typed_value)
+
+        else:
+            return str(typed_value)
+
+    def validate(self):
+        """
+        Validate the stored value against the attribute's type and constraints.
+
+        Raises:
+            ValidationError: If validation fails
+        """
+        typed_value = self.get_typed_value()
+        validated = self.item_attribute.validate_value(typed_value)
+        # Re-store the validated value
+        self.set_typed_value(validated)
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to validate before saving.
+        """
+        # Validate the value before saving
+        if not self.item_attribute.skip_validation:
+            self.validate()
+
+        super().save(*args, **kwargs)
+
+
 class CollectionImage(BerylModel):
     """
     Links MediaFile records to Collections for image management.
