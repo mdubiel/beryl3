@@ -7,8 +7,13 @@
             <div class="space-y-1">
                 {% for attr_data in attributes %}
                 <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
-                    <span class="text-xs" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
-                        {{ attr_data.attribute.display_name }}: {{ attr_data.value }}
+                    <span class="text-xs flex items-center gap-1" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
+                        <span>{{ attr_data.attribute.display_name }}: {{ attr_data.value }}</span>
+                        {% if attr_data.is_legacy %}
+                        <span class="badge badge-xs badge-warning" title="Legacy JSON attribute - needs migration">
+                            {% lucide 'alert-triangle' size=10 %}
+                        </span>
+                        {% endif %}
                     </span>
                     {% if request.user == item.collection.created_by %}
                     <div class="dropdown dropdown-end dropdown-top flex-shrink-0">

@@ -830,12 +830,16 @@ class CollectionItem(BerylModel):
         # Create a map for quick lookup
         attr_map = {attr['name']: attr for attr in detailed_attrs}
 
+        # Track which attributes we've processed
+        processed_names = set()
+
         # Order by ItemAttribute definition order
         for item_attr in self.item_type.attributes.all():
             attr_name = item_attr.name
 
             if attr_name in attr_map:
                 attr_data = attr_map[attr_name]
+                processed_names.add(attr_name)
 
                 # Handle multiple values (list)
                 if isinstance(attr_data['value'], list):
@@ -864,6 +868,24 @@ class CollectionItem(BerylModel):
                         'is_multiple': False,
                         'attr_value_hash': attr_value_hash
                     })
+
+        # Add orphaned JSON attributes (no ItemAttribute definition) at the end
+        for attr_name, attr_data in attr_map.items():
+            if attr_name not in processed_names and attr_data['is_legacy']:
+                # Create a simple attribute object for display
+                class OrphanedAttribute:
+                    def __init__(self, name):
+                        self.name = name
+                        self.display_name = name.replace('_', ' ').title()
+
+                result.append({
+                    'attribute': OrphanedAttribute(attr_name),
+                    'value': attr_data['value'],
+                    'display_value': attr_data['display_value'],
+                    'is_legacy': True,
+                    'is_multiple': False,
+                    'attr_value_hash': None
+                })
 
         return result
     
