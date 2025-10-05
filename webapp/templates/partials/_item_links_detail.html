@@ -62,5 +62,19 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        {# Add Link button - show for owners #}
+        {% if request.user == item.collection.created_by %}
+            <div class="mt-2">
+                <button class="btn btn-ghost btn-xs gap-1"
+                        hx-get="{% url 'item_add_link' item.hash %}"
+                        hx-target="#link-edit-modal-content"
+                        hx-trigger="click"
+                        onclick="document.getElementById('link-edit-modal').showModal()">
+                    {% lucide 'plus' size=14 %}
+                    Add Link
+                </button>
+            </div>
+        {% endif %}
     {% endif %}
 </div>

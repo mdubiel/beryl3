@@ -10,7 +10,7 @@
                     {{ link.get_display_name }}
                     {% lucide link.get_icon size=10 %}
                 </a>
-                
+
                 {# Separate actions dropdown (only for owners) #}
                 {% if request.user == item.collection.created_by %}
                 <div class="dropdown dropdown-end flex-shrink-0 ml-1">

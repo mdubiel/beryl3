@@ -71,9 +71,9 @@ def collection_item_create_view(request, collection_hash):
                     item_name=new_item.name,
                     collection_name=collection.name
                 )
-                
+
                 messages.success(request, f"Item '{new_item.name}' was added to your collection.")
-                return redirect(collection.get_absolute_url())
+                return redirect(new_item.get_absolute_url())
                 
             except Exception as e:
                 logger.error('collection_item_create_view: Item creation failed in collection "%s": %s by user %s [%s]',
@@ -163,9 +163,10 @@ def collection_item_update_view(request, hash):
                              'object_type': 'CollectionItem', 'object_hash': item.hash, 
                              'object_name': item.name, 'collection_hash': item.collection.hash, 
                              'result': 'success'})
-            
+
+
             messages.success(request, f"Item '{item.name}' was updated successfully!")
-            return redirect(item.collection.get_absolute_url())
+            return redirect(item.get_absolute_url())
         else:
             # Log form validation errors
             logger.warning('collection_item_update_view: Item "%s" update failed due to validation errors by user %s [%s]',

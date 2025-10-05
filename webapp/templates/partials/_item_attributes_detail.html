@@ -14,7 +14,16 @@
                 <tbody>
                     {% for attr_data in attributes %}
                     <tr>
-                        <td class="font-medium w-1/3">{{ attr_data.attribute.display_name }}</td>
+                        <td class="font-medium w-1/3">
+                            <span class="inline-flex items-center gap-1">
+                                {{ attr_data.attribute.display_name }}
+                                {% if attr_data.attribute.help_text %}
+                                    <span class="tooltip tooltip-right" data-tip="{{ attr_data.attribute.help_text }}">
+                                        {% lucide 'info' size=14 class='text-neutral opacity-60' %}
+                                    </span>
+                                {% endif %}
+                            </span>
+                        </td>
                         <td class="text-base-content">
                             {% if attr_data.attribute.attribute_type == 'URL' %}
                                 <a href="{{ attr_data.value }}" target="_blank" class="link link-primary">{{ attr_data.value }}</a>
@@ -27,9 +36,6 @@
                             {% else %}
                                 {{ attr_data.value }}
                             {% endif %}
-                            {% if attr_data.attribute.help_text %}
-                                <div class="text-xs text-neutral mt-1">{{ attr_data.attribute.help_text }}</div>
-                            {% endif %}
                         </td>
                         {% if request.user == item.collection.created_by %}
                         <td class="w-16">
@@ -40,7 +46,7 @@
                                 <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-24 z-50">
                                     <li>
                                         <a class="text-xs py-1 px-2"
-                                           hx-get="{% url 'item_edit_attribute' item.hash attr_data.attribute.name %}"
+                                           hx-get="{% url 'item_edit_attribute_value' item.hash attr_data.attr_value_hash %}"
                                            hx-target="#attribute-edit-modal-content"
                                            hx-trigger="click"
                                            onclick="document.getElementById('attribute-edit-modal').showModal()">
@@ -50,10 +56,10 @@
                                     </li>
                                     <li>
                                         <a class="text-xs py-1 px-2 text-error"
-                                           hx-delete="{% url 'item_remove_attribute' item.hash attr_data.attribute.name %}"
+                                           hx-delete="{% url 'item_remove_attribute_value' item.hash attr_data.attr_value_hash %}"
                                            hx-target="#item-attributes-{{ item.hash }}"
                                            hx-swap="outerHTML"
-                                           hx-confirm="Remove {{ attr_data.attribute.display_name }}?"
+                                           hx-confirm="Remove {{ attr_data.attribute.display_name }}{% if attr_data.is_multiple %} ({{ attr_data.display_value }}){% endif %}?"
                                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                                             {% lucide 'trash-2' size=12 %}
                                             Delete
@@ -73,6 +79,20 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            {# Add Attribute button - show for owners #}
+            {% if request.user == item.collection.created_by and item.item_type %}
+                <div class="mt-2">
+                    <button class="btn btn-ghost btn-xs gap-1"
+                            hx-get="{% url 'item_add_attribute' item.hash %}"
+                            hx-target="#attribute-edit-modal-content"
+                            hx-trigger="click"
+                            onclick="document.getElementById('attribute-edit-modal').showModal()">
+                        {% lucide 'plus' size=14 %}
+                        Add Attribute
+                    </button>
+                </div>
+            {% endif %}
         {% endif %}
     {% endwith %}
 </div>

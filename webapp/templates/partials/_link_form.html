@@ -27,12 +27,12 @@
     </div>
     
     <div class="form-control">
-        <label class="label">
+        <label class="label flex-col items-start gap-1">
             <span class="label-text">Custom Display Name (Optional)</span>
-            <span class="label-text-alt">Leave empty to auto-detect from URL</span>
+            <span class="label-text-alt whitespace-normal">Leave empty to auto-detect from URL</span>
         </label>
-        <input type="text" name="display_name" class="input input-bordered w-full" 
-               value="{% if mode == 'edit' %}{{ link.display_name|default:'' }}{% endif %}" 
+        <input type="text" name="display_name" class="input input-bordered w-full"
+               value="{% if mode == 'edit' %}{{ link.display_name|default:'' }}{% endif %}"
                placeholder="e.g., Product Page, Manual, Review">
     </div>
     

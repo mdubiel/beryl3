@@ -789,8 +789,17 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Proper handling of required fields and placeholders
 
 ### Task 40: Duplicate Attributes
-- Status: already implemented in Task 37
+- Status: ✅ completed (implemented in Task 37)
+- Verified: ✅ yes
+- Commit ID: 5e1c77c (part of Task 37)
 - Description: Cannot add two attributes with same key (eg.: two authors of the same book) - allow this functionality
+
+#### Implementation Summary
+- Relational model (CollectionItemAttributeValue) allows multiple values per attribute
+- Multiple authors, genres, etc. now fully supported
+- No unique constraint on (item, attribute) pair
+- Each value is a separate row in database
+- Completed as part of Task 37 refactoring
 
 ### Task 41: Item Type Selection on Creation
 - Status: ⏳ pending
@@ -860,6 +869,15 @@ Implement daily metrics collection system with comprehensive tracking and report
 ### Task 57: Autocompletion for Item Attributes
  - Status: pending
  - Description: when adding or editing item attribute the system (with HX) should try to autocomplete that information (min. 3 characters, search anywhere in the string). For autocmplete data you need to query CollectionItemAttributeValue for the items user own, and are the same type. Example, when I'm trying to add to the 'book' the 'Author' attribute it should look up for all CollectionItemAttributeValue recored where user is an owner, and are the records are type 'Author' refernced to book item attribute.
+
+### Task 58: Group display of attributes for item
+ - Status: pending
+ - Description: when displaying more of one of the same attribute (like many authors), group them. On left side (where now is "Author") display only once name of attribute (aligned top left), and on right side list one per row as it is now.
+
+### Task 59: Easy change of boolean attribute
+ - Status: pending
+ - Description: for item attribute boolean, i want an extra action (icon), next to elipsisis (on its right side, two arrows pointing other directions), which will with one clisk (on questions asked!) swap the value of this boolean attribute from Yes to No and other way around. OFC keep all the logs and Messages involved.
+
 ---
 
 ## Task 33 Additional Requirements (Part of original Task 34)
