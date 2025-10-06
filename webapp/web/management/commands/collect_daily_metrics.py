@@ -420,9 +420,9 @@ class Command(BaseCommand):
             (items_with_images / total_items * 100) if total_items > 0 else 0
         ).quantize(Decimal('0.01'))
 
-        # Items with custom attributes
+        # Items with custom attributes (using relational model)
         items_with_attrs = CollectionItem.objects.filter(
-            attributes__isnull=False
+            attribute_values__isnull=False
         ).distinct().count()
         metrics['items_with_attributes_pct'] = Decimal(
             (items_with_attrs / total_items * 100) if total_items > 0 else 0
@@ -436,9 +436,9 @@ class Command(BaseCommand):
             (items_with_links / total_items * 100) if total_items > 0 else 0
         ).quantize(Decimal('0.01'))
 
-        # Average attributes per item
+        # Average attributes per item (using relational model)
         avg_attrs = CollectionItem.objects.annotate(
-            attr_count=Count('attributes')
+            attr_count=Count('attribute_values')
         ).aggregate(avg=Avg('attr_count'))['avg'] or 0
         metrics['avg_attributes_per_item'] = Decimal(avg_attrs).quantize(Decimal('0.01'))
 
