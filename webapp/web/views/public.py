@@ -61,46 +61,151 @@ def public_collection_view(request, hash):
     
     # Get items and calculate stats similar to private view
     all_items = collection.items.select_related('item_type').prefetch_related(
-        'images__media_file', 
+        'images__media_file',
         'links',
         'default_image__media_file'
     ).order_by('name')
-    
+
     stats = all_items.aggregate(
         total_items=Count('id'),
         in_collection_count=Count('id', filter=Q(status=CollectionItem.Status.IN_COLLECTION)),
         wanted_count=Count('id', filter=Q(status=CollectionItem.Status.WANTED)),
         reserved_count=Count('id', filter=Q(status=CollectionItem.Status.RESERVED))
     )
-    
+
     # Get item type distribution for all items (not paginated)
     item_type_distribution = all_items.values('item_type__display_name', 'item_type__icon').annotate(
         count=Count('id')
     ).order_by('-count')
 
-    # Pagination
-    items_per_page = 20  # Show 20 items per page
-    paginator = Paginator(all_items, items_per_page)
-    page_number = request.GET.get('page')
-    
+    # Task 47: Apply grouping if enabled (same logic as collection_detail_view)
+    grouped_items = None
+    if collection.group_by != Collection.GroupBy.NONE:
+        from collections import defaultdict
+        from web.models import CollectionItemAttributeValue
+
+        groups = defaultdict(list)
+        ungrouped_items = []
+
+        for item in all_items:
+            if collection.group_by == Collection.GroupBy.ITEM_TYPE:
+                if item.item_type:
+                    groups[item.item_type.display_name].append(item)
+                else:
+                    ungrouped_items.append(item)
+            elif collection.group_by == Collection.GroupBy.STATUS:
+                status_label = dict(CollectionItem.Status.choices).get(item.status, item.status)
+                groups[item.status].append(item)
+            elif collection.group_by == Collection.GroupBy.ATTRIBUTE and collection.grouping_attribute:
+                try:
+                    attr_value = CollectionItemAttributeValue.objects.get(
+                        item=item,
+                        item_attribute=collection.grouping_attribute
+                    )
+                    groups[attr_value.value].append(item)
+                except CollectionItemAttributeValue.DoesNotExist:
+                    ungrouped_items.append(item)
+
+        # Create grouped items list
+        if collection.group_by == Collection.GroupBy.ITEM_TYPE:
+            grouped_items = [
+                {'attribute_name': 'Item Type', 'attribute_value': group_name, 'items': group_items}
+                for group_name, group_items in groups.items()
+            ]
+        elif collection.group_by == Collection.GroupBy.STATUS:
+            grouped_items = [
+                {'attribute_name': 'Status', 'attribute_value': dict(CollectionItem.Status.choices).get(status, status), 'items': group_items}
+                for status, group_items in groups.items()
+            ]
+        elif collection.group_by == Collection.GroupBy.ATTRIBUTE and collection.grouping_attribute:
+            grouped_items = [
+                {'attribute_name': collection.grouping_attribute.display_name, 'attribute_value': group_key, 'items': group_items}
+                for group_key, group_items in groups.items()
+            ]
+
+        # Sort groups
+        if grouped_items:
+            grouped_items.sort(key=lambda x: str(x['attribute_value']))
+
+        # Sort items within each group
+        if grouped_items:
+            for group in grouped_items:
+                if collection.sort_by == Collection.SortBy.NAME:
+                    group['items'].sort(key=lambda x: x.name.lower())
+                elif collection.sort_by == Collection.SortBy.CREATED:
+                    group['items'].sort(key=lambda x: x.created, reverse=True)
+                elif collection.sort_by == Collection.SortBy.UPDATED:
+                    group['items'].sort(key=lambda x: x.updated, reverse=True)
+                elif collection.sort_by == Collection.SortBy.ATTRIBUTE and collection.sort_attribute:
+                    def get_attr_value(item):
+                        try:
+                            attr_val = CollectionItemAttributeValue.objects.get(
+                                item=item,
+                                item_attribute=collection.sort_attribute
+                            )
+                            value = attr_val.get_typed_value()
+                            # Handle different types for sorting
+                            if isinstance(value, (int, float)):
+                                return (0, value)  # Numbers first, sorted numerically
+                            elif isinstance(value, str):
+                                # Try to convert to number for numeric strings
+                                try:
+                                    return (0, float(value))
+                                except (ValueError, TypeError):
+                                    return (1, value.lower())  # Strings second, case-insensitive
+                            else:
+                                return (2, str(value))  # Others last
+                        except CollectionItemAttributeValue.DoesNotExist:
+                            return (3, '')  # Items without the attribute at the end
+                    group['items'].sort(key=get_attr_value)
+
+        # Add ungrouped items
+        if ungrouped_items:
+            if collection.sort_by == Collection.SortBy.NAME:
+                ungrouped_items.sort(key=lambda x: x.name.lower())
+            grouped_items.append({
+                'attribute_name': 'Other Items',
+                'attribute_value': None,
+                'items': ungrouped_items
+            })
+
+    # Pagination - handle both grouped and ungrouped views
+    items_per_page = request.GET.get('per_page', '25')
     try:
-        page_obj = paginator.get_page(page_number)
-    except PageNotAnInteger:
-        page_obj = paginator.get_page(1)
-    except EmptyPage:
-        page_obj = paginator.get_page(paginator.num_pages)
+        items_per_page = int(items_per_page)
+        if items_per_page not in [10, 25, 50, 100]:
+            items_per_page = 25
+    except (ValueError, TypeError):
+        items_per_page = 25
+
+    # If grouping is enabled, don't paginate (show all groups)
+    if grouped_items:
+        page_obj = None
+    else:
+        # Regular pagination for ungrouped items
+        paginator = Paginator(all_items, items_per_page)
+        page_number = request.GET.get('page', 1)
+
+        try:
+            page_obj = paginator.page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
 
     fake = Faker()
     dummy_name = fake.name()
 
     context = {
         "collection": collection,
-        "items": page_obj,  # Paginated items
-        "page_obj": page_obj,  # For pagination controls
+        "items": page_obj if page_obj else all_items,  # Paginated or all items
+        "page_obj": page_obj,  # For pagination controls (None if grouped)
         "stats": stats,
         "item_type_distribution": item_type_distribution,
         "dummy_name": dummy_name,
         "item_types": ItemType.objects.all(),
+        "grouped_items": grouped_items,
+        "items_per_page": items_per_page,
     }
     return render(request, "public/collection_public_detail.html", context)
 

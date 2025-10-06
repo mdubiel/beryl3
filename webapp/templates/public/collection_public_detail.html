@@ -135,46 +135,61 @@
             {% endif %}
 
             <div class="flex flex-col gap-6">
-                {# Loop through items and include the public card for each one #}
-                {% for item in items %}
-                    <div id="item-{{ item.hash }}-container">
-                        {% include "partials/_item_public_card.html" with item=item %}
-                    </div>
-                {% endfor %}
+                {# Task 47: Show grouped or ungrouped items based on collection setting #}
+                {% if grouped_items %}
+                    {# Display items grouped by attribute values #}
+                    {% for group in grouped_items %}
+                        {# Group header #}
+                        <h3 class="text-lg font-semibold flex items-center gap-2 mt-2">
+                            {% lucide 'layers' size=20 %}
+                            {{ group.attribute_name }}{% if group.attribute_value %}: {{ group.attribute_value }}{% endif %}
+                            <span class="badge badge-neutral badge-sm ml-2">{{ group.items|length }} items</span>
+                        </h3>
+
+                        {# Group items #}
+                        {% for item in group.items %}
+                            <div id="item-{{ item.hash }}-container">
+                                {% include "partials/_item_public_card.html" with item=item %}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    {# Regular ungrouped display #}
+                    {% for item in items %}
+                        <div id="item-{{ item.hash }}-container">
+                            {% include "partials/_item_public_card.html" with item=item %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
             
             {# Pagination controls #}
-            {% if page_obj.has_other_pages %}
-            <div class="flex justify-center mt-8">
+            {% if page_obj and page_obj.has_other_pages %}
+            <div class="flex flex-col md:flex-row items-center justify-between mt-8 gap-4">
+                {# Page navigation #}
                 <div class="join">
                     {% if page_obj.has_previous %}
-                        <a href="?page=1" class="join-item btn">
-                            {% lucide 'chevrons-left' size=16 %}
-                        </a>
-                        <a href="?page={{ page_obj.previous_page_number }}" class="join-item btn">
-                            {% lucide 'chevron-left' size=16 %}
-                        </a>
+                    <a href="?page=1&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">«</a>
+                    <a href="?page={{ page_obj.previous_page_number }}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">‹</a>
                     {% endif %}
-                    
-                    {# Page number info #}
-                    <span class="join-item btn btn-active">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                    </span>
-                    
+
+                    <button class="join-item btn btn-sm bg-base-100 cursor-default">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</button>
+
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}" class="join-item btn">
-                            {% lucide 'chevron-right' size=16 %}
-                        </a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}" class="join-item btn">
-                            {% lucide 'chevrons-right' size=16 %}
-                        </a>
+                    <a href="?page={{ page_obj.next_page_number }}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">›</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">»</a>
                     {% endif %}
                 </div>
-            </div>
-            
-            {# Items count info #}
-            <div class="text-center mt-4 text-sm opacity-70">
-                Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} items
+
+                {# Items per page selector #}
+                <div class="form-control">
+                    <select onchange="window.location.href='?page=1&per_page=' + this.value" class="select select-bordered select-sm bg-base-100">
+                        <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10 per page</option>
+                        <option value="25" {% if items_per_page == 25 %}selected{% endif %}>25 per page</option>
+                        <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50 per page</option>
+                        <option value="100" {% if items_per_page == 100 %}selected{% endif %}>100 per page</option>
+                    </select>
+                </div>
             </div>
             {% endif %}
         {% else %}

@@ -175,18 +175,126 @@
 
 {# Items listing #}
 <div class="mt-12">
-    <h2 class="text-2xl font-bold mb-4">Items in this Collection</h2>
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold">Items in this Collection</h2>
+        {% if stats.total_items > 0 %}
+        <span class="text-sm text-base-content/70">Showing {{ items.start_index }}-{{ items.end_index }} of {{ stats.total_items }} items</span>
+        {% endif %}
+    </div>
+
+    {# Task 45: Filtering UI #}
+    {% if stats.total_items > 0 %}
+    <div class="card bg-base-200 shadow-sm p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {# Search filter #}
+            <div class="form-control">
+                <label class="label"><span class="label-text">Search</span></label>
+                <input type="text" name="search" value="{{ filter_search }}" placeholder="Search by name or description..." class="input input-bordered input-sm">
+            </div>
+
+            {# Status filter #}
+            <div class="form-control">
+                <label class="label"><span class="label-text">Status</span></label>
+                <select name="status" class="select select-bordered select-sm">
+                    <option value="">All Statuses</option>
+                    {% for status_value, status_label in collection.Status.choices %}
+                    <option value="{{ status_value }}" {% if filter_status == status_value %}selected{% endif %}>{{ status_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# Item Type filter #}
+            <div class="form-control">
+                <label class="label"><span class="label-text">Item Type</span></label>
+                <select name="item_type" class="select select-bordered select-sm">
+                    <option value="">All Types</option>
+                    <option value="none" {% if filter_item_type == 'none' %}selected{% endif %}>No Type</option>
+                    {% for item_type in item_types %}
+                    <option value="{{ item_type.id }}" {% if filter_item_type == item_type.id|stringformat:"s" %}selected{% endif %}>{{ item_type.display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {# Filter buttons #}
+            <div class="form-control flex flex-col justify-end">
+                <label class="label">&nbsp;</label>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm flex-1">
+                        {% lucide 'filter' size=14 class='mr-1' %} Filter
+                    </button>
+                    <a href="?" class="btn btn-ghost btn-sm">
+                        {% lucide 'x' size=14 %} Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
 
     <div class="flex flex-col gap-6">
-        {# Loop through items and include the partial for each one #}
-        {% for item in items %}
-            {% include "partials/_item_list_item.html" with item=item %}
-        {% empty %}
-            <div class="card bg-base-100 shadow-sm p-8 text-center">
-                <p class="text-base-content text-neutral">This collection has no items yet.</p>
-            </div>
-        {% endfor %}
+        {# Task 47: Show grouped or ungrouped items based on collection setting #}
+        {% if grouped_items %}
+            {# Display items grouped by attribute values #}
+            {% for group in grouped_items %}
+                {# Group header #}
+                <h3 class="text-lg font-semibold flex items-center gap-2 mt-2">
+                    {% lucide 'layers' size=20 %}
+                    {{ group.attribute_name }}{% if group.attribute_value %}: {{ group.attribute_value }}{% endif %}
+                    <span class="badge badge-neutral badge-sm ml-2">{{ group.items|length }} items</span>
+                </h3>
+
+                {# Group items #}
+                {% for item in group.items %}
+                    {% include "partials/_item_list_item.html" with item=item %}
+                {% endfor %}
+            {% endfor %}
+        {% else %}
+            {# Regular ungrouped display #}
+            {% for item in items %}
+                {% include "partials/_item_list_item.html" with item=item %}
+            {% empty %}
+                <div class="card bg-base-100 shadow-sm p-8 text-center">
+                    <p class="text-base-content text-neutral">
+                        {% if filter_search or filter_status or filter_item_type %}
+                            No items match your filters.
+                        {% else %}
+                            This collection has no items yet.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endfor %}
+        {% endif %}
     </div>
+
+    {# Task 46: Pagination UI #}
+    {% if items.has_other_pages %}
+    <div class="flex flex-col md:flex-row items-center justify-between mt-8 gap-4">
+        {# Page navigation #}
+        <div class="join">
+            {% if items.has_previous %}
+            <a href="?page=1{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">«</a>
+            <a href="?page={{ items.previous_page_number }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">‹</a>
+            {% endif %}
+
+            <button class="join-item btn btn-sm bg-base-100 cursor-default">Page {{ items.number }} of {{ items.paginator.num_pages }}</button>
+
+            {% if items.has_next %}
+            <a href="?page={{ items.next_page_number }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">›</a>
+            <a href="?page={{ items.paginator.num_pages }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">»</a>
+            {% endif %}
+        </div>
+
+        {# Items per page selector #}
+        <div class="form-control">
+            <select onchange="window.location.href='?page=1{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page=' + this.value" class="select select-bordered select-sm bg-base-100">
+                <option value="10" {% if items_per_page == 10 %}selected{% endif %}>10 per page</option>
+                <option value="25" {% if items_per_page == 25 %}selected{% endif %}>25 per page</option>
+                <option value="50" {% if items_per_page == 50 %}selected{% endif %}>50 per page</option>
+                <option value="100" {% if items_per_page == 100 %}selected{% endif %}>100 per page</option>
+            </select>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {# End items list #}
 

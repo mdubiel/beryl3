@@ -127,6 +127,8 @@ def collection_detail_view(request, hash):
     """
     Displays a single collection and all of its items,
     but ONLY if the collection belongs to the currently logged-in user.
+    Supports filtering by status, item type, and search query.
+    Supports pagination.
     """
     logger.info("Collection detail view accessed by user: '%s [%s]'", request.user.username, request.user.id)
 
@@ -136,8 +138,34 @@ def collection_detail_view(request, hash):
             hash=hash,
             created_by=request.user
         )
-        items = collection.items.order_by('name')
 
+        # Start with base queryset
+        items = collection.items.all()
+
+        # Task 45: Apply filters
+        filter_status = request.GET.get('status', '')
+        filter_item_type = request.GET.get('item_type', '')
+        filter_search = request.GET.get('search', '')
+
+        if filter_status and filter_status in dict(CollectionItem.Status.choices):
+            items = items.filter(status=filter_status)
+
+        if filter_item_type:
+            if filter_item_type == 'none':
+                items = items.filter(item_type__isnull=True)
+            else:
+                items = items.filter(item_type_id=filter_item_type)
+
+        if filter_search:
+            items = items.filter(
+                Q(name__icontains=filter_search) |
+                Q(description__icontains=filter_search)
+            )
+
+        # Order items
+        items = items.order_by('name')
+
+        # Calculate stats before pagination
         stats = items.aggregate(
             total_items=Count('id'),
             in_collection_count=Count('id', filter=Q(status=CollectionItem.Status.IN_COLLECTION)),
@@ -145,20 +173,145 @@ def collection_detail_view(request, hash):
             reserved_count=Count('id', filter=Q(status=CollectionItem.Status.RESERVED))
         )
 
+        # Task 47: Apply grouping if enabled
+        grouped_items = None
+        if collection.group_by != Collection.GroupBy.NONE:
+            from collections import defaultdict
+            from web.models import CollectionItemAttributeValue
+
+            groups = defaultdict(list)
+            ungrouped_items = []
+
+            if collection.group_by == Collection.GroupBy.ITEM_TYPE:
+                # Group by item type
+                for item in items:
+                    if item.item_type:
+                        groups[item.item_type.display_name].append(item)
+                    else:
+                        ungrouped_items.append(item)
+
+                grouped_items = [
+                    {'attribute_name': 'Item Type', 'attribute_value': group_name, 'items': group_items}
+                    for group_name, group_items in groups.items()
+                ]
+
+            elif collection.group_by == Collection.GroupBy.STATUS:
+                # Group by status
+                for item in items:
+                    status_label = dict(CollectionItem.Status.choices).get(item.status, item.status)
+                    groups[item.status].append(item)
+
+                grouped_items = [
+                    {'attribute_name': 'Status', 'attribute_value': dict(CollectionItem.Status.choices).get(status, status), 'items': group_items}
+                    for status, group_items in groups.items()
+                ]
+
+            elif collection.group_by == Collection.GroupBy.ATTRIBUTE and collection.grouping_attribute:
+                # Group by specific attribute
+                for item in items:
+                    try:
+                        attr_value = CollectionItemAttributeValue.objects.get(
+                            item=item,
+                            item_attribute=collection.grouping_attribute
+                        )
+                        group_key = attr_value.value
+                        groups[group_key].append(item)
+                    except CollectionItemAttributeValue.DoesNotExist:
+                        ungrouped_items.append(item)
+
+                grouped_items = [
+                    {'attribute_name': collection.grouping_attribute.display_name, 'attribute_value': group_key, 'items': group_items}
+                    for group_key, group_items in groups.items()
+                ]
+
+            # Sort groups
+            if grouped_items:
+                grouped_items.sort(key=lambda x: str(x['attribute_value']))
+
+            # Sort items within each group
+            if grouped_items:
+                for group in grouped_items:
+                    if collection.sort_by == Collection.SortBy.NAME:
+                        group['items'].sort(key=lambda x: x.name.lower())
+                    elif collection.sort_by == Collection.SortBy.CREATED:
+                        group['items'].sort(key=lambda x: x.created, reverse=True)
+                    elif collection.sort_by == Collection.SortBy.UPDATED:
+                        group['items'].sort(key=lambda x: x.updated, reverse=True)
+                    elif collection.sort_by == Collection.SortBy.ATTRIBUTE and collection.sort_attribute:
+                        # Sort by attribute value
+                        def get_attr_value(item):
+                            try:
+                                attr_val = CollectionItemAttributeValue.objects.get(
+                                    item=item,
+                                    item_attribute=collection.sort_attribute
+                                )
+                                value = attr_val.get_typed_value()
+                                # Handle different types for sorting
+                                if isinstance(value, (int, float)):
+                                    return (0, value)  # Numbers first, sorted numerically
+                                elif isinstance(value, str):
+                                    # Try to convert to number for numeric strings
+                                    try:
+                                        return (0, float(value))
+                                    except (ValueError, TypeError):
+                                        return (1, value.lower())  # Strings second, case-insensitive
+                                else:
+                                    return (2, str(value))  # Others last
+                            except CollectionItemAttributeValue.DoesNotExist:
+                                return (3, '')  # Items without the attribute at the end
+                        group['items'].sort(key=get_attr_value)
+
+            # Add ungrouped items as a special group if any exist
+            if ungrouped_items:
+                if collection.sort_by == Collection.SortBy.NAME:
+                    ungrouped_items.sort(key=lambda x: x.name.lower())
+                grouped_items.append({
+                    'attribute_name': 'Other Items',
+                    'attribute_value': None,
+                    'items': ungrouped_items
+                })
+
+        # Task 46: Add pagination
+        from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+        items_per_page = request.GET.get('per_page', '25')
+        try:
+            items_per_page = int(items_per_page)
+            if items_per_page not in [10, 25, 50, 100]:
+                items_per_page = 25
+        except (ValueError, TypeError):
+            items_per_page = 25
+
+        paginator = Paginator(items, items_per_page)
+        page_number = request.GET.get('page', 1)
+
+        try:
+            items_page = paginator.page(page_number)
+        except PageNotAnInteger:
+            items_page = paginator.page(1)
+        except EmptyPage:
+            items_page = paginator.page(paginator.num_pages)
+
         # Log successful detail view
-        logger.info('collection_detail_view: Collection "%s" viewed with %d items by user %s [%s]',
-                   collection.name, stats['total_items'], request.user.username, request.user.id,
-                   extra={'function': 'collection_detail_view', 'action': 'detail_view', 
-                         'object_type': 'Collection', 'object_hash': collection.hash, 
-                         'object_name': collection.name, 'item_count': stats['total_items'], 
+        logger.info('collection_detail_view: Collection "%s" viewed with %d items (page %s of %s) by user %s [%s]',
+                   collection.name, stats['total_items'], items_page.number, paginator.num_pages,
+                   request.user.username, request.user.id,
+                   extra={'function': 'collection_detail_view', 'action': 'detail_view',
+                         'object_type': 'Collection', 'object_hash': collection.hash,
+                         'object_name': collection.name, 'item_count': stats['total_items'],
                          'visibility': collection.visibility, 'function_args': {'hash': hash, 'request_method': request.method}})
 
         context = {
             'collection': collection,
-            'items': items,
+            'items': items_page,
             'stats': stats,
             'visibility_choices': Collection.Visibility.choices,
             'item_types': ItemType.objects.all(),
+            'filter_status': filter_status,
+            'filter_item_type': filter_item_type,
+            'filter_search': filter_search,
+            'items_per_page': items_per_page,
+            'grouped_items': grouped_items,
         }
 
         logger.info("Rendering collection detail for collection '%s' [%s] owned by user '%s' [%s]", collection.name, collection.hash, request.user.username, request.user.id)

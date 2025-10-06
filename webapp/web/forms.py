@@ -17,16 +17,46 @@ from io import BytesIO
 from .models import Collection, CollectionItem, MediaFile, ItemType
 
 class CollectionForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If editing an existing collection, filter attributes to only those used in the collection
+        if self.instance and self.instance.pk:
+            from web.models import CollectionItemAttributeValue, ItemAttribute
+
+            # Get all attributes used in this collection's items
+            used_attribute_ids = CollectionItemAttributeValue.objects.filter(
+                item__collection=self.instance
+            ).values_list('item_attribute_id', flat=True).distinct()
+
+            # Filter the grouping_attribute and sort_attribute querysets
+            if used_attribute_ids:
+                used_attributes = ItemAttribute.objects.filter(id__in=used_attribute_ids)
+                self.fields['grouping_attribute'].queryset = used_attributes
+                self.fields['sort_attribute'].queryset = used_attributes
+            else:
+                # No attributes used, show empty queryset
+                self.fields['grouping_attribute'].queryset = ItemAttribute.objects.none()
+                self.fields['sort_attribute'].queryset = ItemAttribute.objects.none()
+
     class Meta:
         model = Collection
-        fields = ['name', 'description', 'image_url']
+        fields = ['name', 'description', 'image_url', 'group_by', 'grouping_attribute', 'sort_by', 'sort_attribute']
 
         labels = {
             'name': 'Collection Name',
             'image_url': 'Cover Image URL (Optional)',
+            'group_by': 'Group By',
+            'grouping_attribute': 'Group By Attribute',
+            'sort_by': 'Sort By',
+            'sort_attribute': 'Sort By Attribute',
         }
         help_texts = {
             'name': 'Give your new collection a unique and descriptive name.',
+            'group_by': 'Group items by type, status, or attribute',
+            'grouping_attribute': 'Select which attribute to use for grouping (when Group By = Attribute)',
+            'sort_by': 'Sort items within groups',
+            'sort_attribute': 'Select which attribute to sort by (when Sort By = Attribute)',
         }
 
 class CollectionItemForm(forms.ModelForm):

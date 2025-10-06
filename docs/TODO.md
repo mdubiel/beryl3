@@ -952,6 +952,7 @@ For item attribute boolean, add an extra action icon (next to ellipsis, on its r
   - `templates/partials/_item_attributes.html:31-41` - Toggle button in list view
   - `templates/partials/_item_attributes_detail.html:42-53` - Toggle button in detail view
 
+### Task 60: layout of item type popup and items order.
 ---
 
 ## Task 33 Additional Requirements (Part of original Task 34)

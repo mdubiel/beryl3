@@ -627,6 +627,55 @@ class Collection(BerylModel):
         db_index=True,
     )
 
+    # Task 47: Enable grouping items by shared attribute values
+    class GroupBy(models.TextChoices):
+        NONE = "NONE", _("No Grouping")
+        ITEM_TYPE = "ITEM_TYPE", _("Item Type")
+        STATUS = "STATUS", _("Status")
+        ATTRIBUTE = "ATTRIBUTE", _("Attribute")
+
+    class SortBy(models.TextChoices):
+        NAME = "NAME", _("Name")
+        CREATED = "CREATED", _("Date Created")
+        UPDATED = "UPDATED", _("Date Updated")
+        ATTRIBUTE = "ATTRIBUTE", _("Attribute Value")
+
+    group_by = models.CharField(
+        max_length=20,
+        choices=GroupBy.choices,
+        default=GroupBy.NONE,
+        verbose_name=_("Group By"),
+        help_text=_("Group items by type, status, or attribute"),
+    )
+
+    grouping_attribute = models.ForeignKey(
+        'ItemAttribute',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Group By Attribute"),
+        help_text=_("Select which attribute to group items by"),
+        related_name='grouped_collections'
+    )
+
+    sort_by = models.CharField(
+        max_length=20,
+        choices=SortBy.choices,
+        default=SortBy.NAME,
+        verbose_name=_("Sort By"),
+        help_text=_("Sort items within groups"),
+    )
+
+    sort_attribute = models.ForeignKey(
+        'ItemAttribute',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Sort By Attribute"),
+        help_text=_("Select which attribute to sort items by"),
+        related_name='sorted_collections'
+    )
+
     description = models.TextField(blank=True, null=True, verbose_name="Description")
     image_url = models.URLField(blank=True, null=True, verbose_name=_("Image URL"))
 
