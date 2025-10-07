@@ -57,40 +57,6 @@
         </div>
     </div>
 
-    <!-- Historical Charts -->
-    <div class="mx-6 mb-6">
-        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
-            {% lucide 'trending-up' size=18 class='text-primary mr-2' %}
-            HISTORICAL TRENDS
-        </h3>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Users Chart -->
-            <div class="terminal-bg p-6">
-                <h4 class="terminal-text font-bold mb-4">Users Over Time</h4>
-                <canvas id="usersChart" height="200"></canvas>
-            </div>
-
-            <!-- Items Chart -->
-            <div class="terminal-bg p-6">
-                <h4 class="terminal-text font-bold mb-4">Items Over Time</h4>
-                <canvas id="itemsChart" height="200"></canvas>
-            </div>
-
-            <!-- Collections Chart -->
-            <div class="terminal-bg p-6">
-                <h4 class="terminal-text font-bold mb-4">Collections Over Time</h4>
-                <canvas id="collectionsChart" height="200"></canvas>
-            </div>
-
-            <!-- Storage Chart -->
-            <div class="terminal-bg p-6">
-                <h4 class="terminal-text font-bold mb-4">Storage Over Time</h4>
-                <canvas id="storageChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-
     <!-- User Metrics -->
     <div class="mx-6 mb-6 terminal-bg">
         <div class="p-6">
@@ -104,61 +70,164 @@
                         <tr class="border-b border-primary">
                             <th class="terminal-text">Metric</th>
                             <th class="text-right terminal-text">Current</th>
-                            <th class="text-right terminal-text">vs Yesterday</th>
-                            <th class="text-right terminal-text">vs 7 Days</th>
-                            <th class="text-right terminal-text">vs 30 Days</th>
+                            <th class="text-right terminal-text">Yesterday</th>
+                            <th class="text-right terminal-text">7 Days Ago</th>
+                            <th class="text-right terminal-text">30 Days Ago</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="terminal-text">Total Users</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.total_users.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.total_users.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.total_users.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.total_users.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_users.change_30d %}
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Active Users (24h)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.active_users_24h.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_24h.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_24h.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_24h.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_24h.change_30d %}
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Active Users (7d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.active_users_7d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_7d.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_7d.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_7d.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_7d.change_30d %}
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Active Users (30d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.active_users_30d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_30d.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_30d.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.active_users_30d.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.active_users_30d.change_30d %}
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">New Users (24h)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.new_users_24h.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_24h.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_24h.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_24h.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_24h.change_30d %}
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">New Users (7d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.new_users_7d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_7d.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_7d.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_7d.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_7d.change_30d %}
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">New Users (30d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.new_users_30d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_30d %}</td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_30d.change_1d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_1d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_30d.change_7d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_7d %}
+                            </td>
+                            <td class="text-right">
+                                <span class="text-gray-400">{{ metrics_data.new_users_30d.change_30d.previous }}</span>
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.new_users_30d.change_30d %}
+                            </td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Data Toggle -->
+            <div class="mt-4">
+                <button onclick="toggleHistory('user')" class="btn btn-sm btn-outline">
+                    {% lucide 'history' size=14 class='mr-1' %}
+                    <span id="user-toggle-text">Show Historical Data</span>
+                </button>
+            </div>
+
+            <!-- Historical Data Table (Hidden by default) -->
+            <div id="user-history" class="hidden mt-4 overflow-x-auto">
+                <table class="table table-sm w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Date</th>
+                            <th class="text-right terminal-text">Total Users</th>
+                            <th class="text-right terminal-text">Active 24h</th>
+                            <th class="text-right terminal-text">Active 7d</th>
+                            <th class="text-right terminal-text">Active 30d</th>
+                            <th class="text-right terminal-text">New 24h</th>
+                            <th class="text-right terminal-text">New 7d</th>
+                            <th class="text-right terminal-text">New 30d</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in historical|slice:":10" %}
+                        <tr>
+                            <td class="terminal-text">{{ metric.collection_date|date:"Y-m-d" }}</td>
+                            <td class="text-right terminal-accent">{{ metric.total_users }}</td>
+                            <td class="text-right terminal-text">{{ metric.active_users_24h }}</td>
+                            <td class="text-right terminal-text">{{ metric.active_users_7d }}</td>
+                            <td class="text-right terminal-text">{{ metric.active_users_30d }}</td>
+                            <td class="text-right terminal-text">{{ metric.new_users_24h }}</td>
+                            <td class="text-right terminal-text">{{ metric.new_users_7d }}</td>
+                            <td class="text-right terminal-text">{{ metric.new_users_30d }}</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -178,61 +247,227 @@
                         <tr class="border-b border-primary">
                             <th class="terminal-text">Metric</th>
                             <th class="text-right terminal-text">Current</th>
-                            <th class="text-right terminal-text">vs Yesterday</th>
-                            <th class="text-right terminal-text">vs 7 Days</th>
-                            <th class="text-right terminal-text">vs 30 Days</th>
+                            <th class="text-right terminal-text">Yesterday</th>
+                            <th class="text-right terminal-text">7 Days Ago</th>
+                            <th class="text-right terminal-text">30 Days Ago</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="terminal-text">Total Collections</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.total_collections.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_collections.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_collections.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_collections.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_collections.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Private Collections</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_private.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_private.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_private.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_private.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_private.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Public Collections</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_public.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_public.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_public.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_public.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_public.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Unlisted Collections</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_unlisted.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_unlisted.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_unlisted.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_unlisted.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_unlisted.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Created (24h)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_created_24h.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_24h.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_24h.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_24h.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_24h.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Created (7d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_created_7d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_7d.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_7d.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_7d.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_7d.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Created (30d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.collections_created_30d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_30d.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_30d.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.collections_created_30d.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.collections_created_30d.change_30d %}
+
+                            </td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Data Toggle -->
+            <div class="mt-4">
+                <button onclick="toggleHistory('collection')" class="btn btn-sm btn-outline">
+                    {% lucide 'history' size=14 class='mr-1' %}
+                    <span id="collection-toggle-text">Show Historical Data</span>
+                </button>
+            </div>
+
+            <!-- Historical Data Table (Hidden by default) -->
+            <div id="collection-history" class="hidden mt-4 overflow-x-auto">
+                <table class="table table-sm w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Date</th>
+                            <th class="text-right terminal-text">Total</th>
+                            <th class="text-right terminal-text">Private</th>
+                            <th class="text-right terminal-text">Public</th>
+                            <th class="text-right terminal-text">Unlisted</th>
+                            <th class="text-right terminal-text">Created 24h</th>
+                            <th class="text-right terminal-text">Created 7d</th>
+                            <th class="text-right terminal-text">Created 30d</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in historical|slice:":10" %}
+                        <tr>
+                            <td class="terminal-text">{{ metric.collection_date|date:"Y-m-d" }}</td>
+                            <td class="text-right terminal-accent">{{ metric.total_collections }}</td>
+                            <td class="text-right terminal-text">{{ metric.collections_private }}</td>
+                            <td class="text-right terminal-text">{{ metric.collections_public }}</td>
+                            <td class="text-right terminal-text">{{ metric.collections_unlisted }}</td>
+                            <td class="text-right terminal-text">{{ metric.collections_created_24h }}</td>
+                            <td class="text-right terminal-text">{{ metric.collections_created_7d }}</td>
+                            <td class="text-right terminal-text">{{ metric.collections_created_30d }}</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -252,68 +487,254 @@
                         <tr class="border-b border-primary">
                             <th class="terminal-text">Metric</th>
                             <th class="text-right terminal-text">Current</th>
-                            <th class="text-right terminal-text">vs Yesterday</th>
-                            <th class="text-right terminal-text">vs 7 Days</th>
-                            <th class="text-right terminal-text">vs 30 Days</th>
+                            <th class="text-right terminal-text">Yesterday</th>
+                            <th class="text-right terminal-text">7 Days Ago</th>
+                            <th class="text-right terminal-text">30 Days Ago</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="terminal-text">Total Items</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.total_items.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_items.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_items.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_items.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_items.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">In Collection</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_in_collection.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_in_collection.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_in_collection.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_in_collection.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_in_collection.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Wanted</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_wanted.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_wanted.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_wanted.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_wanted.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_wanted.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Reserved</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_reserved.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_reserved.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_reserved.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_reserved.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_reserved.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Favorites</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.favorite_items_total.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.favorite_items_total.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.favorite_items_total.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.favorite_items_total.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.favorite_items_total.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Created (24h)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_created_24h.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_24h.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_24h.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_24h.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_24h.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Created (7d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_created_7d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_7d.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_7d.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_7d.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_7d.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Created (30d)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_created_30d.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_30d.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_30d.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_created_30d.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_created_30d.change_30d %}
+
+                            </td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Data Toggle -->
+            <div class="mt-4">
+                <button onclick="toggleHistory('item')" class="btn btn-sm btn-outline">
+                    {% lucide 'history' size=14 class='mr-1' %}
+                    <span id="item-toggle-text">Show Historical Data</span>
+                </button>
+            </div>
+
+            <!-- Historical Data Table (Hidden by default) -->
+            <div id="item-history" class="hidden mt-4 overflow-x-auto">
+                <table class="table table-sm w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Date</th>
+                            <th class="text-right terminal-text">Total</th>
+                            <th class="text-right terminal-text">In Collection</th>
+                            <th class="text-right terminal-text">Wanted</th>
+                            <th class="text-right terminal-text">Reserved</th>
+                            <th class="text-right terminal-text">Favorites</th>
+                            <th class="text-right terminal-text">Created 24h</th>
+                            <th class="text-right terminal-text">Created 7d</th>
+                            <th class="text-right terminal-text">Created 30d</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in historical|slice:":10" %}
+                        <tr>
+                            <td class="terminal-text">{{ metric.collection_date|date:"Y-m-d" }}</td>
+                            <td class="text-right terminal-accent">{{ metric.total_items }}</td>
+                            <td class="text-right terminal-text">{{ metric.items_in_collection }}</td>
+                            <td class="text-right terminal-text">{{ metric.items_wanted }}</td>
+                            <td class="text-right terminal-text">{{ metric.items_reserved }}</td>
+                            <td class="text-right terminal-text">{{ metric.favorite_items_total }}</td>
+                            <td class="text-right terminal-text">{{ metric.items_created_24h }}</td>
+                            <td class="text-right terminal-text">{{ metric.items_created_7d }}</td>
+                            <td class="text-right terminal-text">{{ metric.items_created_30d }}</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -333,47 +754,173 @@
                         <tr class="border-b border-primary">
                             <th class="terminal-text">Metric</th>
                             <th class="text-right terminal-text">Current</th>
-                            <th class="text-right terminal-text">vs Yesterday</th>
-                            <th class="text-right terminal-text">vs 7 Days</th>
-                            <th class="text-right terminal-text">vs 30 Days</th>
+                            <th class="text-right terminal-text">Yesterday</th>
+                            <th class="text-right terminal-text">7 Days Ago</th>
+                            <th class="text-right terminal-text">30 Days Ago</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="terminal-text">Total Media Files</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.total_media_files.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_media_files.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_media_files.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_media_files.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_media_files.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Total Storage</td>
                             <td class="text-right font-bold terminal-accent">{{ latest_metrics.total_storage_bytes|filesizeformat }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_storage_bytes.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_storage_bytes.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.total_storage_bytes.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.total_storage_bytes.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Uploads (24h)</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.recent_uploads_24h.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.recent_uploads_24h.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.recent_uploads_24h.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.recent_uploads_24h.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.recent_uploads_24h.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Orphaned Files</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.orphaned_files.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.orphaned_files.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.orphaned_files.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.orphaned_files.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.orphaned_files.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Corrupted Files</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.corrupted_files.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.corrupted_files.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.corrupted_files.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.corrupted_files.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.corrupted_files.change_30d %}
+
+                            </td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Data Toggle -->
+            <div class="mt-4">
+                <button onclick="toggleHistory('storage')" class="btn btn-sm btn-outline">
+                    {% lucide 'history' size=14 class='mr-1' %}
+                    <span id="storage-toggle-text">Show Historical Data</span>
+                </button>
+            </div>
+
+            <!-- Historical Data Table (Hidden by default) -->
+            <div id="storage-history" class="hidden mt-4 overflow-x-auto">
+                <table class="table table-sm w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Date</th>
+                            <th class="text-right terminal-text">Media Files</th>
+                            <th class="text-right terminal-text">Storage (GB)</th>
+                            <th class="text-right terminal-text">Uploads 24h</th>
+                            <th class="text-right terminal-text">Orphaned</th>
+                            <th class="text-right terminal-text">Corrupted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in historical|slice:":10" %}
+                        <tr>
+                            <td class="terminal-text">{{ metric.collection_date|date:"Y-m-d" }}</td>
+                            <td class="text-right terminal-accent">{{ metric.total_media_files }}</td>
+                            <td class="text-right terminal-text">{{ metric.total_storage_bytes|filesizeformat }}</td>
+                            <td class="text-right terminal-text">{{ metric.recent_uploads_24h }}</td>
+                            <td class="text-right terminal-text">{{ metric.orphaned_files }}</td>
+                            <td class="text-right terminal-text">{{ metric.corrupted_files }}</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -393,47 +940,173 @@
                         <tr class="border-b border-primary">
                             <th class="terminal-text">Metric</th>
                             <th class="text-right terminal-text">Current</th>
-                            <th class="text-right terminal-text">vs Yesterday</th>
-                            <th class="text-right terminal-text">vs 7 Days</th>
-                            <th class="text-right terminal-text">vs 30 Days</th>
+                            <th class="text-right terminal-text">Yesterday</th>
+                            <th class="text-right terminal-text">7 Days Ago</th>
+                            <th class="text-right terminal-text">30 Days Ago</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="terminal-text">Items with Images</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_with_images_pct.current }}%</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_images_pct.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_images_pct.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_images_pct.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_images_pct.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Items with Attributes</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_with_attributes_pct.current }}%</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_attributes_pct.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_attributes_pct.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_attributes_pct.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_attributes_pct.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Items with Links</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.items_with_links_pct.current }}%</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_links_pct.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_links_pct.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.items_with_links_pct.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.items_with_links_pct.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Avg Attributes per Item</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.avg_attributes_per_item.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.avg_attributes_per_item.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.avg_attributes_per_item.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.avg_attributes_per_item.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.avg_attributes_per_item.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Avg Items per Collection</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.avg_items_per_collection.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.avg_items_per_collection.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.avg_items_per_collection.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.avg_items_per_collection.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.avg_items_per_collection.change_30d %}
+
+                            </td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Data Toggle -->
+            <div class="mt-4">
+                <button onclick="toggleHistory('engagement')" class="btn btn-sm btn-outline">
+                    {% lucide 'history' size=14 class='mr-1' %}
+                    <span id="engagement-toggle-text">Show Historical Data</span>
+                </button>
+            </div>
+
+            <!-- Historical Data Table (Hidden by default) -->
+            <div id="engagement-history" class="hidden mt-4 overflow-x-auto">
+                <table class="table table-sm w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Date</th>
+                            <th class="text-right terminal-text">With Images %</th>
+                            <th class="text-right terminal-text">With Attrs %</th>
+                            <th class="text-right terminal-text">With Links %</th>
+                            <th class="text-right terminal-text">Avg Attrs/Item</th>
+                            <th class="text-right terminal-text">Avg Items/Coll</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in historical|slice:":10" %}
+                        <tr>
+                            <td class="terminal-text">{{ metric.collection_date|date:"Y-m-d" }}</td>
+                            <td class="text-right terminal-accent">{{ metric.items_with_images_pct }}%</td>
+                            <td class="text-right terminal-text">{{ metric.items_with_attributes_pct }}%</td>
+                            <td class="text-right terminal-text">{{ metric.items_with_links_pct }}%</td>
+                            <td class="text-right terminal-text">{{ metric.avg_attributes_per_item }}</td>
+                            <td class="text-right terminal-text">{{ metric.avg_items_per_collection }}</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -453,40 +1126,146 @@
                         <tr class="border-b border-primary">
                             <th class="terminal-text">Metric</th>
                             <th class="text-right terminal-text">Current</th>
-                            <th class="text-right terminal-text">vs Yesterday</th>
-                            <th class="text-right terminal-text">vs 7 Days</th>
-                            <th class="text-right terminal-text">vs 30 Days</th>
+                            <th class="text-right terminal-text">Yesterday</th>
+                            <th class="text-right terminal-text">7 Days Ago</th>
+                            <th class="text-right terminal-text">30 Days Ago</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td class="terminal-text">Flagged Content</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.flagged_content.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.flagged_content.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.flagged_content.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.flagged_content.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.flagged_content.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Pending Review</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.pending_review.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.pending_review.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.pending_review.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.pending_review.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.pending_review.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">User Violations</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.user_violations.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.user_violations.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.user_violations.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.user_violations.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.user_violations.change_30d %}
+
+                            </td>
                         </tr>
                         <tr>
                             <td class="terminal-text">Banned Users</td>
                             <td class="text-right font-bold terminal-accent">{{ metrics_data.banned_users.current }}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_1d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_7d %}</td>
-                            <td class="text-right">{% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_30d %}</td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.banned_users.change_1d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_1d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.banned_users.change_7d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_7d %}
+
+                            </td>
+                            <td class="text-right">
+
+                                <span class="text-gray-400">{{ metrics_data.banned_users.change_30d.previous }}</span>
+
+                                {% include 'partials/_trend_indicator.html' with change=metrics_data.banned_users.change_30d %}
+
+                            </td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Historical Data Toggle -->
+            <div class="mt-4">
+                <button onclick="toggleHistory('moderation')" class="btn btn-sm btn-outline">
+                    {% lucide 'history' size=14 class='mr-1' %}
+                    <span id="moderation-toggle-text">Show Historical Data</span>
+                </button>
+            </div>
+
+            <!-- Historical Data Table (Hidden by default) -->
+            <div id="moderation-history" class="hidden mt-4 overflow-x-auto">
+                <table class="table table-sm w-full text-xs">
+                    <thead>
+                        <tr class="border-b border-primary">
+                            <th class="terminal-text">Date</th>
+                            <th class="text-right terminal-text">Flagged</th>
+                            <th class="text-right terminal-text">Pending Review</th>
+                            <th class="text-right terminal-text">Violations</th>
+                            <th class="text-right terminal-text">Banned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for metric in historical|slice:":10" %}
+                        <tr>
+                            <td class="terminal-text">{{ metric.collection_date|date:"Y-m-d" }}</td>
+                            <td class="text-right terminal-accent">{{ metric.flagged_content }}</td>
+                            <td class="text-right terminal-text">{{ metric.pending_review }}</td>
+                            <td class="text-right terminal-text">{{ metric.user_violations }}</td>
+                            <td class="text-right terminal-text">{{ metric.banned_users }}</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -496,131 +1275,18 @@
     {% endif %}
 </div>
 
-<!-- Chart.js Library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
 <script>
-// Prepare historical data from Django context
-const historicalData = [
-    {% for metric in historical %}
-    {
-        date: '{{ metric.collection_date|date:"M d" }}',
-        total_users: {{ metric.total_users }},
-        total_items: {{ metric.total_items }},
-        total_collections: {{ metric.total_collections }},
-        total_storage_gb: {{ metric.total_storage_bytes|default:0 }} / (1024**3)
-    },
-    {% endfor %}
-];
+function toggleHistory(section) {
+    const historyDiv = document.getElementById(section + '-history');
+    const toggleText = document.getElementById(section + '-toggle-text');
 
-// Extract data arrays
-const dates = historicalData.map(d => d.date);
-const users = historicalData.map(d => d.total_users);
-const items = historicalData.map(d => d.total_items);
-const collections = historicalData.map(d => d.total_collections);
-const storage = historicalData.map(d => d.total_storage_gb.toFixed(2));
-
-// Chart configuration defaults
-const chartDefaults = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            display: false
-        }
-    },
-    scales: {
-        y: {
-            beginAtZero: true,
-            ticks: {
-                color: '#9ca3af'
-            },
-            grid: {
-                color: 'rgba(156, 163, 175, 0.1)'
-            }
-        },
-        x: {
-            ticks: {
-                color: '#9ca3af'
-            },
-            grid: {
-                color: 'rgba(156, 163, 175, 0.1)'
-            }
-        }
+    if (historyDiv.classList.contains('hidden')) {
+        historyDiv.classList.remove('hidden');
+        toggleText.textContent = 'Hide Historical Data';
+    } else {
+        historyDiv.classList.add('hidden');
+        toggleText.textContent = 'Show Historical Data';
     }
-};
-
-// Users Chart
-new Chart(document.getElementById('usersChart'), {
-    type: 'line',
-    data: {
-        labels: dates,
-        datasets: [{
-            label: 'Total Users',
-            data: users,
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: chartDefaults
-});
-
-// Items Chart
-new Chart(document.getElementById('itemsChart'), {
-    type: 'line',
-    data: {
-        labels: dates,
-        datasets: [{
-            label: 'Total Items',
-            data: items,
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: chartDefaults
-});
-
-// Collections Chart
-new Chart(document.getElementById('collectionsChart'), {
-    type: 'line',
-    data: {
-        labels: dates,
-        datasets: [{
-            label: 'Total Collections',
-            data: collections,
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: chartDefaults
-});
-
-// Storage Chart
-new Chart(document.getElementById('storageChart'), {
-    type: 'line',
-    data: {
-        labels: dates,
-        datasets: [{
-            label: 'Storage (GB)',
-            data: storage,
-            borderColor: '#8b5cf6',
-            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: chartDefaults
-});
-
-// Auto-refresh metrics every 5 minutes
-setInterval(() => {
-    window.location.reload();
-}, 300000);
+}
 </script>
 {% endblock %}
