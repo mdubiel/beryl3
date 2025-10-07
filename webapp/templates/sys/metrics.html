@@ -57,6 +57,40 @@
         </div>
     </div>
 
+    <!-- Historical Charts -->
+    <div class="mx-6 mb-6">
+        <h3 class="terminal-accent text-lg font-bold mb-4 flex items-center">
+            {% lucide 'trending-up' size=18 class='text-primary mr-2' %}
+            HISTORICAL TRENDS
+        </h3>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Users Chart -->
+            <div class="terminal-bg p-6">
+                <h4 class="terminal-text font-bold mb-4">Users Over Time</h4>
+                <canvas id="usersChart" height="200"></canvas>
+            </div>
+
+            <!-- Items Chart -->
+            <div class="terminal-bg p-6">
+                <h4 class="terminal-text font-bold mb-4">Items Over Time</h4>
+                <canvas id="itemsChart" height="200"></canvas>
+            </div>
+
+            <!-- Collections Chart -->
+            <div class="terminal-bg p-6">
+                <h4 class="terminal-text font-bold mb-4">Collections Over Time</h4>
+                <canvas id="collectionsChart" height="200"></canvas>
+            </div>
+
+            <!-- Storage Chart -->
+            <div class="terminal-bg p-6">
+                <h4 class="terminal-text font-bold mb-4">Storage Over Time</h4>
+                <canvas id="storageChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- User Metrics -->
     <div class="mx-6 mb-6 terminal-bg">
         <div class="p-6">
@@ -462,7 +496,128 @@
     {% endif %}
 </div>
 
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
+// Prepare historical data from Django context
+const historicalData = [
+    {% for metric in historical %}
+    {
+        date: '{{ metric.collection_date|date:"M d" }}',
+        total_users: {{ metric.total_users }},
+        total_items: {{ metric.total_items }},
+        total_collections: {{ metric.total_collections }},
+        total_storage_gb: {{ metric.total_storage_bytes|default:0 }} / (1024**3)
+    },
+    {% endfor %}
+];
+
+// Extract data arrays
+const dates = historicalData.map(d => d.date);
+const users = historicalData.map(d => d.total_users);
+const items = historicalData.map(d => d.total_items);
+const collections = historicalData.map(d => d.total_collections);
+const storage = historicalData.map(d => d.total_storage_gb.toFixed(2));
+
+// Chart configuration defaults
+const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            display: false
+        }
+    },
+    scales: {
+        y: {
+            beginAtZero: true,
+            ticks: {
+                color: '#9ca3af'
+            },
+            grid: {
+                color: 'rgba(156, 163, 175, 0.1)'
+            }
+        },
+        x: {
+            ticks: {
+                color: '#9ca3af'
+            },
+            grid: {
+                color: 'rgba(156, 163, 175, 0.1)'
+            }
+        }
+    }
+};
+
+// Users Chart
+new Chart(document.getElementById('usersChart'), {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: 'Total Users',
+            data: users,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: chartDefaults
+});
+
+// Items Chart
+new Chart(document.getElementById('itemsChart'), {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: 'Total Items',
+            data: items,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: chartDefaults
+});
+
+// Collections Chart
+new Chart(document.getElementById('collectionsChart'), {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: 'Total Collections',
+            data: collections,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: chartDefaults
+});
+
+// Storage Chart
+new Chart(document.getElementById('storageChart'), {
+    type: 'line',
+    data: {
+        labels: dates,
+        datasets: [{
+            label: 'Storage (GB)',
+            data: storage,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: chartDefaults
+});
+
 // Auto-refresh metrics every 5 minutes
 setInterval(() => {
     window.location.reload();
