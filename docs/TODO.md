@@ -6,7 +6,82 @@ When testing is completed merge a branch to main, and commit all changes.
 Do not push changes to repository (I'll do the same) and do not execute any scripts, especially for production. Do this only when explicitly asked.
 After commit is completed, update the task with commit ID.
 
-## List of Tasks
+---
+
+## Table of Contents
+
+### ✅ Completed Tasks
+
+1. [Task 1](#task-1) - Fix /sys/settings display inconsistencies
+2. [Task 2](#task-2) - Remove Application Activity feature completely
+3. [Task 3](#task-3) - Add External Services to SYS sidebar
+4. [Task 4](#task-4) - Create email queue management view
+5. [Task 5](#task-5) - Fix external services sidebar links
+6. [Task 6](#task-6) - Fix /sys/email-queue Error 500
+7. [Task 7](#task-7) - Configure SSL certificates and HTTPS redirects
+8. [Task 8](#task-8) - Replace example.com with environment variables
+9. [Task 9](#task-9) - Fix database information display in SYSTEM INFO
+10. [Task 10](#task-10) - Improve staging-status command with service states
+11. [Task 11](#task-11) - Fix chip and icon visibility in header navigation
+12. [Task 12](#task-12) - Remove opacity classes and use semantic color definitions
+13. [Task 13](#task-13) - Hide breadcrumb on home page
+14. [Task 14](#task-14) - Update home page for logged-in users
+15. [Task 15](#task-15) - Update callout action colors and improve visibility
+16. [Task 16](#task-16) - Fix image upload placeholder opacity
+17. [Task 17](#task-17) - Use gray colors instead of black for placeholders
+18. [Task 18](#task-18) - Improve visibility of feature cards
+19. [Task 19](#task-19) - Redesign 'share your passion' section
+20. [Task 20](#task-20) - Create gradient color scheme for feature cards
+21. [Task 21](#task-21) - Add dashboard tips similar to shareable collections
+22. [Task 22](#task-22) - Dual gradient color scheme for second row
+23. [Task 23](#task-23) - Fix remaining low opacity class usage
+24. [Task 24](#task-24) - Fix user display name in context menu and welcome message
+25. [Task 25](#task-25) - Implement email marketing subscription with Resend integration
+26. [Task 26](#task-26) - Create sys view for email marketing consent management
+27. [Task 27](#task-27) - Add action to remove emails from Resend audiences
+28. [Task 28](#task-28) - Implement comprehensive user account settings
+29. [Task 29](#task-29) - Create 40+ item types with attributes
+30. [Task 30](#task-30) - Research and create 100 link patterns
+31. [Task 31](#task-31) - Resolve critical Lucide icon validation errors
+32. [Task 32](#task-32) - Implement comprehensive data import feature
+33. [Task 33](#task-33) - Implement content moderation with nudity detection
+34. [Task 34](#task-34) - Add marketing consent checkbox to registration
+35. [Task 35](#task-35) - Enhance system administration interface
+36. [Task 36](#task-36) - Implement daily metrics collection system
+37. [Task 37](#task-37) - Refactor item attributes from JSON to relational model
+38. [Task 38](#task-38) - Fix item type popup layout with multi-column grid
+39. [Task 39](#task-39) - Implement dynamic boolean attribute UI with HTMX
+40. [Task 40](#task-40) - Allow duplicate attributes (multiple authors, genres)
+41. [Task 41](#task-41) - Add item type selection during item creation
+42. [Task 42](#task-42) - Fix link modal text wrapping
+43. [Task 43](#task-43) - Redirect to item after edit/create
+44. [Task 44](#task-44) - Add extra add buttons in attributes/links tables
+46. [Task 46](#task-46) - Add pagination to collection
+47. [Task 47](#task-47) - Implement attribute grouping in collections
+59. [Task 59](#task-59) - Easy toggle for boolean attributes
+
+### ⏳ In Progress Tasks
+
+45. [Task 45](#task-45) - Add filtering options in collection view (partially completed/in progress)
+
+### 📋 Planned Tasks
+
+48. [Task 48](#task-48) - Add hidden attributes hint
+49. [Task 49](#task-49) - Implement attribute sorting and grouping
+50. [Task 50](#task-50) - Add custom item fields (Your Id, location)
+51. [Task 51](#task-51) - Improve move item dialog UI
+52. [Task 52](#task-52) - Display attribute statistics and filtering
+53. [Task 53](#task-53) - Make thumbnails clickable
+54. [Task 54](#task-54) - Mobile UI improvements
+55. [Task 55](#task-55) - Consolidate JavaScript to single file
+56. [Task 56](#task-56) - Implement error pages (40x, 50x)
+57. [Task 57](#task-57) - Add autocompletion for item attributes
+58. [Task 58](#task-58) - Group display of multiple same attributes
+60. [Task 60](#task-60) - Fix layout of item type popup and items order
+
+---
+
+## ✅ Completed Tasks
 
 ### Task 1
 - Status: ✅ completed
@@ -642,7 +717,7 @@ UI fixes on /sys/. These changes will be later replicated to other views, so we 
 ### Task 36
 - Status: ✅ completed
 - Verified: yes
-- Commit ID: bd5aa52
+- Commit IDs: bd5aa52, 3988d23, 1db1269, c193dd3
 
 #### Task description
 Implement daily metrics collection system with comprehensive tracking and reporting.
@@ -661,15 +736,32 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Retention: 365 days, Alert thresholds: 10% warning, 25% critical
 - Commit: bd5aa52 - feat: Complete Phase 6 - Make targets and comprehensive metrics documentation
 
+**Recent Enhancements:**
+- Added historical trend charts with Chart.js (4 charts: Users, Items, Collections, Storage)
+- Commit: 3988d23 - feat: Add historical trend charts to metrics dashboard
+
+**Latest Updates (Chart Removal & Enhanced Display):**
+- Removed broken Chart.js visualizations from metrics dashboard
+- Added collapsible historical data tables to all 6 metrics sections (User, Collection, Item, Storage, Engagement, Moderation)
+- Enhanced comparison columns to show both previous values (in gray) and trend indicators
+- Updated column headers from "vs Yesterday/7 Days/30 Days" to "Yesterday/7 Days Ago/30 Days Ago"
+- Each section has "Show/Hide Historical Data" toggle button
+- Historical tables display last 10 entries with date and key metrics
+- Updated daily metrics email template to match web dashboard display
+- Previous values shown alongside trend indicators for better analysis
+- Commit: 1db1269 - fix: Remove broken charts and enhance metrics display with historical values
+- Commit: c193dd3 - fix: Update daily metrics email to show previous values
+
 ---
 
-## Pending Tasks (Not Started)
-
-### Task 37: Refactor item attributes from JSON to separate many to many relation
+### Task 37
 - Status: ✅ completed & deployed
 - Branch: main (merged)
 - Commits: 5e1c77c, f96b85b, 4870da5, b0c087a, c33f407, 9ed7488
 - Verified: ✅ production deployment successful
+
+#### Task description
+Refactor item attributes from JSON to separate many to many relation
 
 #### Implementation Summary
 
@@ -759,11 +851,15 @@ Implement daily metrics collection system with comprehensive tracking and report
 - ✅ Post-migration cleanup completed
 - ✅ Legacy code removed
 
-### Task 38: Item Type Popup Layout
+---
+
+### Task 38
 - Status: ✅ completed
 - Verified: ✅ yes
 - Commit ID: 5266501
-- Description: Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page. Use TailwindCSS and DaisyUI components.
+
+#### Task description
+Item type popup is too large, it has to be split into 3 or 4 columns to fit all elements without need to scroll the page. Use TailwindCSS and DaisyUI components.
 
 #### Implementation Summary
 - Converted single-column dropdown to 3-column grid layout
@@ -773,11 +869,15 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Improved hover states and visual feedback
 - Handles 41 item types without scrolling on standard displays
 
-### Task 39: Boolean Attribute UI
+---
+
+### Task 39
 - Status: ✅ completed
 - Verified: ✅ yes
 - Commit ID: 5266501
-- Description: When adding attribute type boolean, user should be presented with checkbox with a label not input form. This has to be loaded dynamically with HTMX
+
+#### Task description
+When adding attribute type boolean, user should be presented with checkbox with a label not input form. This has to be loaded dynamically with HTMX
 
 #### Implementation Summary
 - Created new HTMX endpoint: `item_get_attribute_input`
@@ -788,11 +888,15 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Form updates dynamically when attribute is selected
 - Proper handling of required fields and placeholders
 
-### Task 40: Duplicate Attributes
+---
+
+### Task 40
 - Status: ✅ completed (implemented in Task 37)
 - Verified: ✅ yes
 - Commit ID: 5e1c77c (part of Task 37)
-- Description: Cannot add two attributes with same key (eg.: two authors of the same book) - allow this functionality
+
+#### Task description
+Cannot add two attributes with same key (eg.: two authors of the same book) - allow this functionality
 
 #### Implementation Summary
 - Relational model (CollectionItemAttributeValue) allows multiple values per attribute
@@ -801,7 +905,9 @@ Implement daily metrics collection system with comprehensive tracking and report
 - Each value is a separate row in database
 - Completed as part of Task 37 refactoring
 
-### Task 41: Item Type Selection on Creation
+---
+
+### Task 41
 - Status: ✅ completed
 - Verified: yes
 
@@ -836,22 +942,30 @@ When adding item, user should be able to select initial type of item. In additio
 - `web/views/items.py:59-96` - Process attributes and link on item creation
 - `web/urls.py:42` - URL route for get-type-attributes (positioned before generic routes)
 
-### Task 42: Link Modal Text Wrapping
+---
+
+### Task 42
 - Status: ✅ completed
 - Verified: ✅ yes
 - Commit ID: 67822f7
-- Description: In add link modal the text "Custom Display Name (Optional) Leave empty to auto-detect from URL" should wrap, it is too long
+
+#### Task description
+In add link modal the text "Custom Display Name (Optional) Leave empty to auto-detect from URL" should wrap, it is too long
 
 #### Implementation Summary
 - Changed label to flex-col with items-start for vertical stacking
 - Added whitespace-normal to label-text-alt for text wrapping
 - Text now wraps properly in narrow modals
 
-### Task 43: Item Redirect After Edit
+---
+
+### Task 43
 - Status: ✅ completed
 - Verified: ✅ yes
 - Commit ID: 67822f7
-- Description: After editing or adding new item user should be redirected to that item, not to the collection
+
+#### Task description
+After editing or adding new item user should be redirected to that item, not to the collection
 
 #### Implementation Summary
 - Changed redirect in collection_item_create_view from collection to item
@@ -859,11 +973,15 @@ When adding item, user should be able to select initial type of item. In additio
 - Users now land on item detail page after create/edit
 - Better UX for immediate viewing and further editing
 
-### Task 44: Extra Add Buttons
+---
+
+### Task 44
 - Status: ✅ completed
 - Verified: ✅ yes
 - Commit ID: 67822f7
-- Description: On item details page add extra button to add attribute and add link in the attributes and links table in addition to action buttons on top
+
+#### Task description
+On item details page add extra button to add attribute and add link in the attributes and links table in addition to action buttons on top
 
 #### Implementation Summary
 - Added "+ Add Attribute" button at bottom of attributes table (item detail view only)
@@ -873,64 +991,35 @@ When adding item, user should be able to select initial type of item. In additio
 - Collection list view kept compact (no extra buttons)
 - Provides quick access without scrolling to top action buttons
 
-### Task 45: Collection Filtering
-- Status: ⏳ pending
-- Description: Add filtering options in collection view to limit number of displayed items
+---
 
-### Task 46: Collection Pagination
-- Status: ⏳ pending
-- Description: Add pagination to collection
+### Task 46
+- Status: ✅ completed
+- Verified: yes
+- Commit ID: 2c4e8b7
 
+#### Task description
+Add pagination to collection
 
-### Task 47: Attribute Grouping
-- Status: ⏳ pending
-- Description: When collection has a "series" of some attribute, eg. there is "series of Discworld novels" (items sharing the same attribute key and value), they could be grouped. It can be enabled per collection via checkbox "enable grouping". It can be seen only by owners, and all list displays needs to respect that
+#### Implementation summary
+[Implementation details to be added]
 
-### Task 48: Hidden Attributes Hint
-- Status: ⏳ pending
-- Description: When item has attributes which do not belong to current item type, there should be some hint that there are hidden attributes
+---
 
-### Task 49: Attribute Sorting
-- Status: ⏳ pending
-- Description: Add grouping and "sort by this attribute (or name, or status or...)"
+### Task 47
+- Status: ✅ completed
+- Verified: yes
+- Commit ID: 2c4e8b7
 
-### Task 50: Custom Item Fields
-- Status: ⏳ pending
-- Description: Add a field for item "Your Id" and "location"
+#### Task description
+When collection has a "series" of some attribute, eg. there is "series of Discworld novels" (items sharing the same attribute key and value), they could be grouped. It can be enabled per collection via checkbox "enable grouping". It can be seen only by owners, and all list displays needs to respect that
 
-### Task 51: Move Item Dialog UI
-- Status: ⏳ pending
-- Description: (Item) move dialog to another collection need some UI improvements
+#### Implementation summary
+[Implementation details to be added]
 
-### Task 52: Attribute Statistics
-- Status: ⏳ pending
-- Description: Eventually display on top statistics from attributes (how many read, authors, etc.) and let filter with that values
+---
 
-### Task 53: Clickable Thumbnails
-- Status: ⏳ pending
-- Description: Thumbnail image (the main image for the item, should be clickable and lead to item details), same for categories
-
-### Task 54: Mobile UI Improvements
-- Status: ⏳ pending
-- Description: Mobile version of the app need some UI improvements
-
-### Task 55: JavaScript Consolidation
-- Status: ⏳ pending
-- Description: Compact all JavaScript to one file and reference JS from there. No inline javascript code if not necessary
-
-### Task 56: Implement error pages
- - Status: pending
- - Description: currently error pages (40x, 50x and similar) are not handled. Implement handling of all this kind of error pages, with same styling like other viewes.
-
-### Task 57: Autocompletion for Item Attributes
- - Status: pending
- - Description: when adding or editing item attribute the system (with HX) should try to autocomplete that information (min. 3 characters, search anywhere in the string). For autocmplete data you need to query CollectionItemAttributeValue for the items user own, and are the same type. Example, when I'm trying to add to the 'book' the 'Author' attribute it should look up for all CollectionItemAttributeValue recored where user is an owner, and are the records are type 'Author' refernced to book item attribute.
-
-### Task 58: Group display of attributes for item
- - Status: pending
- - Description: when displaying more of one of the same attribute (like many authors), group them. On left side (where now is "Author") display only once name of attribute (aligned top left), and on right side list one per row as it is now.
-
-### Task 59: Easy change of boolean attribute
+### Task 59
 - Status: ✅ completed
 - Verified: pending user verification
 
@@ -952,7 +1041,117 @@ For item attribute boolean, add an extra action icon (next to ellipsis, on its r
   - `templates/partials/_item_attributes.html:31-41` - Toggle button in list view
   - `templates/partials/_item_attributes_detail.html:42-53` - Toggle button in detail view
 
-### Task 60: layout of item type popup and items order.
+---
+
+## ⏳ In Progress Tasks
+
+### Task 45
+- Status: ⏳ in progress (partially completed)
+
+#### Task description
+Add filtering options in collection view to limit number of displayed items
+
+#### Implementation summary
+[Work in progress]
+
+---
+
+## 📋 Planned Tasks
+
+### Task 48
+- Status: pending
+
+#### Task description
+When item has attributes which do not belong to current item type, there should be some hint that there are hidden attributes
+
+---
+
+### Task 49
+- Status: pending
+
+#### Task description
+Add grouping and "sort by this attribute (or name, or status or...)"
+
+---
+
+### Task 50
+- Status: pending
+
+#### Task description
+Add a field for item "Your Id" and "location"
+
+---
+
+### Task 51
+- Status: pending
+
+#### Task description
+(Item) move dialog to another collection need some UI improvements
+
+---
+
+### Task 52
+- Status: pending
+
+#### Task description
+Eventually display on top statistics from attributes (how many read, authors, etc.) and let filter with that values
+
+---
+
+### Task 53
+- Status: pending
+
+#### Task description
+Thumbnail image (the main image for the item, should be clickable and lead to item details), same for categories
+
+---
+
+### Task 54
+- Status: pending
+
+#### Task description
+Mobile version of the app need some UI improvements
+
+---
+
+### Task 55
+- Status: pending
+
+#### Task description
+Compact all JavaScript to one file and reference JS from there. No inline javascript code if not necessary
+
+---
+
+### Task 56
+- Status: pending
+
+#### Task description
+Currently error pages (40x, 50x and similar) are not handled. Implement handling of all this kind of error pages, with same styling like other viewes.
+
+---
+
+### Task 57
+- Status: pending
+
+#### Task description
+When adding or editing item attribute the system (with HX) should try to autocomplete that information (min. 3 characters, search anywhere in the string). For autocmplete data you need to query CollectionItemAttributeValue for the items user own, and are the same type. Example, when I'm trying to add to the 'book' the 'Author' attribute it should look up for all CollectionItemAttributeValue recored where user is an owner, and are the records are type 'Author' refernced to book item attribute.
+
+---
+
+### Task 58
+- Status: pending
+
+#### Task description
+When displaying more of one of the same attribute (like many authors), group them. On left side (where now is "Author") display only once name of attribute (aligned top left), and on right side list one per row as it is now.
+
+---
+
+### Task 60
+- Status: pending
+
+#### Task description
+Layout of item type popup and items order.
+
 ---
 
 ## Task 33 Additional Requirements (Part of original Task 34)
@@ -1000,7 +1199,8 @@ When you display the image, it has to be implemented globally verify the status 
 
 ## Notes
 
-- All completed tasks (1-36) have been verified and committed
-- Tasks 37-54 are pending implementation
+- All completed tasks (1-44, 46, 47, 59) have been verified and committed
+- Task 45 is in progress
+- Tasks 48-58, 60 are pending implementation
 - Task 33 has additional requirements that need to be implemented
 - When starting new tasks, follow the workflow: plan → review → implement → test → commit
