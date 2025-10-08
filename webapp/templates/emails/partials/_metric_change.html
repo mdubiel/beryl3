@@ -1,4 +1,5 @@
 {% if change.change is not None %}
+    <span style="color: #9ca3af;">{{ change.previous }}</span>
     {% if change.direction == 1 %}
         <span class="change {% if change.change_pct >= threshold_critical %}change-critical{% elif change.change_pct >= threshold_warning %}change-warning{% else %}change-up{% endif %}">
             <span class="arrow arrow-up">↑</span>
