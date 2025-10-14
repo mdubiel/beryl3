@@ -173,6 +173,60 @@ details > summary::-webkit-details-marker {
   @apply rounded-r-lg;
 }
 
+/* Task 62: Public collection background styles */
+.public-collection-bg {
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
+.public-collection-overlay::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: -1;
+}
 
+.public-collection-header-wrapper {
+  @apply bg-white/50 backdrop-blur-lg shadow-sm;
+}
 
+.public-collection-header {
+  @apply bg-white/50 backdrop-blur-lg shadow-sm;
+}
+
+.public-collection-breadcrumbs {
+  @apply bg-white/50 backdrop-blur-lg shadow-sm;
+}
+
+.public-collection-breadcrumbs ul {
+  @apply items-center;
+}
+
+.public-collection-breadcrumbs a,
+.public-collection-breadcrumbs span {
+  @apply text-gray-800;
+}
+
+.public-collection-transparent-bg {
+  background-color: transparent !important;
+}
+
+/* Task 62: Stats styling for public collection */
+.public-collection-stats .stat {
+  border: none !important;
+  flex: 1 1 0% !important; /* Equal width for all stats */
+  min-width: 0 !important;
+}
+
+/* Task 62: Remove rounded corners from public item cards */
+.card.rounded-none,
+.card.rounded-none figure,
+.card.rounded-none img {
+  border-radius: 0 !important;
+}

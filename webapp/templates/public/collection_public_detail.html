@@ -6,6 +6,18 @@
 
 {% block title %}{{ collection.name }}{% endblock %}
 
+{# Task 62: Apply background image and overlay classes only when background exists, otherwise use default solid white #}
+{% if background_image_url %}
+{% block body_classes %}public-collection-bg public-collection-overlay{% endblock %}
+{% block body_style %}style="background-image: url('{{ background_image_url }}');"{% endblock %}
+{% block header_wrapper_classes %}public-collection-header-wrapper{% endblock %}
+{% block breadcrumbs_classes %}public-collection-breadcrumbs{% endblock %}
+{% block content_wrapper_classes %}public-collection-transparent-bg{% endblock %}
+{% endif %}
+
+{# Task 62: Override main padding to py-8 #}
+{% block main_classes %}py-8{% endblock %}
+
 {% block breadcrumbs %}
     <li>
         <span class="inline-flex gap-2 items-center">
@@ -16,52 +28,37 @@
 {% endblock breadcrumbs %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto">
 
     {# Collection Hero Card - Updated to match private view #}
-    <div class="bg-base-100 rounded-lg min-w-80 max-w-none mx-auto lg:mx-0 mb-8">
-        
-        {# Image section using DaisyUI figure - Only show if image exists #}
-        {% if collection.default_image or collection.images.all.0 %}
-        <figure class="w-full h-64 rounded-t-lg overflow-hidden">
-            {% if collection.default_image %}
-                <img src="{% media_url collection.default_image.media_file %}" 
-                     alt="{{ collection.name }}" 
-                     class="w-full h-full object-cover cursor-pointer"
-                     onclick="showImageModal('{% media_url collection.default_image.media_file %}', '{{ collection.name|escapejs }}')" />
-            {% elif collection.images.all.0 %}
-                <img src="{% media_url collection.images.all.0.media_file %}" 
-                     alt="{{ collection.name }}" 
-                     class="w-full h-full object-cover cursor-pointer"
-                     onclick="showImageModal('{% media_url collection.images.all.0.media_file %}', '{{ collection.name|escapejs }}')" />
-            {% endif %}
-        </figure>
-        {% endif %}
-        
+    <div class="{% if background_image_url %}bg-white/50 backdrop-blur-lg shadow-sm{% else %}bg-base-100 rounded-lg{% endif %} min-w-80 max-w-none mx-auto lg:mx-0 mb-8">
+
+        {# Task 62: Header image removed - now using background image instead #}
+
         {# Content section using DaisyUI card-body #}
-        <div class="card-body flex flex-col justify-between py-8 px-4{% if not collection.default_image and not collection.images.all.0 %} rounded-t-lg{% endif %}">
-            
+        <div class="card-body flex flex-col justify-between py-8 px-4">
+
             {# Top section #}
-            <div class="space-y-6">
-                
-                <h1 class="text-5xl font-bold leading-tight">{{ collection.name }}</h1>
-                
+            <div class="space-y-4">
+
+                <h1 class="text-5xl font-bold leading-tight text-gray-900">{{ collection.name }}</h1>
+
                 <div class="flex items-center gap-2">
-                    {% lucide 'user' size=16 class='text-neutral' %}
-                    <p class="text-lg opacity-80">
+                    {% lucide 'user' size=16 class='text-gray-800' %}
+                    <p class="text-lg text-gray-800">
                         Owned by {{ collection.created_by.profile.get_display_name }}
                     </p>
                 </div>
-                
+
                 {# Only show description if it exists and is not empty #}
                 {% if collection.description %}
-                <p class="text-base-content text-neutral">{{ collection.description|markdown_safe }}</p>
+                <p class="text-gray-900">{{ collection.description|markdown_safe }}</p>
                 {% endif %}
-                
+
                 {# Collection Images Gallery - Show if there are multiple images or single image when no header #}
                 {% if collection.images.all|length > 1 %}
                 <div class="mt-6">
-                    <h3 class="text-sm font-semibold mb-3 text-base-content text-neutral">Collection Images</h3>
+                    <h3 class="text-sm font-semibold mb-3 text-gray-800">Collection Images</h3>
                     <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2">
                         {% for image in collection.images.all %}
                         <div class="aspect-square bg-base-200 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
@@ -78,22 +75,22 @@
             </div>
             
             {# Bottom section - Stats #}
-            <div class="mt-6">
-                <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-100/60 backdrop-blur-sm">
-                    <div class="stat">
-                        <div class="stat-title">Total Items</div>
+            <div class="mt-4 flex justify-center">
+                <div class="public-collection-stats stats stats-vertical sm:stats-horizontal shadow-none border-0 bg-transparent rounded-none">
+                    <div class="stat rounded-none">
+                        <div class="stat-title text-gray-900">Total Items</div>
                         <div class="stat-value">{{ stats.total_items }}</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">In Collection</div>
+                    <div class="stat rounded-none">
+                        <div class="stat-title text-gray-900">In Collection</div>
                         <div class="stat-value text-success">{{ stats.in_collection_count }}</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">Wanted</div>
+                    <div class="stat rounded-none">
+                        <div class="stat-title text-gray-900">Wanted</div>
                         <div class="stat-value text-info">{{ stats.wanted_count }}</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-title">Reserved</div>
+                    <div class="stat rounded-none">
+                        <div class="stat-title text-gray-900">Reserved</div>
                         <div class="stat-value text-warning">{{ stats.reserved_count }}</div>
                     </div>
                 </div>
@@ -104,36 +101,10 @@
     </div>
 
     {# Items listing #}
-    <div class="mt-12">
-        <h2 class="text-2xl font-bold mb-4">Items in this Collection</h2>
+    <div class="{% if background_image_url %}bg-white/50 backdrop-blur-lg shadow-sm{% else %}bg-base-100{% endif %} px-4 py-4 mt-8">
+        <h2 class="text-2xl font-bold mb-4 text-gray-900">Items in this Collection</h2>
 
         {% if stats.total_items > 0 %}
-            {# Item type distribution - based on all items, not current page #}
-            {% if item_type_distribution|length > 1 %}
-            <div class="bg-base-200 rounded-box p-4 mb-6">
-                <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
-                    {% lucide 'tags' size=18 %}
-                    Item Types
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    {% for type_data in item_type_distribution %}
-                        <div class="badge badge-outline badge-lg">
-                            {% if type_data.item_type__display_name %}
-                                {% if type_data.item_type__icon %}
-                                    {% lucide type_data.item_type__icon size=14 class='mr-1' %}
-                                {% endif %}
-                                {{ type_data.item_type__display_name }}
-                            {% else %}
-                                {% lucide 'package' size=14 class='mr-1' %}
-                                Generic
-                            {% endif %}
-                            <span class="ml-1 text-xs text-neutral">({{ type_data.count }})</span>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             <div class="flex flex-col gap-6">
                 {# Task 47: Show grouped or ungrouped items based on collection setting #}
                 {% if grouped_items %}

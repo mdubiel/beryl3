@@ -119,13 +119,13 @@
     
 </head>
 
-<body class="bg-base-100 text-base-content font-sans">
+<body class="bg-base-100 text-base-content font-sans {% block body_classes %}{% endblock %}" {% block body_style %}{% endblock %}>
     
     {# Main content container #}
-    <div class="w-11/12 md:w-5/6 lg:w-4/5 mx-auto">
-    
+    <div class="w-11/12 md:w-5/6 lg:w-4/5 mx-auto {% block container_classes %}{% endblock %}">
+
         {# Navbar - outside frame #}
-        <div class="space-y-4 mt-4 mb-8">
+        <div class="mt-4 mb-8 {% block header_wrapper_classes %}{% endblock %}">
         <header class="flex items-center justify-between py-4 px-2">
             <div>
                 <h1>
@@ -209,12 +209,10 @@
             </div>
         </header>
 
-        </div> {# End of navbar #}
-
         {# Main content area #}
-        <div class="bg-base-100 relative">
+        <div class="bg-base-100 relative {% block content_wrapper_classes %}{% endblock %}">
             {% if request.resolver_match.url_name != 'index' %}
-            <div class="text-sm breadcrumbs px-4 pt-4">
+            <div class="text-sm breadcrumbs px-4 pt-4 {% block breadcrumbs_classes %}{% endblock %}">
                 <ul>
                     {# Breadcrumbs #}
                     <li>
@@ -231,7 +229,7 @@
                 </ul>
             </div>
             {% endif %}
-            
+
             <!-- Django Messages -->
             {% if messages %}
                 <div class="px-4 pt-6">
@@ -254,12 +252,14 @@
                 </div>
             {% endif %}
             
-            <main class="py-12">
+            <main class="{% block main_classes %}py-12{% endblock %}">
                 {% block content %}
                 {% endblock %}
             </main>
         </div> {# End of main content area #}
-        
+
+        </div> {# End of navbar #}
+
     </div> {# End of main centered container #}
 
     <footer class="footer footer-horizontal footer-center bg-base-200 text-base-content rounded p-8">
