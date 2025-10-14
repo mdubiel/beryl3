@@ -1,74 +1,153 @@
 {% load lucide %}
+{% load attribute_tags %}
 
 <div class="mt-4" id="item-attributes-{{ item.hash }}">
-    {% with attributes=item.get_display_attributes %}
+    {% with attributes=item.get_display_attributes|group_attributes %}
         {% if attributes|length > 0 %}
-            {# All attributes - always show expanded #}
-            <div class="space-y-1">
-                {% for attr_data in attributes %}
-                <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
-                    <span class="text-xs flex items-center gap-2" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
-                        <span class="inline-flex items-center">
-                            {{ attr_data.attribute.display_name }}{% if attr_data.attribute.help_text %}<span class="tooltip tooltip-right ml-1" data-tip="{{ attr_data.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
-                        </span>
-                        {% if attr_data.attribute.attribute_type == 'BOOLEAN' %}
-                            {% if attr_data.value %}
-                                <span class="flex items-center gap-1 text-success font-semibold">
-                                    {% lucide 'circle-check' size=14 %}
-                                    Yes
-                                </span>
-                            {% else %}
-                                <span class="flex items-center gap-1 text-error font-semibold">
-                                    {% lucide 'circle-x' size=14 %}
-                                    No
-                                </span>
-                            {% endif %}
+            {# All attributes - grouped by attribute name with grid layout #}
+            {# Grid layout: attribute names (right-aligned, fixed width) | values (left-aligned) #}
+            <div class="grid grid-cols-[8rem_1fr] gap-y-2">
+                {% for group in attributes %}
+                {# Attribute name - right-aligned, fixed width #}
+                <div class="text-xs font-bold text-right {% if not forloop.last %}border-b border-base-300 pb-2{% endif %}">
+                    {{ group.attribute.display_name }}{{ group.values|length|pluralize }}{% if group.attribute.help_text %}<span class="tooltip tooltip-left ml-1" data-tip="{{ group.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
+                </div>
+
+                {# Values - left-aligned with left padding #}
+                <div class="pl-4 {% if not forloop.last %}border-b border-base-300 pb-2{% endif %}">
+                        {% if group.values|length > 1 %}
+                            {# Multiple values - display as list with actions for each #}
+                            <div class="space-y-1">
+                                {% for value_data in group.values %}
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs">
+                                        {% if group.attribute.attribute_type == 'BOOLEAN' %}
+                                            {% if value_data.value %}
+                                                <span class="flex items-center gap-1 text-success font-semibold">
+                                                    {% lucide 'circle-check' size=14 %}
+                                                    Yes
+                                                </span>
+                                            {% else %}
+                                                <span class="flex items-center gap-1 text-error font-semibold">
+                                                    {% lucide 'circle-x' size=14 %}
+                                                    No
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ value_data.display_value }}
+                                        {% endif %}
+                                    </span>
+                                    {% if request.user == item.collection.created_by %}
+                                    <div class="flex items-center gap-1 flex-shrink-0">
+                                        {% if group.attribute.attribute_type == 'BOOLEAN' %}
+                                        <button class="p-1 hover:bg-base-200 rounded cursor-pointer"
+                                                title="Toggle value"
+                                                hx-post="{% url 'item_toggle_boolean_attribute' item.hash value_data.attr_value_hash %}"
+                                                hx-target="#item-attributes-{{ item.hash }}"
+                                                hx-swap="outerHTML"
+                                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                            {% lucide 'arrow-left-right' size=12 %}
+                                        </button>
+                                        {% endif %}
+                                        <div class="dropdown dropdown-end dropdown-top">
+                                            <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Attribute Actions">
+                                                {% lucide 'ellipsis' size=12 %}
+                                            </button>
+                                            <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-50">
+                                                <li>
+                                                    <a class="text-xs py-1 px-2"
+                                                       hx-get="{% url 'item_edit_attribute_value' item.hash value_data.attr_value_hash %}"
+                                                       hx-target="#attribute-edit-modal-content"
+                                                       hx-trigger="click"
+                                                       onclick="document.getElementById('attribute-edit-modal').showModal()">
+                                                        {% lucide 'pencil' size=12 %}
+                                                        Edit
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="text-xs py-1 px-2 text-error"
+                                                       hx-delete="{% url 'item_remove_attribute_value' item.hash value_data.attr_value_hash %}"
+                                                       hx-target="#item-attributes-{{ item.hash }}"
+                                                       hx-swap="outerHTML"
+                                                       hx-confirm="Remove {{ group.attribute.display_name }} ({{ value_data.display_value }})?"
+                                                       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                                        {% lucide 'trash-2' size=12 %}
+                                                        Delete
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
                         {% else %}
-                            <span>{{ attr_data.display_value }}</span>
+                            {# Single value - display inline with actions #}
+                            {% with value_data=group.values.0 %}
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs">
+                                    {% if group.attribute.attribute_type == 'BOOLEAN' %}
+                                        {% if value_data.value %}
+                                            <span class="flex items-center gap-1 text-success font-semibold">
+                                                {% lucide 'circle-check' size=14 %}
+                                                Yes
+                                            </span>
+                                        {% else %}
+                                            <span class="flex items-center gap-1 text-error font-semibold">
+                                                {% lucide 'circle-x' size=14 %}
+                                                No
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        {{ value_data.display_value }}
+                                    {% endif %}
+                                </span>
+                                {% if request.user == item.collection.created_by %}
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                    {% if group.attribute.attribute_type == 'BOOLEAN' %}
+                                    <button class="p-1 hover:bg-base-200 rounded cursor-pointer"
+                                            title="Toggle value"
+                                            hx-post="{% url 'item_toggle_boolean_attribute' item.hash value_data.attr_value_hash %}"
+                                            hx-target="#item-attributes-{{ item.hash }}"
+                                            hx-swap="outerHTML"
+                                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                        {% lucide 'arrow-left-right' size=12 %}
+                                    </button>
+                                    {% endif %}
+                                    <div class="dropdown dropdown-end dropdown-top">
+                                        <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Attribute Actions">
+                                            {% lucide 'ellipsis' size=12 %}
+                                        </button>
+                                        <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-50">
+                                            <li>
+                                                <a class="text-xs py-1 px-2"
+                                                   hx-get="{% url 'item_edit_attribute_value' item.hash value_data.attr_value_hash %}"
+                                                   hx-target="#attribute-edit-modal-content"
+                                                   hx-trigger="click"
+                                                   onclick="document.getElementById('attribute-edit-modal').showModal()">
+                                                    {% lucide 'pencil' size=12 %}
+                                                    Edit
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="text-xs py-1 px-2 text-error"
+                                                   hx-delete="{% url 'item_remove_attribute_value' item.hash value_data.attr_value_hash %}"
+                                                   hx-target="#item-attributes-{{ item.hash }}"
+                                                   hx-swap="outerHTML"
+                                                   hx-confirm="Remove {{ group.attribute.display_name }}?"
+                                                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+                                                    {% lucide 'trash-2' size=12 %}
+                                                    Delete
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endwith %}
                         {% endif %}
-                    </span>
-                    {% if request.user == item.collection.created_by %}
-                    <div class="flex items-center gap-1 flex-shrink-0">
-                        {% if attr_data.attribute.attribute_type == 'BOOLEAN' %}
-                        <button class="p-1 hover:bg-base-200 rounded cursor-pointer"
-                                title="Toggle value"
-                                hx-post="{% url 'item_toggle_boolean_attribute' item.hash attr_data.attr_value_hash %}"
-                                hx-target="#item-attributes-{{ item.hash }}"
-                                hx-swap="outerHTML"
-                                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                            {% lucide 'arrow-left-right' size=12 %}
-                        </button>
-                        {% endif %}
-                        <div class="dropdown dropdown-end dropdown-top">
-                            <button tabindex="0" class="p-1 hover:bg-base-200 rounded cursor-pointer" title="Attribute Actions">
-                                {% lucide 'ellipsis' size=12 %}
-                            </button>
-                            <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-32 z-50">
-                                <li>
-                                    <a class="text-xs py-1 px-2"
-                                       hx-get="{% url 'item_edit_attribute_value' item.hash attr_data.attr_value_hash %}"
-                                       hx-target="#attribute-edit-modal-content"
-                                       hx-trigger="click"
-                                       onclick="document.getElementById('attribute-edit-modal').showModal()">
-                                        {% lucide 'pencil' size=12 %}
-                                        Edit
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="text-xs py-1 px-2 text-error"
-                                       hx-delete="{% url 'item_remove_attribute_value' item.hash attr_data.attr_value_hash %}"
-                                       hx-target="#item-attributes-{{ item.hash }}"
-                                       hx-swap="outerHTML"
-                                       hx-confirm="Remove {{ attr_data.attribute.display_name }}{% if attr_data.is_multiple %} ({{ attr_data.display_value }}){% endif %}?"
-                                       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                        {% lucide 'trash-2' size=12 %}
-                                        Delete
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

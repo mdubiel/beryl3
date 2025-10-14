@@ -1,17 +1,16 @@
 {% load lucide %}
 {% load media_tags %}
+{% load attribute_tags %}
 
-<div class="card lg:card-side bg-base-100 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0 shadow-md hover:shadow-lg transition-shadow">
+<div class="card lg:card-side bg-gray-50/85 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0 shadow-md hover:shadow-lg transition-shadow rounded-none">
     {# Image section using DaisyUI figure #}
-    <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch">
-        {% if item.default_image %}
+    <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch rounded-none">
+        {% if item.default_image and item.default_image.media_file.file_exists %}
             <img src="{% media_url item.default_image.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover" />
-        {% elif item.images.all.0 %}
+        {% elif item.images.all.0 and item.images.all.0.media_file.file_exists %}
             <img src="{% media_url item.images.all.0.media_file %}" alt="{{ item.name }}" class="w-full h-full object-cover" />
         {% else %}
-            <div class="w-full h-full bg-base-300 flex items-center justify-center">
-                {% lucide 'image' size=64 class='text-neutral' %}
-            </div>
+            <div class="w-full h-full bg-white"></div>
         {% endif %}
     </figure>
     {# Content section using DaisyUI card-body #}
@@ -21,78 +20,125 @@
         <div class="space-y-3">
             
             {# Row 1: Item name with favorite star #}
-            <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
-                <div class="flex items-center gap-2 flex-grow">
-                    {# Favorite star - display only (not interactive for public view) #}
-                    {% if item.is_favorite %}
-                    <div class="tooltip" data-tip="Owner's favorite">
-                        {% lucide 'star' size=20 class='text-warning fill-current' %}
+            <div class="flex flex-wrap lg:flex-nowrap items-start justify-between gap-4">
+                <div class="flex flex-col flex-wrap gap-2 pr-4">
+                    <div class="flex items-center gap-2 flex-grow">
+                        {# Favorite star - display only (not interactive for public view) #}
+                        {% if item.is_favorite %}
+                        <div class="tooltip" data-tip="Owner's favorite">
+                            {% lucide 'star' size=20 class='text-warning fill-current' %}
+                        </div>
+                        {% endif %}
+                        
+                        <h2 class="font-bold text-lg leading-tight">
+                            {{ item.name }}
+                        </h2>
+                        
+                    </div>
+                    {# Row 2: Description #}
+                    {% if item.description %}
+                    <div>
+                        <p class="text-sm opacity-70">{{ item.description }}</p>
                     </div>
                     {% endif %}
-                    
-                    <h2 class="font-bold text-lg leading-tight">
-                        {{ item.name }}
-                    </h2>
+                    {# Row 3: Status badge #}
+                    <div class="flex flex-wrap gap-2">
+                        <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% else %}badge-neutral{% endif %}">
+                            {% lucide 'tag' size=12 class='mr-1' %}
+                            {{ item.get_status_display }}
+                        </div>
+                    </div>
                 </div>
                 
                 {# Item type badge #}
                 {% if item.item_type %}
+                <div class="flex flex-col items-center justify-center gap-1 min-w-24 max-w-24">
+                <p>
+                    {% lucide item.item_type.icon size=48 class='mr-1' %}
+                </p>
+                    <p class="text-center">{{ item.item_type.display_name }}</p>
+                </div>                
+                {% comment %}
                 <div class="badge badge-secondary">
                     {% lucide item.item_type.icon size=14 class='mr-1' %}
                     {{ item.item_type.display_name }}
                 </div>
+                {% endcomment %}
                 {% endif %}
             </div>
             
-            {# Row 2: Description #}
-            {% if item.description %}
-            <div>
-                <p class="text-sm opacity-70">{{ item.description }}</p>
-            </div>
-            {% endif %}
+
             
-            {# Row 3: Status badge #}
-            <div class="flex flex-wrap gap-2">
-                <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% else %}badge-neutral{% endif %}">
-                    {% lucide 'tag' size=12 class='mr-1' %}
-                    {{ item.get_status_display }}
-                </div>
-            </div>
+
             
-            {# Row 4: Attributes display (detailed like private view) #}
+            {# Row 4: Attributes display (grouped by attribute name) #}
             {% if item.item_type %}
-                {% with attributes=item.get_display_attributes %}
+                {% with attributes=item.get_display_attributes|group_attributes %}
                     {% if attributes|length > 0 %}
                         <div class="mt-3">
-                            <div class="space-y-1">
-                                {% for attr_data in attributes %}
-                                <div class="flex items-center justify-between py-1 {% if not forloop.last %}border-b border-base-300{% endif %}">
-                                    <span class="text-xs flex items-center gap-2" title="{{ attr_data.attribute.display_name }}: {{ attr_data.value }}">
-                                        <span class="inline-flex items-center">
-                                            <strong>{{ attr_data.attribute.display_name }}{% if attr_data.attribute.help_text %}<span class="tooltip tooltip-right ml-1" data-tip="{{ attr_data.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:</strong>
-                                        </span>
-                                        {% if attr_data.attribute.attribute_type == 'URL' %}
-                                            <a href="{{ attr_data.value }}" target="_blank" class="link link-hover text-primary">
-                                                {{ attr_data.value }}
-                                            </a>
-                                        {% elif attr_data.attribute.attribute_type == 'BOOLEAN' %}
-                                            {% if attr_data.value %}
-                                                <span class="flex items-center gap-1 text-success font-semibold">
-                                                    {% lucide 'circle-check' size=14 %}
-                                                    Yes
-                                                </span>
-                                            {% else %}
-                                                <span class="flex items-center gap-1 text-error font-semibold">
-                                                    {% lucide 'circle-x' size=14 %}
-                                                    No
-                                                </span>
-                                            {% endif %}
-                                        {% elif attr_data.attribute.attribute_type == 'DATE' %}
-                                            {{ attr_data.display_value }}
+                            {# Grid layout: attribute names (right-aligned, fixed width) | values (left-aligned) #}
+                            <div class="grid grid-cols-[8rem_1fr] gap-y-2">
+                                {% for group in attributes %}
+                                {# Attribute name - right-aligned, fixed width #}
+                                <div class="text-xs font-bold text-right {% if not forloop.last %}border-b border-base-300 pb-2{% endif %}">
+                                    {{ group.attribute.display_name }}{{ group.values|length|pluralize }}{% if group.attribute.help_text %}<span class="tooltip tooltip-left ml-1" data-tip="{{ group.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
+                                </div>
+
+                                {# Values - left-aligned with left padding #}
+                                <div class="pl-4 {% if not forloop.last %}border-b border-base-300 pb-2{% endif %}">
+                                        {% if group.values|length > 1 %}
+                                            {# Multiple values - display as list #}
+                                            <div class="space-y-0.5">
+                                                {% for value_data in group.values %}
+                                                <div class="text-xs">
+                                                    {% if group.attribute.attribute_type == 'URL' %}
+                                                        <a href="{{ value_data.value }}" target="_blank" class="link link-hover text-primary">
+                                                            {{ value_data.value }}
+                                                        </a>
+                                                    {% elif group.attribute.attribute_type == 'BOOLEAN' %}
+                                                        {% if value_data.value %}
+                                                            <span class="flex items-center gap-1 text-success font-semibold">
+                                                                {% lucide 'circle-check' size=14 %}
+                                                                Yes
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="flex items-center gap-1 text-error font-semibold">
+                                                                {% lucide 'circle-x' size=14 %}
+                                                                No
+                                                            </span>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {{ value_data.display_value }}
+                                                    {% endif %}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
                                         {% else %}
-                                            {{ attr_data.value }}
+                                            {# Single value - display inline #}
+                                            <span class="text-xs">
+                                                {% with value_data=group.values.0 %}
+                                                    {% if group.attribute.attribute_type == 'URL' %}
+                                                        <a href="{{ value_data.value }}" target="_blank" class="link link-hover text-primary">
+                                                            {{ value_data.value }}
+                                                        </a>
+                                                    {% elif group.attribute.attribute_type == 'BOOLEAN' %}
+                                                        {% if value_data.value %}
+                                                            <span class="flex items-center gap-1 text-success font-semibold">
+                                                                {% lucide 'circle-check' size=14 %}
+                                                                Yes
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="flex items-center gap-1 text-error font-semibold">
+                                                                {% lucide 'circle-x' size=14 %}
+                                                                No
+                                                            </span>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {{ value_data.display_value }}
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </span>
                                         {% endif %}
-                                    </span>
                                 </div>
                                 {% endfor %}
                             </div>
