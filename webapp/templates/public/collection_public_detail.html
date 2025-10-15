@@ -1,22 +1,10 @@
-{% extends "base.html" %}
+{% extends "base_public.html" %}
 {% load i18n %}
 {% load lucide %}
 {% load markdown_tags %}
 {% load media_tags %}
 
 {% block title %}{{ collection.name }}{% endblock %}
-
-{# Task 62: Apply background image and overlay classes only when background exists, otherwise use default solid white #}
-{% if background_image_url %}
-{% block body_classes %}public-collection-bg public-collection-overlay{% endblock %}
-{% block body_style %}style="background-image: url('{{ background_image_url }}');"{% endblock %}
-{% block header_wrapper_classes %}public-collection-header-wrapper{% endblock %}
-{% block breadcrumbs_classes %}public-collection-breadcrumbs{% endblock %}
-{% block content_wrapper_classes %}public-collection-transparent-bg{% endblock %}
-{% endif %}
-
-{# Task 62: Override main padding to py-8 #}
-{% block main_classes %}py-8{% endblock %}
 
 {% block breadcrumbs %}
     <li>

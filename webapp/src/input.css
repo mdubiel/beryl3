@@ -193,15 +193,15 @@ details > summary::-webkit-details-marker {
 }
 
 .public-collection-header-wrapper {
-  @apply bg-white/50 backdrop-blur-lg shadow-sm;
+  @apply bg-white/85 backdrop-blur-lg shadow-sm;
 }
 
 .public-collection-header {
-  @apply bg-white/50 backdrop-blur-lg shadow-sm;
+  @apply bg-white/85 backdrop-blur-lg shadow-sm;
 }
 
 .public-collection-breadcrumbs {
-  @apply bg-white/50 backdrop-blur-lg shadow-sm;
+  @apply bg-white/85 backdrop-blur-lg shadow-sm;
 }
 
 .public-collection-breadcrumbs ul {
