@@ -6,6 +6,7 @@
 # pylint: disable=line-too-long
 
 import logging
+import random
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -196,6 +197,46 @@ def public_collection_view(request, hash):
     fake = Faker()
     dummy_name = fake.name()
 
+    # Task 62: Collect all available images for random background selection
+    background_image_url = None
+    available_images = []
+
+    # Add collection images from MediaFile (uploaded images)
+    for collection_image in collection.images.all():
+        if collection_image.media_file and collection_image.media_file.file_exists:
+            available_images.append(collection_image.media_file.file_url)
+
+    # Add collection image_url if exists (fallback for URL-based images)
+    # Skip placeholder images from placehold.co
+    if collection.image_url and 'placehold.co' not in collection.image_url:
+        available_images.append(collection.image_url)
+
+    # Add all item images from MediaFile (uploaded images)
+    for item in all_items:
+        for item_image in item.images.all():
+            if item_image.media_file and item_image.media_file.file_exists:
+                available_images.append(item_image.media_file.file_url)
+
+        # Also add item image_url if exists (fallback for URL-based images)
+        # Skip placeholder images from placehold.co
+        if item.image_url and 'placehold.co' not in item.image_url:
+            available_images.append(item.image_url)
+
+    # Select random image for background
+    if available_images:
+        background_image_url = random.choice(available_images)
+        logger.info(
+            'public_collection_view: Selected random background image for collection "%s"',
+            collection.name,
+            extra={
+                'function': 'public_collection_view',
+                'action': 'select_background_image',
+                'collection_hash': collection.hash,
+                'total_images': len(available_images),
+                'selected_image': background_image_url
+            }
+        )
+
     context = {
         "collection": collection,
         "items": page_obj if page_obj else all_items,  # Paginated or all items
@@ -206,6 +247,7 @@ def public_collection_view(request, hash):
         "item_types": ItemType.objects.all(),
         "grouped_items": grouped_items,
         "items_per_page": items_per_page,
+        "background_image_url": background_image_url,  # Task 62
     }
     return render(request, "public/collection_public_detail.html", context)
 
