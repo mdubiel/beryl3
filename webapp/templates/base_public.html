@@ -1,0 +1,283 @@
+{% load static %}
+{% load lucide %}
+{% load django_htmx %}
+
+<!DOCTYPE html>
+<html lang="en" data-theme="berylfe">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Home{% endblock %} | Beryl</title>
+
+    <!-- Google Fonts - Monospace font collection -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&family=Source+Code+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    {% htmx_script %}
+
+    <script>
+        // Font Selection with localStorage persistence
+        const fontNames = {
+            'fira-code': 'Fira Code',
+            'jetbrains-mono': 'JetBrains Mono',
+            'source-code-pro': 'Source Code Pro',
+            'space-mono': 'Space Mono',
+            'ibm-plex-mono': 'IBM Plex Mono',
+            'system-mono': 'System Mono'
+        };
+
+        function selectFont(fontName) {
+            // Remove existing font classes
+            document.body.className = document.body.className.replace(/font-[a-z-]+/g, '');
+            // Add new font class
+            document.body.classList.add('font-' + fontName);
+
+            // Save to localStorage
+            localStorage.setItem('beryl-selected-font', fontName);
+
+            // Update check marks in navbar dropdown
+            Object.keys(fontNames).forEach(font => {
+                const checkElement = document.getElementById('check-' + font);
+                if (checkElement) {
+                    if (font === fontName) {
+                        checkElement.classList.remove('hidden');
+                    } else {
+                        checkElement.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Close the dropdown after selection by removing focus
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.closest('.dropdown')) {
+                activeElement.blur();
+            }
+        }
+
+        // Load saved font preference on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedFont = localStorage.getItem('beryl-selected-font') || 'space-mono'; // Default to space-mono
+            selectFont(savedFont);
+
+            // DaisyUI dropdowns with tabindex handle click-outside automatically
+            // No additional JavaScript needed for basic dropdown behavior
+        });
+
+        // Modal ESC key functionality
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                // Prevent default ESC behavior to avoid conflicts
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Find all open modals (DaisyUI dialog elements with 'open' attribute)
+                const openModals = document.querySelectorAll('dialog[open]');
+                if (openModals.length > 0) {
+                    // Close the most recently opened modal (last in the list)
+                    const lastModal = openModals[openModals.length - 1];
+                    lastModal.close();
+                    return false;
+                }
+
+                // Also check for modals with modal-open class (alternative DaisyUI state)
+                const modalOpenElements = document.querySelectorAll('.modal-open');
+                if (modalOpenElements.length > 0) {
+                    const lastModal = modalOpenElements[modalOpenElements.length - 1];
+                    if (lastModal.close && typeof lastModal.close === 'function') {
+                        lastModal.close();
+                    }
+                }
+            }
+        }, true); // Use capture phase to ensure we get the event first
+    </script>
+
+</head>
+
+<body class="bg-base-100 text-base-content font-sans {% if background_image_url %}public-collection-bg public-collection-overlay{% endif %}" {% if background_image_url %}style="background-image: url('{{ background_image_url }}');"{% endif %}>
+
+    {# Main content container #}
+    <div class="w-11/12 md:w-5/6 lg:w-4/5 mx-auto">
+
+        {# Navbar - outside frame #}
+        <div class="mt-4 mb-8 {% if background_image_url %}public-collection-header-wrapper{% endif %}">
+        <header class="flex items-center justify-between py-4 px-2 mb-8 bg-white">
+            <div>
+                <h1>
+                    <a href="/" class="text-6xl font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-3">
+                        {% lucide 'cpu' size='48' class='text-secondary' %}
+                        <span>Beryl3</span>
+                    </a>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Font Selector Dropdown -->
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors" title="Select Font">
+                        <div class="w-8 h-8 rounded-full bg-base-200 border border-neutral flex items-center justify-center">
+                            {% lucide 'type' size='18' class='text-primary' %}
+                        </div>
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                        <li><a onclick="selectFont('fira-code')" class="flex items-center justify-between font-fira-code">
+                            <span>Fira Code</span>
+                            <span id="check-fira-code" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectFont('jetbrains-mono')" class="flex items-center justify-between font-jetbrains-mono">
+                            <span>JetBrains Mono</span>
+                            <span id="check-jetbrains-mono" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectFont('source-code-pro')" class="flex items-center justify-between font-source-code-pro">
+                            <span>Source Code Pro</span>
+                            <span id="check-source-code-pro" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectFont('space-mono')" class="flex items-center justify-between font-space-mono">
+                            <span>Space Mono</span>
+                            <span id="check-space-mono" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectFont('ibm-plex-mono')" class="flex items-center justify-between font-ibm-plex-mono">
+                            <span>IBM Plex Mono</span>
+                            <span id="check-ibm-plex-mono" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectFont('system-mono')" class="flex items-center justify-between font-system-mono">
+                            <span>System Mono</span>
+                            <span id="check-system-mono" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                    </ul>
+                </div>
+
+                {% if user.is_authenticated %}
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+                        <div class="w-8 h-8 rounded-full border border-neutral">
+                            <img src="{{ user_avatar_url }}" alt="{{ user.display_name }}" class="object-cover rounded-full" />
+                        </div>
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                        <li class="menu-title">
+                            <span>{{ user.display_name }}</span>
+                        </li>
+                        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        <li><a href="{% url 'collection_list' %}">Your collections</a></li>
+                        <li></li>
+                        <li><a href="{% url 'user_settings' %}">Account Settings</a></li>
+                        <li></li>
+                        <li><a href="{% url 'account_email' %}">Manage Emails</a></li>
+                        <li><a href="{% url 'account_change_password' %}">Change Password</a></li>
+                        <li><a href="{% url 'account_logout' %}" class="text-error">Logout</a></li>
+                    </ul>
+                </div>
+                {% else %}
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors">
+                        <div class="w-8 h-8 rounded bg-primary/20 flex items-center justify-center">
+                            {% lucide 'user' size='16' class='text-primary' %}
+                        </div>
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                        <li><a href="{% url 'account_login' %}">Login</a></li>
+                        <li><a href="{% url 'account_signup' %}">Register</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        {# Main content area #}
+        <div class="bg-base-100 relative {% if background_image_url %}public-collection-transparent-bg{% endif %}">
+            <div class="text-sm breadcrumbs px-4 pt-4 {% if background_image_url %}public-collection-breadcrumbs{% endif %}">
+                <ul>
+                    {# Breadcrumbs #}
+                    <li>
+                        {# This is the home link, always present #}
+                        <a  href="{% url 'dashboard' %}">
+                            {% lucide 'house' size=16 class="mr-2" %}
+                            Home
+                        </a>
+                    </li>
+
+                    {% block breadcrumbs %}
+                        {# Default breadcrumb for pages that don't define their own #}
+                    {% endblock breadcrumbs %}
+                </ul>
+            </div>
+
+            <!-- Django Messages -->
+            {% if messages %}
+                <div class="px-4 pt-6">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'info' %}alert-info{% else %}alert-info{% endif %} mb-4">
+                            <div class="flex items-center gap-2">
+                                {% if message.tags == 'error' %}
+                                    {% lucide 'x' size=20 %}
+                                {% elif message.tags == 'warning' %}
+                                    {% lucide 'triangle-alert' size=20 %}
+                                {% elif message.tags == 'success' %}
+                                    {% lucide 'check' size=20 %}
+                                {% else %}
+                                    {% lucide 'info' size=20 %}
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <main class="py-8">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div> {# End of main content area #}
+
+        </div> {# End of navbar #}
+
+    </div> {# End of main centered container #}
+
+    <footer class="footer footer-horizontal footer-center bg-base-200 text-base-content rounded p-8">
+        <aside class="flex flex-col items-center md:items-start">
+            <p class="font-bold text-lg text-primary mb-2">
+                {% lucide 'package' size=20 class='inline mr-2' %}Beryl3
+            </p>
+        </aside>
+        <nav class="flex flex-row gap-2 flex-wrap items-center">
+            <p>
+            <a href="{% url 'index' %}" class="link link-hover text-sm">Home</a></p>
+            <p><span>&bull;</span></p>
+                {% if user.is_authenticated %}
+                    <p><a href="{% url 'dashboard' %}" class="link link-hover text-sm">Dashboard</a></p>
+                    <p><span>&bull;</span></p>
+                    <p><a href="{% url 'collection_list' %}" class="link link-hover text-sm">Collections</a></p>
+                    <p><span>&bull;</span></p>
+                {% endif %}
+            </p>
+            <p><a href="#" class="link link-hover text-sm">Features</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="{% url 'terms' %}" class="link link-hover text-sm">Terms of Service</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="{% url 'privacy' %}" class="link link-hover text-sm">Privacy Policy</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="#" class="link link-hover text-sm">Cookie Policy</a></p>
+                    <p><span>&bull;</span></p>
+            <p><a href="#" class="link link-hover text-sm">Help Center</a></p>
+        </nav>
+        <div class="flex flex-col items-center justify-center gap-2 text-xs text-base-content/50">
+            <p>
+            <span>Made with ❤️ for collectors</span>
+            <span>&bull;</span>
+            <span>Version {{ APP_VERSION }}</span>
+            {% if settings.DEBUG %}
+                <span>&bull;</span>
+                <span class="text-warning">Development Mode</span>
+            {% endif %}
+            </p>
+            <p>Copyright &copy; {% now "Y" %} Beryl3. All rights reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

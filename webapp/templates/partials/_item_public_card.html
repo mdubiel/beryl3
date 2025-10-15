@@ -41,29 +41,30 @@
                         <p class="text-sm opacity-70">{{ item.description }}</p>
                     </div>
                     {% endif %}
-                    {# Row 3: Status badge #}
+                    {# Row 3: Status badge and item type badge #}
                     <div class="flex flex-wrap gap-2">
                         <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% else %}badge-neutral{% endif %}">
                             {% lucide 'tag' size=12 class='mr-1' %}
                             {{ item.get_status_display }}
                         </div>
+                        {# Item type badge - small screens only #}
+                        {% if item.item_type %}
+                        <div class="badge badge-secondary lg:hidden">
+                            {% lucide item.item_type.icon size=14 class='mr-1' %}
+                            {{ item.item_type.display_name }}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-                
-                {# Item type badge #}
+
+                {# Item type badge - large screens: icon with label below #}
                 {% if item.item_type %}
-                <div class="flex flex-col items-center justify-center gap-1 min-w-24 max-w-24">
-                <p>
-                    {% lucide item.item_type.icon size=48 class='mr-1' %}
-                </p>
+                <div class="hidden lg:flex flex-col items-center justify-center gap-1 min-w-24 max-w-24">
+                    <p>
+                        {% lucide item.item_type.icon size=48 class='mr-1' %}
+                    </p>
                     <p class="text-center">{{ item.item_type.display_name }}</p>
-                </div>                
-                {% comment %}
-                <div class="badge badge-secondary">
-                    {% lucide item.item_type.icon size=14 class='mr-1' %}
-                    {{ item.item_type.display_name }}
                 </div>
-                {% endcomment %}
                 {% endif %}
             </div>
             
@@ -77,7 +78,7 @@
                     {% if attributes|length > 0 %}
                         <div class="mt-3">
                             {# Grid layout: attribute names (right-aligned, fixed width) | values (left-aligned) #}
-                            <div class="grid grid-cols-[8rem_1fr] gap-y-2">
+                            <div class="grid grid-cols-[6rem_1fr] lg:grid-cols-[8rem_1fr] gap-y-2">
                                 {% for group in attributes %}
                                 {# Attribute name - right-aligned, fixed width #}
                                 <div class="text-xs font-bold text-right {% if not forloop.last %}border-b border-base-300 pb-2{% endif %}">
