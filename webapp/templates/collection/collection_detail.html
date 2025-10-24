@@ -182,6 +182,31 @@
         {% endif %}
     </div>
 
+    {# Task 52: Smart attribute filter badges #}
+    {% if attribute_stats and stats.total_items > 0 %}
+    <div class="mb-6">
+        <h3 class="text-sm font-semibold mb-3 text-neutral">Quick Filters</h3>
+        <div class="flex flex-wrap gap-2">
+            {% for stat in attribute_stats %}
+            <a href="?attribute={{ stat.attribute_id }}&attribute_value={{ stat.value|urlencode }}{% if filter_search %}&search={{ filter_search|urlencode }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}"
+               class="badge badge-lg gap-2 cursor-pointer hover:badge-primary transition-colors
+                      {% if filter_attribute == stat.attribute_id|stringformat:'s' and filter_attribute_value == stat.value %}badge-primary{% else %}badge-ghost{% endif %}">
+                <span class="font-medium">{{ stat.display_value }}</span>
+                <span class="badge badge-sm {% if filter_attribute == stat.attribute_id|stringformat:'s' and filter_attribute_value == stat.value %}badge-neutral{% else %}badge-ghost{% endif %}">{{ stat.count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% if filter_attribute %}
+        <div class="mt-2">
+            <a href="?{% if filter_search %}search={{ filter_search|urlencode }}&{% endif %}{% if filter_status %}status={{ filter_status }}&{% endif %}{% if filter_item_type %}item_type={{ filter_item_type }}{% endif %}"
+               class="btn btn-ghost btn-xs">
+                {% lucide 'x' size=12 %} Clear Attribute Filter
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     {# Task 45: Filtering UI #}
     {% if stats.total_items > 0 %}
     <div class="card bg-base-200 shadow-sm p-4 mb-6">

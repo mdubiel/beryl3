@@ -1052,3 +1052,158 @@ def get_type_attributes_for_create(request):
     except ItemType.DoesNotExist:
         logger.warning("get_type_attributes_for_create: Item type %s not found", item_type_id)
         return HttpResponse('')
+
+
+# Task 50: Personal Information (Your ID and Location) editing views
+
+@login_required
+@require_http_methods(["GET"])
+@log_execution_time
+def item_edit_your_id(request, hash):
+    """
+    Handles GET request to show form for editing the 'your_id' field.
+    Suggests next ID based on last used numeric value.
+    """
+    logger.info("Edit your_id form requested for item hash '%s' by user '%s' [%s]",
+                hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to edit your_id for item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    # Get last used your_id from user's items (excluding current item)
+    last_item_with_id = CollectionItem.objects.filter(
+        collection__created_by=request.user,
+        your_id__isnull=False
+    ).exclude(
+        your_id='',
+        hash=item.hash
+    ).order_by('-updated').first()
+
+    last_used_id = last_item_with_id.your_id if last_item_with_id else None
+    suggested_id = None
+
+    # Try to suggest next ID if last one is numeric or has numeric suffix
+    if last_used_id:
+        import re
+        # Check if it's purely numeric
+        if last_used_id.isdigit():
+            suggested_id = str(int(last_used_id) + 1)
+        else:
+            # Check for pattern like "ABC-123" or "ID123"
+            match = re.search(r'^(.+?)(\d+)$', last_used_id)
+            if match:
+                prefix = match.group(1)
+                number = int(match.group(2))
+                suggested_id = f"{prefix}{number + 1}"
+
+    return render(request, 'partials/_item_edit_your_id.html', {
+        'item': item,
+        'last_used_id': last_used_id,
+        'suggested_id': suggested_id
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+@log_execution_time
+def item_edit_location(request, hash):
+    """
+    Handles GET request to show form for editing the 'location' field.
+    """
+    logger.info("Edit location form requested for item hash '%s' by user '%s' [%s]",
+                hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem.objects.select_related('location'), hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to edit location for item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    # Get user's locations for the dropdown
+    from web.models import Location
+    locations = Location.objects.filter(created_by=request.user).order_by('name')
+
+    return render(request, 'partials/_item_edit_location.html', {
+        'item': item,
+        'locations': locations
+    })
+
+
+@login_required
+@require_POST
+@log_execution_time
+def item_save_personal_info(request, hash):
+    """
+    Handles POST request to save personal information (your_id or location).
+    """
+    logger.info("Save personal info requested for item hash '%s' by user '%s' [%s]",
+                hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to save personal info for item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    field_name = request.POST.get('field_name')
+
+    if field_name == 'your_id':
+        old_value = item.your_id
+        new_value = request.POST.get('your_id', '').strip()
+        item.your_id = new_value
+        item.save(update_fields=['your_id'])
+
+        logger.info("User '%s' [%s] updated your_id for item '%s' [%s]: '%s' -> '%s'",
+                   request.user.username, request.user.id, item.name, item.hash, old_value, new_value)
+
+    elif field_name == 'location':
+        from web.models import Location
+        old_location = item.location
+        location_value = request.POST.get('location', '').strip()
+        location_name = request.POST.get('location_name', '').strip()
+
+        if location_value:
+            # User selected from autocomplete - location_value is the ID
+            try:
+                location = Location.objects.get(id=location_value, created_by=request.user)
+                item.location = location
+                logger.info("User '%s' [%s] updated location for item '%s' [%s]: '%s' -> '%s'",
+                           request.user.username, request.user.id, item.name, item.hash,
+                           old_location.name if old_location else 'None', location.name)
+            except (Location.DoesNotExist, ValueError):
+                logger.error("Invalid location ID %s for user '%s' [%s]", location_value, request.user.username, request.user.id)
+                return JsonResponse({'error': 'Invalid location'}, status=400)
+        elif location_name:
+            # User typed a name - check if exists or create new
+            existing_location = Location.objects.filter(created_by=request.user, name=location_name).first()
+            if existing_location:
+                item.location = existing_location
+                logger.info("User '%s' [%s] using existing location '%s' for item '%s'",
+                           request.user.username, request.user.id, location_name, item.name)
+            else:
+                # Create new location
+                location = Location.objects.create(
+                    name=location_name,
+                    description='',
+                    created_by=request.user
+                )
+                item.location = location
+                logger.info("User '%s' [%s] created new location '%s' [%s] for item '%s' [%s]",
+                           request.user.username, request.user.id, location.name, location.hash,
+                           item.name, item.hash)
+        else:
+            # Clear location
+            item.location = None
+            logger.info("User '%s' [%s] cleared location for item '%s' [%s]",
+                       request.user.username, request.user.id, item.name, item.hash)
+
+        item.save(update_fields=['location'])
+
+    # Close the modal and refresh the personal info section
+    return render(request, 'partials/_item_personal_info.html', {'item': item})

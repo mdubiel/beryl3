@@ -231,10 +231,13 @@
             </div>
             {% endif %}
 
-            {# Attributes display #}
-            {% if item.item_type %}
-                {% include "partials/_item_attributes_detail.html" with item=item %}
+            {# Task 50: Custom fields (your_id and location) - visible only to owner #}
+            {% if request.user == item.collection.created_by %}
+                {% include "partials/_item_personal_info.html" with item=item %}
             {% endif %}
+
+            {# Attributes display #}
+            {% include "partials/_item_attributes_detail.html" with item=item %}
 
             {# Links display #}
             {% include "partials/_item_links_detail.html" with item=item %}
@@ -276,6 +279,16 @@
             <form method="dialog">
                 <button class="btn">Close</button>
             </form>
+        </div>
+    </div>
+</dialog>
+
+{# Personal Information edit modal #}
+<dialog id="personal-info-edit-modal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Edit Personal Information</h3>
+        <div id="personal-info-edit-modal-content">
+            <!-- Content will be loaded here via HTMX -->
         </div>
     </div>
 </dialog>

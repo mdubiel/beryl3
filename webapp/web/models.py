@@ -610,6 +610,43 @@ class ItemAttribute(BerylModel):
         return value
 
 
+class Location(BerylModel):
+    """
+    Task 50: Physical location where collection items are stored.
+    Belongs to a user and can be assigned to items for organization.
+    """
+
+    name = models.CharField(max_length=200, verbose_name=_("Location Name"))
+    description = models.TextField(blank=True, default="", verbose_name=_("Description"))
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="locations",
+        verbose_name=_("Created By")
+    )
+
+    class Meta:
+        verbose_name = _("Location")
+        verbose_name_plural = _("Locations")
+        ordering = ['name']
+        unique_together = [['created_by', 'name']]
+        indexes = [
+            models.Index(fields=['created_by', 'name']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def get_item_count(self):
+        """Return count of items in this location."""
+        return self.items.count()
+
+    def get_absolute_url(self):
+        """URL to view items in this location."""
+        from django.urls import reverse
+        return reverse('location_items', kwargs={'hash': self.hash})
+
+
 class Collection(BerylModel):
     stats = BerylCollectionStatsManager()
 
@@ -794,6 +831,24 @@ class CollectionItem(BerylModel):
     
     # Favorite field
     is_favorite = models.BooleanField(default=False, verbose_name=_("Is Favorite"), db_index=True)
+
+    # Task 50: Custom item fields
+    your_id = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        verbose_name=_("Your ID"),
+        help_text=_("Your personal identifier for this item")
+    )
+    location = models.ForeignKey(
+        'Location',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='items',
+        verbose_name=_("Location"),
+        help_text=_("Physical location where this item is stored")
+    )
 
     class Meta:
         verbose_name = "Collection Item"
@@ -1014,6 +1069,43 @@ class CollectionItem(BerylModel):
             int: Total number of unique attributes
         """
         return len(self.get_all_attributes())
+
+    def get_hidden_attributes(self):
+        """
+        Returns list of attribute values that don't belong to the current item type.
+        Returns empty list if item has no type set.
+
+        Task 48: This helps identify attributes from a previous item type when
+        the item type has been changed.
+
+        Returns:
+            list: List of CollectionItemAttributeValue objects not in current type's schema
+        """
+        if not self.item_type:
+            return []
+
+        # Get all attribute IDs for this item type
+        type_attribute_ids = set(
+            self.item_type.attributes.values_list('id', flat=True)
+        )
+
+        # Get all attribute values for this item that don't belong to current type
+        hidden = self.attribute_values.select_related('item_attribute').filter(
+            ~models.Q(item_attribute_id__in=type_attribute_ids)
+        )
+
+        return list(hidden)
+
+    def get_hidden_attributes_count(self):
+        """
+        Returns count of hidden attributes.
+
+        Task 48: Provides count for template display.
+
+        Returns:
+            int: Number of attributes not in current item type's schema
+        """
+        return len(self.get_hidden_attributes())
 
     # ========================================================================
     # END ATTRIBUTE SUPPORT

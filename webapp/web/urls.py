@@ -9,7 +9,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 
-from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, marketing, user_settings, fix_attrs
+from web.views import index, landing, user, collection, collection_hx, items, items_hx, public, sys, images, marketing, user_settings, fix_attrs, location
 
 
 urlpatterns = [
@@ -50,9 +50,18 @@ urlpatterns = [
     
     # User favorites
     path('favorites/', user.favorites_view, name='favorites_list'),
-    
+
     # User account settings
     path('user/settings/', user_settings.user_settings_view, name='user_settings'),
+
+    # Task 50: Location management
+    path('locations/', location.location_list_view, name='location_list'),
+    path('locations/new/', location.location_create_view, name='location_create'),
+    path('locations/autocomplete/', location.location_autocomplete_view, name='location_autocomplete'),
+    path('locations/quick-create/', location.location_quick_create_view, name='location_quick_create'),
+    path('locations/<str:hash>/', location.location_items_view, name='location_items'),
+    path('locations/<str:hash>/edit/', location.location_update_view, name='location_update'),
+    path('locations/<str:hash>/delete/', location.location_delete_view, name='location_delete'),
 
     # HX actions
     path('collections/<str:hash>/update-visibility/', collection_hx.update_collection_visibility, name='collection_update_visibility'),
@@ -71,6 +80,11 @@ urlpatterns = [
     path('items/<str:hash>/edit-link/<int:link_id>/', items_hx.item_edit_link, name='item_edit_link'),
     path('items/<str:hash>/save-link/', items_hx.item_save_link, name='item_save_link'),
     path('items/<str:hash>/remove-link/<int:link_id>/', items_hx.item_remove_link, name='item_remove_link'),
+
+    # Task 50: Personal information (Your ID and Location) management
+    path('items/<str:hash>/edit-your-id/', items_hx.item_edit_your_id, name='item_edit_your_id'),
+    path('items/<str:hash>/edit-location/', items_hx.item_edit_location, name='item_edit_location'),
+    path('items/<str:hash>/save-personal-info/', items_hx.item_save_personal_info, name='item_save_personal_info'),
     
     # Image management HTMX endpoints
     path('images/<str:hash>/set-default/', images.set_default_image, name='set_default_image'),

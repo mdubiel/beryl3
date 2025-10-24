@@ -6,7 +6,10 @@
             <thead>
                 <tr>
                     <th colspan="{% if request.user == item.collection.created_by %}3{% else %}2{% endif %}" class="bg-base-200">
-                        <span>Links</span>
+                        <span class="flex items-center gap-2">
+                            {% lucide 'link' size=16 %}
+                            Links
+                        </span>
                     </th>
                 </tr>
             </thead>

@@ -1,0 +1,126 @@
+{% load lucide %}
+
+<form hx-post="{% url 'item_save_personal_info' item.hash %}"
+      hx-target="#item-personal-info-{{ item.hash }}"
+      hx-swap="outerHTML"
+      hx-on::after-request="if (event.detail.pathInfo.requestPath.includes('save-personal-info')) { document.getElementById('personal-info-edit-modal').close(); }"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      class="space-y-4">
+
+    <input type="hidden" name="field_name" value="location">
+    <input type="hidden" name="location" id="location_value" value="{{ item.location.id|default:'' }}">
+    <input type="hidden" name="location_name" id="location_name_hidden" value="">
+
+    <div class="form-control relative">
+        <label class="label">
+            <span class="label-text">Location</span>
+        </label>
+        <div class="relative">
+            <input type="text"
+                   id="location_search"
+                   name="q"
+                   class="input input-bordered w-full"
+                   placeholder="Type location name..."
+                   value="{{ item.location.name|default:'' }}"
+                   autocomplete="off"
+                   hx-get="{% url 'location_autocomplete' %}"
+                   hx-trigger="keyup changed delay:300ms, input changed delay:300ms"
+                   hx-target="#location_results"
+                   hx-swap="innerHTML"
+                   hx-include="this"
+                   onblur="setTimeout(() => { const el = document.getElementById('location_results'); if (el) el.classList.add('hidden'); }, 200)">
+            <div id="location_results"
+                 class="absolute z-50 w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden">
+                <!-- Autocomplete results will appear here -->
+            </div>
+        </div>
+        <div class="text-xs text-base-content/70 mt-1">
+            Type to search existing locations, or enter a new name to create one.
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-2">
+        <button type="button"
+                class="btn btn-ghost text-error hover:bg-error hover:text-error-content"
+                onclick="clearLocation(); this.closest('form').requestSubmit()">
+            {% lucide 'trash-2' size=16 class='mr-2' %}
+            Clear
+        </button>
+        <button type="button"
+                class="btn btn-ghost"
+                onclick="document.getElementById('personal-info-edit-modal').close()">
+            Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-primary">
+            {% lucide 'save' size=16 class='mr-2' %}
+            Save
+        </button>
+    </div>
+</form>
+
+<script>
+// Always define/redefine to ensure modal version takes precedence
+window.selectLocationAndSubmit = function(id, name) {
+    console.log('selectLocationAndSubmit called:', id, name);
+
+    // For modal form (item detail page), set and submit
+    if (document.getElementById('location_value')) {
+        console.log('Modal form detected');
+        document.getElementById('location_value').value = id;
+        document.getElementById('location_search').value = name;
+        if (document.getElementById('location_name_hidden')) {
+            document.getElementById('location_name_hidden').value = name;
+        }
+        // Hide dropdown if it exists
+        const resultsEl = document.getElementById('location_results');
+        if (resultsEl) {
+            resultsEl.classList.add('hidden');
+        }
+        // Submit the form via HTMX - modal will close automatically via hx-on::after-request
+        const form = document.getElementById('location_search');
+        console.log('Form found:', form);
+        if (form && form.closest) {
+            const parentForm = form.closest('form');
+            if (parentForm) {
+                // Use htmx.trigger to submit the form via HTMX
+                htmx.trigger(parentForm, 'submit');
+            }
+        }
+    }
+    // For main form (item create/edit page), just set the value
+    else if (document.getElementById('form_location_id')) {
+        console.log('Main form detected');
+        document.getElementById('form_location_id').value = id;
+        document.getElementById('form_location_search').value = name;
+        const resultsEl = document.getElementById('form_location_results');
+        if (resultsEl) {
+            resultsEl.classList.add('hidden');
+        }
+    }
+};
+
+window.clearLocation = function() {
+    if (document.getElementById('location_value')) {
+        document.getElementById('location_value').value = '';
+        document.getElementById('location_search').value = '';
+    } else if (document.getElementById('form_location_id')) {
+        document.getElementById('form_location_id').value = '';
+        document.getElementById('form_location_search').value = '';
+    }
+};
+
+// Update hidden location_name field and clear ID when user manually types
+if (document.getElementById('location_search')) {
+    document.getElementById('location_search').addEventListener('input', function(e) {
+        // Update the location_name hidden field with current value
+        if (document.getElementById('location_name_hidden')) {
+            document.getElementById('location_name_hidden').value = e.target.value;
+        }
+        // Clear the hidden ID field so backend knows this is a manually typed name
+        if (document.getElementById('location_value')) {
+            document.getElementById('location_value').value = '';
+        }
+    });
+}
+</script>

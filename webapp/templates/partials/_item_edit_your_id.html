@@ -1,0 +1,73 @@
+{% load lucide %}
+
+<form hx-post="{% url 'item_save_personal_info' item.hash %}"
+      hx-target="#item-personal-info-{{ item.hash }}"
+      hx-swap="outerHTML"
+      hx-on::after-request="if (event.detail.pathInfo.requestPath.includes('save-personal-info')) { document.getElementById('personal-info-edit-modal').close(); }"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      class="space-y-4">
+
+    <input type="hidden" name="field_name" value="your_id">
+
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text">Your ID</span>
+        </label>
+        <input type="text"
+               name="your_id"
+               id="your_id_input"
+               value="{{ item.your_id }}"
+               class="input input-bordered w-full"
+               placeholder="Enter your personal identifier"
+               maxlength="100">
+        <label class="label">
+            <span class="label-text-alt">Your personal identifier for this item (max 100 characters)</span>
+        </label>
+    </div>
+
+    {% if suggested_id or last_used_id %}
+    <div class="alert alert-info">
+        <div class="flex-col items-start w-full">
+            {% if suggested_id %}
+            <div class="flex items-center justify-between w-full">
+                <span class="text-sm">
+                    {% lucide 'info' size=14 class='inline mr-1' %}
+                    Suggested next ID: <strong>{{ suggested_id }}</strong>
+                </span>
+                <button type="button"
+                        class="btn btn-xs btn-ghost"
+                        onclick="document.getElementById('your_id_input').value='{{ suggested_id }}'">
+                    Use This
+                </button>
+            </div>
+            {% endif %}
+            {% if last_used_id and last_used_id != suggested_id %}
+            <div class="flex items-center justify-between w-full {% if suggested_id %}mt-2{% endif %}">
+                <span class="text-sm">
+                    {% lucide 'history' size=14 class='inline mr-1' %}
+                    Last used: <strong>{{ last_used_id }}</strong>
+                </span>
+                <button type="button"
+                        class="btn btn-xs btn-ghost"
+                        onclick="document.getElementById('your_id_input').value='{{ last_used_id }}'">
+                    Use This
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="flex justify-end gap-2">
+        <button type="button"
+                class="btn btn-ghost"
+                onclick="document.getElementById('personal-info-edit-modal').close()">
+            Cancel
+        </button>
+        <button type="submit"
+                class="btn btn-primary">
+            {% lucide 'save' size=16 class='mr-2' %}
+            Save
+        </button>
+    </div>
+</form>

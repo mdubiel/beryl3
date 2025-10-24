@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load lucide %}
+{% load i18n %}
+
+{% block title %}{% if location %}Edit{% else %}Create{% endif %} Location{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <a href="{% url 'location_list' %}">
+            {% lucide 'map-pin' size=16 %}
+            My Locations
+        </a>
+    </li>
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% if location %}
+                {% lucide 'pencil' size=16 %}
+                Edit
+            {% else %}
+                {% lucide 'plus' size=16 %}
+                Create New
+            {% endif %}
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="flex justify-center">
+    <form method="post" class="w-full max-w-2xl">
+        {% csrf_token %}
+
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-6">
+            <legend class="fieldset-legend">
+                {% if location %}Edit Location{% else %}Create a New Location{% endif %}
+            </legend>
+
+            <label class="label" for="name">
+                <span class="label-text">Location Name *</span>
+            </label>
+            <input type="text" name="name" id="name" required
+                   value="{% if location %}{{ location.name }}{% else %}{{ name|default:'' }}{% endif %}"
+                   class="input input-bordered w-full"
+                   placeholder="e.g., Living Room Shelf, Garage Box #3">
+
+            <label class="label mt-4" for="description">
+                <span class="label-text">Description</span>
+            </label>
+            <textarea name="description" id="description"
+                      class="textarea textarea-bordered w-full h-24"
+                      placeholder="Optional description of this location...">{% if location %}{{ location.description }}{% else %}{{ description|default:'' }}{% endif %}</textarea>
+
+            <div class="flex items-center justify-between mt-6 gap-4">
+                <a href="{% url 'location_list' %}" class="btn btn-ghost">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary flex-grow">
+                    {% if location %}
+                        Save Changes
+                    {% else %}
+                        Create Location
+                    {% endif %}
+                </button>
+            </div>
+        </fieldset>
+    </form>
+</div>
+{% endblock %}

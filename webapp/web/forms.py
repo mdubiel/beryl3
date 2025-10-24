@@ -75,12 +75,31 @@ class CollectionItemForm(forms.ModelForm):
 
     class Meta:
         model = CollectionItem
-        fields = ['name', 'item_type', 'status', 'description', 'image_url']
+        fields = ['name', 'item_type', 'status', 'description', 'image_url', 'your_id', 'location']
 
         labels = {
             'name': 'Item Name',
             'image_url': 'Image URL (Optional)',
+            'your_id': 'Your ID (Optional)',
+            'location': 'Location (Optional)',
         }
+
+    def __init__(self, *args, **kwargs):
+        # Extract user from kwargs if provided
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        # Task 50: Filter locations to only user's own
+        if user:
+            from web.models import Location
+            self.fields['location'].queryset = Location.objects.filter(
+                created_by=user
+            ).order_by('name')
+            self.fields['location'].empty_label = "(No Location)"
+        else:
+            # If no user provided, show empty queryset
+            from web.models import Location
+            self.fields['location'].queryset = Location.objects.none()
 
 
 class ImageUploadForm(forms.Form):

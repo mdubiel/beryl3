@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load lucide %}
+{% load i18n %}
+
+{% block title %}My Locations{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'map-pin' size=16 %}
+            My Locations
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">My Locations</h1>
+    <a href="{% url 'location_create' %}" class="btn btn-primary">
+        {% lucide 'plus' size=16 class='mr-2' %} New Location
+    </a>
+</div>
+
+{% if locations %}
+<div class="grid gap-4">
+    {% for location in locations %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <h3 class="card-title">
+                        {% lucide 'map-pin' size=20 class='mr-2' %}
+                        {{ location.name }}
+                    </h3>
+                    {% if location.description %}
+                    <p class="text-sm text-neutral mt-2">{{ location.description }}</p>
+                    {% endif %}
+                    <div class="mt-3">
+                        {% if location.item_count > 0 %}
+                        <a href="{{ location.get_absolute_url }}" class="link link-primary text-sm">
+                            {% lucide 'package' size=14 class='inline' %}
+                            View {{ location.item_count }} item{{ location.item_count|pluralize }}
+                        </a>
+                        {% else %}
+                        <span class="text-sm text-neutral">No items in this location</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="dropdown dropdown-end">
+                    <button tabindex="0" class="btn btn-ghost btn-sm btn-square">
+                        {% lucide 'ellipsis' size=16 %}
+                    </button>
+                    <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40 z-10">
+                        <li>
+                            <a href="{% url 'location_update' location.hash %}">
+                                {% lucide 'pencil' size=14 %}
+                                Edit
+                            </a>
+                        </li>
+                        <li>
+                            <a onclick="document.getElementById('delete-modal-{{ location.hash }}').showModal()"
+                               class="text-error">
+                                {% lucide 'trash-2' size=14 %}
+                                Delete
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Delete confirmation modal #}
+    <dialog id="delete-modal-{{ location.hash }}" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Delete Location?</h3>
+            <p class="py-4">
+                Are you sure you want to delete the location "{{ location.name }}"?
+                {% if location.item_count > 0 %}
+                <br><br>
+                <strong class="text-warning">{{ location.item_count }} item{{ location.item_count|pluralize }}</strong> will be unassigned from this location.
+                {% endif %}
+            </p>
+            <div class="modal-action">
+                <form method="post" action="{% url 'location_delete' location.hash %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-error">Delete</button>
+                </form>
+                <form method="dialog">
+                    <button class="btn">Cancel</button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body text-center py-12">
+        {% lucide 'map-pin' size=48 class='mx-auto text-neutral mb-4' %}
+        <p class="text-neutral text-lg">No locations yet.</p>
+        <p class="text-sm text-neutral mb-4">Create locations to organize where your items are stored.</p>
+        <a href="{% url 'location_create' %}" class="btn btn-primary btn-sm">
+            {% lucide 'plus' size=14 class='mr-2' %} Create First Location
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

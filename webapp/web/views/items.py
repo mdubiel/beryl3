@@ -38,18 +38,46 @@ def collection_item_create_view(request, collection_hash):
                      'function_args': {'collection_hash': collection_hash, 'request_method': request.method}})
 
     if request.method == 'POST':
-        logger.info("User '%s [%s]' is submitting a new item for collection '%s' [%s]", request.user.username, request.user.id, collection.name, collection.hash) 
-        form = CollectionItemForm(request.POST)
+        logger.info("User '%s [%s]' is submitting a new item for collection '%s' [%s]", request.user.username, request.user.id, collection.name, collection.hash)
+        form = CollectionItemForm(request.POST, user=request.user)
         
         if form.is_valid():
             try:
                 # Get the new item object but don't save it to the DB yet
                 new_item = form.save(commit=False)
-                
+
                 # Set the fields that were not on the form
                 new_item.collection = collection
                 new_item.created_by = request.user
-                
+
+                # Task 50: Handle location - either ID or name
+                from web.models import Location
+                location_value = request.POST.get('location', '').strip()
+                location_name = request.POST.get('location_name', '').strip()
+
+                if location_value:
+                    # User selected from autocomplete - use existing location
+                    try:
+                        new_item.location = Location.objects.get(id=location_value, created_by=request.user)
+                    except (Location.DoesNotExist, ValueError):
+                        logger.warning("Invalid location ID %s during item creation", location_value)
+                elif location_name:
+                    # User typed a name - check if exists or create new
+                    existing_location = Location.objects.filter(created_by=request.user, name=location_name).first()
+                    if existing_location:
+                        new_item.location = existing_location
+                        logger.info("Using existing location '%s' for new item", location_name)
+                    else:
+                        # Create new location
+                        new_location = Location.objects.create(
+                            name=location_name,
+                            description='',
+                            created_by=request.user
+                        )
+                        new_item.location = new_location
+                        logger.info("Created new location '%s' [%s] during item creation",
+                                   new_location.name, new_location.hash)
+
                 new_item.save()
                 logger.info(
                     "User '%s [%s]' created new item '%s' in collection '%s' [%s]",
@@ -127,10 +155,10 @@ def collection_item_create_view(request, collection_hash):
                           collection.name, request.user.username, request.user.id,
                           extra={'function': 'collection_item_create_view', 'action': 'creation_failed', 
                                 'object_type': 'CollectionItem', 'collection_hash': collection.hash, 
-                                'collection_name': collection.name, 'errors': form.errors.as_json(), 
+                                'collection_name': collection.name, 'errors': form.errors.as_json(),
                                 'result': 'validation_error'})
     else:
-        form = CollectionItemForm()
+        form = CollectionItemForm(user=request.user)
 
     context = {
         'form': form,
@@ -190,8 +218,39 @@ def collection_item_update_view(request, hash):
 
     if request.method == 'POST':
         logger.info("User '%s [%s]' is submitting an update for item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
-        form = CollectionItemForm(request.POST, instance=item)
+        form = CollectionItemForm(request.POST, instance=item, user=request.user)
         if form.is_valid():
+            # Task 50: Handle location - either ID or name
+            from web.models import Location
+            location_value = request.POST.get('location', '').strip()
+            location_name = request.POST.get('location_name', '').strip()
+
+            if location_value:
+                # User selected from autocomplete - use existing location
+                try:
+                    item.location = Location.objects.get(id=location_value, created_by=request.user)
+                except (Location.DoesNotExist, ValueError):
+                    logger.warning("Invalid location ID %s during item update", location_value)
+            elif location_name:
+                # User typed a name - check if exists or create new
+                existing_location = Location.objects.filter(created_by=request.user, name=location_name).first()
+                if existing_location:
+                    item.location = existing_location
+                    logger.info("Using existing location '%s' for item update", location_name)
+                else:
+                    # Create new location
+                    new_location = Location.objects.create(
+                        name=location_name,
+                        description='',
+                        created_by=request.user
+                    )
+                    item.location = new_location
+                    logger.info("Created new location '%s' [%s] during item update",
+                               new_location.name, new_location.hash)
+            else:
+                # Clear location if both empty
+                item.location = None
+
             form.save()
             logger.info("User '%s [%s]' updated item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
             
@@ -216,7 +275,7 @@ def collection_item_update_view(request, hash):
                                 'result': 'validation_error'})
     else:
         logger.info("User '%s [%s]' is viewing the update form for item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
-        form = CollectionItemForm(instance=item)
+        form = CollectionItemForm(instance=item, user=request.user)
 
     context = {
         'form': form,

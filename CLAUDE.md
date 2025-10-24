@@ -24,27 +24,20 @@ When user says "process TODO", execute the following workflow:
 - Create comprehensive documentation for each task
 
 ### Commit Strategy:
+- Before commit, verify with user that all changes in the task are completed and verified, commit only after approval
 - One commit per completed TODO task
 - Commit message format: "task: [Task number] - [Brief description]"
 - Include all related changes in single commit
 
 ### Pre-Commit Validation:
-Before creating any commit, **ALWAYS** run the Lucide icon validator to ensure all icons are valid:
+Before creating any commit, **ALWAYS** validate that used lucide icons have valid names to avoid `IconNotFound` errors.
 
-```bash
-python workflows/bin/validate_lucide.py
-```
-
-This prevents runtime errors caused by invalid Lucide icon names. The validator checks:
-- All `{% lucide 'icon-name' %}` tags in Django templates
-- Hardcoded `icon="name"` values in Python code
-- Icon arrays in JavaScript (e.g., `commonIcons`)
-- Database-stored icons in RecentActivity, ItemType, and LinkPattern models
-
-If validation fails, fix the issues or run with `--fix` flag to auto-correct known issues:
-```bash
-python workflows/bin/validate_lucide.py --fix
-```
+**Icon Validation Process**:
+1. Before using any Lucide icon, search existing templates to verify the icon name is correct
+2. Common valid icons in this project: `ellipsis`, `pencil`, `trash-2`, `plus`, `map-pin`, `package`, `search`, `x`
+3. Invalid icons that should NOT be used: `more-vertical` (use `ellipsis` instead)
+4. Always search codebase with: `grep -r "{% lucide 'icon-name'" webapp/templates/` to verify icon exists
+5. When in doubt, check other dropdown menus in existing templates for correct icon names
 
 **IMPORTANT**: Never commit code with invalid Lucide icons. All commits must pass icon validation.
 
@@ -54,6 +47,15 @@ This workflow ensures systematic completion of all TODO items with proper docume
 
 ### Unified Environment Management System
 **Golden Source of Truth**: All environment variables are managed through a single golden file system located in `workflows/envs/`.
+
+### Code execution:
+- During development user runs the following Make target to ensure that:
+  - build-admin-css-watch - to ensure tailwindcss build the admin CSS files
+  - build-css-watch - to ensure tailwindcss build the user frontend CSS files
+  - run-dev-server - to run the development server.
+ - to ensure consistency never run `python manage.py runserver`, `tailwindcss/cli` command but rather ask user to verify output of those
+ - If `python manage.py` has to be run it has to use: 1) make target or `uv` command. Never run `python manage.py` command alone
+ - Never directly execute commands on production or staging environments. If there is need to access or modify data or files: provide a python script (runnable in uv environment, always located in `workflows/tasks/taskN`) and ask user to run it. Provide an `scp` and `uv` command for user to execute. Expect JSON output file will be provided in same directory.
 
 #### Golden Source File
 - **Location**: `workflows/envs/env.gold`
@@ -116,6 +118,7 @@ All environment management scripts are located in `workflows/bin/`:
 - ❌ Hardcoded database configuration instead of using `DB_ENGINE`
 - ❌ Mixed production detection logic with feature flags
 - ❌ Secrets committed to version control
+- ❌ Never commit code with invalid Lucide icons. All commits must pass icon validation.
 
 #### Verification
 After deployment, verify:

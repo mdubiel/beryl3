@@ -20,6 +20,69 @@ from web.models import Collection, CollectionItem, ItemType, RecentActivity
 
 logger = logging.getLogger('webapp')
 
+
+def get_attribute_statistics(items_queryset, collection):
+    """
+    Task 52: Calculate aggregate statistics for attributes in the collection.
+    Returns list of dicts with attribute name, value, count.
+    Limits to top 20 most common attribute values.
+
+    Args:
+        items_queryset: QuerySet of CollectionItem objects
+        collection: Collection object
+
+    Returns:
+        list: List of dicts with keys: attribute_name, attribute_id, value, count
+    """
+    from collections import defaultdict
+    from web.models import CollectionItemAttributeValue
+
+    # Get all attribute values for items in queryset
+    attribute_values = CollectionItemAttributeValue.objects.filter(
+        item__in=items_queryset
+    ).select_related('item_attribute').values(
+        'item_attribute__display_name',
+        'item_attribute__id',
+        'value'
+    )
+
+    # Aggregate by attribute and value
+    stats = defaultdict(lambda: defaultdict(int))
+
+    for av in attribute_values:
+        attr_name = av['item_attribute__display_name']
+        attr_id = av['item_attribute__id']
+        value = av['value']
+
+        # Truncate long values for display
+        display_value = value
+        if len(display_value) > 30:
+            display_value = display_value[:27] + '...'
+
+        stats[(attr_name, attr_id)][value] += 1
+
+    # Convert to list format for template
+    result = []
+    for (attr_name, attr_id), values in stats.items():
+        for value, count in values.items():
+            # Truncate value if needed
+            display_value = value
+            if len(display_value) > 30:
+                display_value = display_value[:27] + '...'
+
+            result.append({
+                'attribute_name': attr_name,
+                'attribute_id': attr_id,
+                'value': value,
+                'display_value': display_value,
+                'count': count
+            })
+
+    # Sort by count descending, then by attribute name, limit to top 20
+    result.sort(key=lambda x: (-x['count'], x['attribute_name'], x['value']))
+    return result[:20]
+
+
 @login_required
 @log_execution_time
 def collection_create(request):
@@ -147,6 +210,10 @@ def collection_detail_view(request, hash):
         filter_item_type = request.GET.get('item_type', '')
         filter_search = request.GET.get('search', '')
 
+        # Task 52: Add attribute filter
+        filter_attribute = request.GET.get('attribute', '')
+        filter_attribute_value = request.GET.get('attribute_value', '')
+
         if filter_status and filter_status in dict(CollectionItem.Status.choices):
             items = items.filter(status=filter_status)
 
@@ -162,6 +229,14 @@ def collection_detail_view(request, hash):
                 Q(description__icontains=filter_search)
             )
 
+        # Task 52: Apply attribute filter
+        if filter_attribute and filter_attribute_value:
+            from web.models import CollectionItemAttributeValue
+            items = items.filter(
+                attribute_values__item_attribute_id=filter_attribute,
+                attribute_values__value=filter_attribute_value
+            ).distinct()
+
         # Order items
         items = items.order_by('name')
 
@@ -172,6 +247,9 @@ def collection_detail_view(request, hash):
             wanted_count=Count('id', filter=Q(status=CollectionItem.Status.WANTED)),
             reserved_count=Count('id', filter=Q(status=CollectionItem.Status.RESERVED))
         )
+
+        # Task 52: Calculate attribute statistics
+        attribute_stats = get_attribute_statistics(items, collection)
 
         # Task 47: Apply grouping if enabled
         grouped_items = None
@@ -310,8 +388,11 @@ def collection_detail_view(request, hash):
             'filter_status': filter_status,
             'filter_item_type': filter_item_type,
             'filter_search': filter_search,
+            'filter_attribute': filter_attribute,
+            'filter_attribute_value': filter_attribute_value,
             'items_per_page': items_per_page,
             'grouped_items': grouped_items,
+            'attribute_stats': attribute_stats,
         }
 
         logger.info("Rendering collection detail for collection '%s' [%s] owned by user '%s' [%s]", collection.name, collection.hash, request.user.username, request.user.id)
