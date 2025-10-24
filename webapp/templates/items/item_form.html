@@ -109,7 +109,8 @@
                            hx-vals='js:{"q": document.getElementById("form_location_search").value}'
                            onblur="setTimeout(() => document.getElementById('form_location_results').classList.add('hidden'), 200)">
                     <div id="form_location_results"
-                         class="absolute z-50 w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden">
+                         class="absolute w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden"
+                         style="z-index: 9999;">
                         <!-- Autocomplete results will appear here -->
                     </div>
                 </div>

@@ -203,10 +203,10 @@ Personal information editing partials:
 ### 🟡 Remaining Tests (User to Complete)
 - [ ] View item detail - verify your_id and location display (owner only)
 - [ ] View public item - verify fields are hidden from non-owners
-- [ ] Edit item and assign location via inline edit
+- [x] Edit item and assign location via inline edit
 - [ ] Test Your ID suggestions with various patterns (numeric, prefixed)
-- [ ] Test location dropdown with multiple locations
-- [ ] Verify soft-deleted location shows "(deleted)" in red strikethrough
+- [x] Test location dropdown with multiple locations
+- [x] Verify soft-deleted location shows "(deleted)" in red strikethrough
 
 ## Ready for Commit
 

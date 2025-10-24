@@ -116,7 +116,14 @@
             }
         }, true); // Use capture phase to ensure we get the event first
     </script>
-    
+
+    <!-- Combobox Component -->
+    <script>
+        // Pass Django DEBUG setting to JavaScript
+        window.DJANGO_DEBUG = {% if debug %}true{% else %}false{% endif %};
+    </script>
+    <script src="{% static 'js/combobox.js' %}"></script>
+
 </head>
 
 <body class="bg-base-100 text-base-content font-sans {% block body_classes %}{% endblock %}" {% block body_style %}{% endblock %}>

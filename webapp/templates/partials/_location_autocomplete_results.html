@@ -1,36 +1,32 @@
 {% load lucide %}
 
 {% if locations %}
-    <script>
-        console.log('Autocomplete: Found {{ locations|length }} locations for query "{{ query }}"');
-        // Show the results dropdown (handle both modal and main form)
-        if (document.getElementById('location_results')) {
-            document.getElementById('location_results').classList.remove('hidden');
-        }
-        if (document.getElementById('form_location_results')) {
-            document.getElementById('form_location_results').classList.remove('hidden');
-        }
-    </script>
     {% for location in locations %}
     <button type="button"
-            class="w-full px-4 py-2 hover:bg-base-200 cursor-pointer flex items-center gap-2 text-left"
-            onmousedown="selectLocationAndSubmit('{{ location.id }}', '{{ location.name|escapejs }}'); return false;">
-        {% lucide 'map-pin' size=14 %}
-        <span>{{ location.name }}</span>
+            class="w-full px-3 py-2 hover:bg-base-200 cursor-pointer flex items-center gap-2 text-left text-sm"
+            onmousedown="window.comboboxSelect('location', '{{ location.id }}', '{{ location.name|escapejs }}'); return false;">
+        {% lucide 'map-pin' size=12 %}
+        <span data-combobox-item-name="{{ location.name }}"></span>
         {% if location.description %}
             <span class="text-xs text-neutral ml-2">{{ location.description|truncatewords:5 }}</span>
         {% endif %}
     </button>
     {% endfor %}
+    <script>
+        // Show dropdown and highlight query
+        var containerId = document.getElementById('combobox-location-results') ? 'combobox-location-results' : 'combobox-form-location-results';
+        var container = document.getElementById(containerId);
+        if (container) {
+            container.classList.remove('hidden');
+            window.comboboxHighlightQuery(containerId, '{{ query }}');
+        }
+    </script>
 {% else %}
     <script>
-        console.log('Autocomplete: No locations found for query "{{ query }}"');
-        // Hide the results dropdown when no results (handle both modal and main form)
-        if (document.getElementById('location_results')) {
-            document.getElementById('location_results').classList.add('hidden');
-        }
-        if (document.getElementById('form_location_results')) {
-            document.getElementById('form_location_results').classList.add('hidden');
-        }
+        // Hide dropdown when no results
+        ['combobox-location-results', 'combobox-form-location-results'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
     </script>
 {% endif %}
