@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 58, 59)
+### ✅ Completed Tasks (1-47, 50, 58, 59, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -67,8 +67,10 @@ See detailed reports in `docs/reports/` directory:
 | 44 | Add extra add buttons in attributes/links tables | [task044.md](reports/task044.md) | 67822f7 |
 | 46 | Add pagination to collection | [task046.md](reports/task046.md) | 2c4e8b7 |
 | 47 | Implement attribute grouping in collections | [task047.md](reports/task047.md) | 2c4e8b7 |
+| 50 | Add custom item fields (Location and Your ID) | [task050_progress.md](reports/task050_progress.md) | 689eaac, 12f2819, eecdef6, 4e09d9b |
 | 58 | Group display of multiple same attributes | [task058.md](reports/task058.md) | 772825b |
-| 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | pending |
+| 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
+| 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
 
 ---
 
@@ -130,24 +132,6 @@ Add grouping and "sort by this attribute (or name, or status or...)"
 
 ---
 
-### Task 50: Add Custom Item Fields
-
-**Status:** Pending
-
-**Description:**
-Add a field for item "Your Id" and "location".
-
-Location is another model, when user first time create a location, new entry is created. Later, when user is selecting location it has two options from select field: new entry or select one of this existing locations. Selecting existing should point to existing entryn in location tables. This should be displayed with autocompletion (combo box) when user edit item and try to select location. Location edition is available only in /items/<hash>/edit view.
-Available locations should be visible in new view /locations/ and availabe from user pop-up menu. It should only display list of locations with number of items assigned and query to virtual collection list showing tiems belonging to this location.
-Display location and your Id, as another attribute but visible only to user (not visible in public view) 
-
-**Requirements:**
-- Your ID: Custom user-defined identifier
-- Location: Physical location of item
-- Both fields optional
-- Searchable and filterable
-
----
 
 ### Task 51: Improve Move Item Dialog UI
 
@@ -290,33 +274,6 @@ Prevent users from specific countries (configurable as env variable) to access t
 
 ---
 
-### Task 62: Dynamic Background Images for Public Collections
-
-**Status:** 📋 Planned, it should be completed - verify
-
-**Description:**
-For public view of Collection, if the collection, and items in that collection have images - use randomly selected one of it to set as a background. Background should be fixed (do not move when scrolling) and fill entire view.
-
-**Requirements:**
-- Random image selection from collection/items
-- Fixed background (CSS `background-attachment: fixed`)
-- Full viewport coverage
-- Overlay for text readability
-- Performance optimized
-- Fallback when no images available
-
-**Implementation Plan:**
-1. Modify `public_collection_view` to collect all images
-2. Select random image and pass to template
-3. Update template with CSS background styling
-4. Add semi-transparent overlay for readability
-5. Test with various image sizes and aspect ratios
-
-**Files to Modify:**
-- `webapp/web/views/public.py` - Add image collection logic
-- `webapp/templates/public/collection_public_detail.html` - Add background styling
-
----
 ## Task
  We are still using placeholders for images? Review entire codebase and remove them.
  
