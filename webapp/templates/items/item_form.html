@@ -85,32 +85,43 @@
 
             <div class="form-control w-full mb-4">
                 <label class="label" for="{{ form.your_id.id_for_label }}"><span class="label-text">{{ form.your_id.label }}</span></label>
-                {% render_field form.your_id class="input input-bordered w-full" placeholder="Your personal identifier" %}
+                {% if suggested_id %}
+                    {% render_field form.your_id class="input input-bordered w-full" placeholder=suggested_id %}
+                {% else %}
+                    {% render_field form.your_id class="input input-bordered w-full" placeholder="Your personal identifier" %}
+                {% endif %}
                 <label class="label">
-                    <span class="label-text-alt">Optional: Your own ID/reference for this item</span>
+                    <span class="label-text-alt">
+                        {% if suggested_id %}
+                            Suggested: <strong>{{ suggested_id }}</strong>{% if last_used_id %} (last used: {{ last_used_id }}){% endif %}
+                        {% else %}
+                            Optional: Your own ID/reference for this item
+                        {% endif %}
+                    </span>
                 </label>
                 {% if form.your_id.errors %}<div class="text-error text-sm mt-1">{{ form.your_id.errors.as_text }}</div>{% endif %}
             </div>
 
             <div class="form-control w-full mb-4">
                 <label class="label"><span class="label-text">{{ form.location.label }}</span></label>
-                <input type="hidden" name="location" id="form_location_id" value="{{ form.location.value|default:'' }}">
+                <input type="hidden" name="location" id="combobox-form-location-value" value="{{ form.location.value|default:'' }}">
+                <input type="hidden" name="location_name" id="combobox-form-location-name" value="">
                 <div class="relative">
                     <input type="text"
-                           id="form_location_search"
-                           name="location_name"
+                           id="combobox-form-location-search"
+                           name="q"
                            class="input input-bordered w-full"
                            placeholder="Type location name..."
                            value="{% if form.instance.location %}{{ form.instance.location.name }}{% endif %}"
                            autocomplete="off"
+                           data-combobox="form-location"
                            hx-get="{% url 'location_autocomplete' %}"
-                           hx-trigger="keyup changed delay:300ms"
-                           hx-target="#form_location_results"
-                           hx-vals='js:{"q": document.getElementById("form_location_search").value}'
-                           onblur="setTimeout(() => document.getElementById('form_location_results').classList.add('hidden'), 200)">
-                    <div id="form_location_results"
-                         class="absolute w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden"
-                         style="z-index: 9999;">
+                           hx-trigger="keyup changed delay:300ms, input changed delay:300ms"
+                           hx-target="#combobox-form-location-results"
+                           hx-swap="innerHTML"
+                           hx-include="this">
+                    <div id="combobox-form-location-results"
+                         class="absolute w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden z-[9999]">
                         <!-- Autocomplete results will appear here -->
                     </div>
                 </div>
@@ -134,50 +145,22 @@
 </div>
 
 <script>
-// Define functions only if modal version hasn't been loaded yet
-// Modal version (from _item_edit_location.html) will override these when loaded
-if (typeof selectLocationAndSubmit === 'undefined') {
-    window.selectLocationAndSubmit = function(id, name) {
-        // For main form (item create/edit page), just set the value (don't auto-submit)
-        if (document.getElementById('form_location_id')) {
-            document.getElementById('form_location_id').value = id;
-            document.getElementById('form_location_search').value = name;
-            document.getElementById('form_location_results').classList.add('hidden');
-        }
-        // For modal form (item detail page), set and submit
-        else if (document.getElementById('location_value')) {
-            document.getElementById('location_value').value = id;
-            document.getElementById('location_search').value = name;
-            document.getElementById('location_results').classList.add('hidden');
-            // Modal will close automatically via hx-on::after-request
-            const form = document.getElementById('location_search').closest('form');
-            if (form) {
-                htmx.trigger(form, 'submit');
+// Task 50: Ensure location name is submitted when user types (not selects from autocomplete)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const locationSearch = document.getElementById('combobox-form-location-search');
+    const locationName = document.getElementById('combobox-form-location-name');
+    const locationValue = document.getElementById('combobox-form-location-value');
+
+    if (form && locationSearch && locationName) {
+        form.addEventListener('submit', function(e) {
+            // If user typed but didn't select from autocomplete (value is empty but search has text)
+            if (!locationValue.value && locationSearch.value) {
+                // Copy the typed text to location_name so backend can process it
+                locationName.value = locationSearch.value;
             }
-        }
-    };
-}
-
-if (typeof clearLocation === 'undefined') {
-    window.clearLocation = function() {
-        if (document.getElementById('location_value')) {
-            document.getElementById('location_value').value = '';
-            document.getElementById('location_search').value = '';
-        } else if (document.getElementById('form_location_id')) {
-            document.getElementById('form_location_id').value = '';
-            document.getElementById('form_location_search').value = '';
-        }
-    };
-}
-
-// Clear hidden location ID when user manually types (to allow creating new location)
-if (document.getElementById('form_location_search')) {
-    document.getElementById('form_location_search').addEventListener('input', function() {
-        // Clear the hidden ID field so backend knows this is a manually typed name
-        if (document.getElementById('form_location_id')) {
-            document.getElementById('form_location_id').value = '';
-        }
-    });
-}
+        });
+    }
+});
 </script>
 {% endblock %}

@@ -289,6 +289,9 @@
   .z-\[1\] {
     z-index: 1;
   }
+  .z-\[9999\] {
+    z-index: 9999;
+  }
   .col-span-full {
     grid-column: 1 / -1;
   }
@@ -351,6 +354,9 @@
   }
   .mt-12 {
     margin-top: calc(var(--spacing) * 12);
+  }
+  .mt-auto {
+    margin-top: auto;
   }
   .mr-1 {
     margin-right: calc(var(--spacing) * 1);
@@ -774,6 +780,9 @@
   }
   .gap-y-2 {
     row-gap: calc(var(--spacing) * 2);
+  }
+  .self-end {
+    align-self: flex-end;
   }
   .truncate {
     overflow: hidden;

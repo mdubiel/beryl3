@@ -212,9 +212,31 @@
                 </div>
             </div>
             {% endif %}
-            
+
         </div>
-        
+
+        {# Task 50: Your ID and Location display (bottom right corner, owner only) #}
+        {% if request.user == item.collection.created_by %}
+            {% if item.your_id or item.location %}
+            <div class="self-end mt-auto pt-2">
+                <div class="flex items-center gap-3 text-xs text-base-content/60">
+                    {% if item.your_id %}
+                    <div class="flex items-center gap-1">
+                        {% lucide 'hash' size=12 class='opacity-60' %}
+                        <span>{{ item.your_id }}</span>
+                    </div>
+                    {% endif %}
+                    {% if item.location %}
+                    <a href="{% url 'location_items' item.location.hash %}" class="flex items-center gap-1 hover:text-base-content transition-colors">
+                        {% lucide 'map-pin' size=12 class='opacity-60' %}
+                        <span>{{ item.location.name }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+
     </div>
 
 </div>

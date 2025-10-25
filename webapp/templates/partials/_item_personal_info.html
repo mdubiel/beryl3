@@ -14,58 +14,60 @@
         </thead>
         <tbody>
             {# Your ID Row #}
-            <tr class="align-top">
+            <tr class="align-top" id="your-id-row-{{ item.hash }}">
                 <td class="font-medium w-1/3 align-top text-right">
                     <span class="inline-flex items-center justify-end">
                         Your ID:
                     </span>
                 </td>
-                <td class="text-base-content align-top">
-                    {% if item.your_id %}
-                        {{ item.your_id }}
-                    {% else %}
-                        <span class="text-neutral text-sm italic">Not set</span>
-                    {% endif %}
-                </td>
-                <td class="w-20 align-top">
-                    <button class="btn btn-ghost btn-xs btn-square"
-                            title="Edit Your ID"
-                            hx-get="{% url 'item_edit_your_id' item.hash %}"
-                            hx-target="#personal-info-edit-modal-content"
-                            hx-trigger="click"
-                            onclick="document.getElementById('personal-info-edit-modal').showModal()">
-                        {% lucide 'pencil' size=12 %}
-                    </button>
+                <td class="text-base-content align-top" colspan="2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex-1">
+                            {% if item.your_id %}
+                                {{ item.your_id }}
+                            {% else %}
+                                <span class="text-neutral text-sm italic">Not set</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-ghost btn-xs btn-square"
+                                title="Edit Your ID"
+                                hx-get="{% url 'item_edit_your_id_inline' item.hash %}"
+                                hx-target="#your-id-row-{{ item.hash }}"
+                                hx-swap="outerHTML">
+                            {% lucide 'pencil' size=12 %}
+                        </button>
+                    </div>
                 </td>
             </tr>
             {# Location Row #}
-            <tr class="align-top">
+            <tr class="align-top" id="location-row-{{ item.hash }}">
                 <td class="font-medium w-1/3 align-top text-right">
                     <span class="inline-flex items-center justify-end">
                         Location:
                     </span>
                 </td>
-                <td class="text-base-content align-top">
-                    {% if item.location and not item.location.is_deleted %}
-                        <a href="{{ item.location.get_absolute_url }}" class="link link-primary inline-flex items-center gap-1">
-                            {% lucide 'map-pin' size=14 %}
-                            {{ item.location.name }}
-                        </a>
-                    {% elif item.location and item.location.is_deleted %}
-                        <span class="text-error text-sm line-through">{{ item.location.name }} (deleted)</span>
-                    {% else %}
-                        <span class="text-neutral text-sm italic">Not set</span>
-                    {% endif %}
-                </td>
-                <td class="w-20 align-top">
-                    <button class="btn btn-ghost btn-xs btn-square"
-                            title="Edit Location"
-                            hx-get="{% url 'item_edit_location' item.hash %}"
-                            hx-target="#personal-info-edit-modal-content"
-                            hx-trigger="click"
-                            onclick="document.getElementById('personal-info-edit-modal').showModal()">
-                        {% lucide 'pencil' size=12 %}
-                    </button>
+                <td class="text-base-content align-top" colspan="2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex-1">
+                            {% if item.location and not item.location.is_deleted %}
+                                <a href="{% url 'location_items' item.location.hash %}" class="link link-primary inline-flex items-center gap-1">
+                                    {% lucide 'map-pin' size=14 %}
+                                    {{ item.location.name }}
+                                </a>
+                            {% elif item.location and item.location.is_deleted %}
+                                <span class="text-error text-sm line-through">{{ item.location.name }} (deleted)</span>
+                            {% else %}
+                                <span class="text-neutral text-sm italic">Not set</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-ghost btn-xs btn-square"
+                                title="Edit Location"
+                                hx-get="{% url 'item_edit_location_inline' item.hash %}"
+                                hx-target="#location-row-{{ item.hash }}"
+                                hx-swap="outerHTML">
+                            {% lucide 'pencil' size=12 %}
+                        </button>
+                    </div>
                 </td>
             </tr>
         </tbody>

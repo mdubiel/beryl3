@@ -18,45 +18,16 @@
                id="your_id_input"
                value="{{ item.your_id }}"
                class="input input-bordered w-full"
-               placeholder="Enter your personal identifier"
+               placeholder="{% if suggested_id %}{{ suggested_id }}{% else %}Enter your personal identifier{% endif %}"
                maxlength="100">
         <div class="text-xs text-base-content/70 mt-1">
-            Your personal identifier for this item (max 100 characters)
-        </div>
-    </div>
-
-    {% if suggested_id or last_used_id %}
-    <div class="alert alert-info">
-        <div class="flex-col items-start w-full">
             {% if suggested_id %}
-            <div class="flex items-center justify-between w-full">
-                <span class="text-sm">
-                    {% lucide 'info' size=14 class='inline mr-1' %}
-                    Suggested next ID: <strong>{{ suggested_id }}</strong>
-                </span>
-                <button type="button"
-                        class="btn btn-xs btn-ghost"
-                        onclick="document.getElementById('your_id_input').value='{{ suggested_id }}'">
-                    Use This
-                </button>
-            </div>
-            {% endif %}
-            {% if last_used_id and last_used_id != suggested_id %}
-            <div class="flex items-center justify-between w-full {% if suggested_id %}mt-2{% endif %}">
-                <span class="text-sm">
-                    {% lucide 'history' size=14 class='inline mr-1' %}
-                    Last used: <strong>{{ last_used_id }}</strong>
-                </span>
-                <button type="button"
-                        class="btn btn-xs btn-ghost"
-                        onclick="document.getElementById('your_id_input').value='{{ last_used_id }}'">
-                    Use This
-                </button>
-            </div>
+                Suggested next ID: <strong>{{ suggested_id }}</strong>{% if last_used_id %} (last used: {{ last_used_id }}){% endif %}
+            {% else %}
+                Your personal identifier for this item (max 100 characters)
             {% endif %}
         </div>
     </div>
-    {% endif %}
 
     <div class="flex justify-end gap-2">
         <button type="button"

@@ -84,6 +84,9 @@ urlpatterns = [
     # Task 50: Personal information (Your ID and Location) management
     path('items/<str:hash>/edit-your-id/', items_hx.item_edit_your_id, name='item_edit_your_id'),
     path('items/<str:hash>/edit-location/', items_hx.item_edit_location, name='item_edit_location'),
+    path('items/<str:hash>/edit-your-id-inline/', items_hx.item_edit_your_id_inline, name='item_edit_your_id_inline'),
+    path('items/<str:hash>/edit-location-inline/', items_hx.item_edit_location_inline, name='item_edit_location_inline'),
+    path('items/<str:hash>/reload-personal-info/', items_hx.item_reload_personal_info, name='item_reload_personal_info'),
     path('items/<str:hash>/save-personal-info/', items_hx.item_save_personal_info, name='item_save_personal_info'),
     
     # Image management HTMX endpoints

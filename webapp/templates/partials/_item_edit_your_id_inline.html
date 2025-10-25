@@ -1,0 +1,53 @@
+{% load lucide %}
+
+{# Inline edit form for Your ID #}
+<tr class="align-top" id="your-id-row-{{ item.hash }}">
+    <td class="font-medium w-1/3 align-top text-right">
+        <span class="inline-flex items-center justify-end">
+            Your ID:
+        </span>
+    </td>
+    <td class="text-base-content align-top" colspan="2">
+        <form hx-post="{% url 'item_save_personal_info' item.hash %}"
+              hx-target="#item-personal-info-{{ item.hash }}"
+              hx-swap="outerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              class="flex items-center gap-2">
+
+            <input type="hidden" name="field_name" value="your_id">
+
+            <input type="text"
+                   name="your_id"
+                   value="{{ item.your_id }}"
+                   class="input input-bordered input-sm flex-1"
+                   placeholder="{% if suggested_id %}{{ suggested_id }}{% else %}Enter your personal identifier{% endif %}"
+                   maxlength="100"
+                   autofocus>
+
+            <button type="button"
+                    class="btn btn-ghost btn-sm btn-square text-error"
+                    title="Clear"
+                    onclick="this.previousElementSibling.value=''; this.closest('form').requestSubmit();">
+                {% lucide 'x' size=16 %}
+            </button>
+
+            <button type="button"
+                    class="btn btn-ghost btn-sm"
+                    hx-get="{% url 'item_reload_personal_info' item.hash %}"
+                    hx-target="#item-personal-info-{{ item.hash }}"
+                    hx-swap="outerHTML">
+                Cancel
+            </button>
+
+            <button type="submit" class="btn btn-primary btn-sm">
+                {% lucide 'save' size=16 class='mr-1' %}
+                Save
+            </button>
+        </form>
+        {% if suggested_id %}
+        <div class="text-xs text-base-content/60 mt-1">
+            Suggested: <strong>{{ suggested_id }}</strong>{% if last_used_id %} (last used: {{ last_used_id }}){% endif %}
+        </div>
+        {% endif %}
+    </td>
+</tr>

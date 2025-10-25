@@ -1074,31 +1074,19 @@ def item_edit_your_id(request, hash):
                     request.user.username, request.user.id, item.name, item.hash)
         raise Http404("You do not have permission to edit this item.")
 
-    # Get last used your_id from user's items (excluding current item)
+    # Get last used your_id from collection (for display purposes)
     last_item_with_id = CollectionItem.objects.filter(
-        collection__created_by=request.user,
+        collection=item.collection,
         your_id__isnull=False
     ).exclude(
         your_id='',
-        hash=item.hash
-    ).order_by('-updated').first()
+        pk=item.pk if item.pk else None
+    ).order_by('-created').first()
 
     last_used_id = last_item_with_id.your_id if last_item_with_id else None
-    suggested_id = None
 
-    # Try to suggest next ID if last one is numeric or has numeric suffix
-    if last_used_id:
-        import re
-        # Check if it's purely numeric
-        if last_used_id.isdigit():
-            suggested_id = str(int(last_used_id) + 1)
-        else:
-            # Check for pattern like "ABC-123" or "ID123"
-            match = re.search(r'^(.+?)(\d+)$', last_used_id)
-            if match:
-                prefix = match.group(1)
-                number = int(match.group(2))
-                suggested_id = f"{prefix}{number + 1}"
+    # Use the model's predict_next_id method
+    suggested_id = item.predict_next_id()
 
     return render(request, 'partials/_item_edit_your_id.html', {
         'item': item,
@@ -1131,6 +1119,88 @@ def item_edit_location(request, hash):
     return render(request, 'partials/_item_edit_location.html', {
         'item': item,
         'locations': locations
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+@log_execution_time
+def item_edit_your_id_inline(request, hash):
+    """
+    Task 50: Inline edit for Your ID field (no modal).
+    """
+    logger.info("Inline edit your_id requested for item hash '%s' by user '%s' [%s]",
+                hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to edit your_id for item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    # Get last used your_id from collection (for display purposes)
+    last_item_with_id = CollectionItem.objects.filter(
+        collection=item.collection,
+        your_id__isnull=False
+    ).exclude(
+        your_id='',
+        pk=item.pk if item.pk else None
+    ).order_by('-created').first()
+
+    last_used_id = last_item_with_id.your_id if last_item_with_id else None
+    suggested_id = item.predict_next_id()
+
+    return render(request, 'partials/_item_edit_your_id_inline.html', {
+        'item': item,
+        'last_used_id': last_used_id,
+        'suggested_id': suggested_id
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+@log_execution_time
+def item_edit_location_inline(request, hash):
+    """
+    Task 50: Inline edit for Location field (no modal).
+    """
+    logger.info("Inline edit location requested for item hash '%s' by user '%s' [%s]",
+                hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem.objects.select_related('location'), hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to edit location for item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to edit this item.")
+
+    return render(request, 'partials/_item_edit_location_inline.html', {
+        'item': item
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+@log_execution_time
+def item_reload_personal_info(request, hash):
+    """
+    Task 50: Reload personal info section (for cancel button).
+    """
+    logger.info("Reload personal info requested for item hash '%s' by user '%s' [%s]",
+                hash, request.user.username, request.user.id)
+    item = get_object_or_404(CollectionItem.objects.select_related('location'), hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        logger.error("User '%s' [%s] attempted to reload personal info for item '%s' [%s] they do not own",
+                    request.user.username, request.user.id, item.name, item.hash)
+        raise Http404("You do not have permission to view this item.")
+
+    suggested_id = item.predict_next_id()
+    return render(request, 'partials/_item_personal_info.html', {
+        'item': item,
+        'suggested_id': suggested_id
     })
 
 
@@ -1205,5 +1275,9 @@ def item_save_personal_info(request, hash):
 
         item.save(update_fields=['location'])
 
-    # Close the modal and refresh the personal info section
-    return render(request, 'partials/_item_personal_info.html', {'item': item})
+    # Refresh the personal info section with suggested ID
+    suggested_id = item.predict_next_id()
+    return render(request, 'partials/_item_personal_info.html', {
+        'item': item,
+        'suggested_id': suggested_id
+    })

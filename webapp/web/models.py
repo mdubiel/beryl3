@@ -1111,6 +1111,90 @@ class CollectionItem(BerylModel):
     # END ATTRIBUTE SUPPORT
     # ========================================================================
 
+    def predict_next_id(self):
+        """
+        Task 50: Predict the next ID based on the last used your_id in the collection.
+
+        Analyzes the pattern of the last used ID and suggests the next value:
+        - Numeric patterns: "123" -> "124"
+        - Prefix patterns: "ABC-123" -> "ABC-124"
+        - Mixed patterns: "ID42" -> "ID43"
+
+        Returns:
+            str: Predicted next ID, or empty string if no pattern can be determined
+        """
+        import re
+
+        # Get the last item with your_id set in this collection (excluding current item)
+        last_item = (
+            CollectionItem.objects.filter(
+                collection=self.collection,
+                your_id__isnull=False
+            )
+            .exclude(your_id='')
+            .exclude(pk=self.pk if self.pk else None)
+            .order_by('-created')
+            .first()
+        )
+
+        if not last_item or not last_item.your_id:
+            return ""
+
+        last_id = last_item.your_id
+
+        # Pattern 1: Pure numeric (e.g., "123" -> "124")
+        if last_id.isdigit():
+            try:
+                next_num = int(last_id) + 1
+                # Preserve leading zeros
+                return str(next_num).zfill(len(last_id))
+            except ValueError:
+                return ""
+
+        # Pattern 2: Prefix + separator + number (e.g., "ABC-123" -> "ABC-124")
+        # Matches: ABC-123, ID_42, BOOK.007, etc.
+        match = re.match(r'^(.+?)([-_.\s]+)(\d+)$', last_id)
+        if match:
+            prefix = match.group(1)
+            separator = match.group(2)
+            number_str = match.group(3)
+            try:
+                next_num = int(number_str) + 1
+                # Preserve leading zeros
+                next_number_str = str(next_num).zfill(len(number_str))
+                return f"{prefix}{separator}{next_number_str}"
+            except ValueError:
+                return ""
+
+        # Pattern 3: Letters followed by number (e.g., "ID42" -> "ID43", "BOOK007" -> "BOOK008")
+        match = re.match(r'^([A-Za-z]+)(\d+)$', last_id)
+        if match:
+            prefix = match.group(1)
+            number_str = match.group(2)
+            try:
+                next_num = int(number_str) + 1
+                # Preserve leading zeros
+                next_number_str = str(next_num).zfill(len(number_str))
+                return f"{prefix}{next_number_str}"
+            except ValueError:
+                return ""
+
+        # Pattern 4: Number followed by letters (e.g., "42A" -> "43A")
+        match = re.match(r'^(\d+)([A-Za-z]+)$', last_id)
+        if match:
+            number_str = match.group(1)
+            suffix = match.group(2)
+            try:
+                next_num = int(number_str) + 1
+                # Preserve leading zeros
+                next_number_str = str(next_num).zfill(len(number_str))
+                return f"{next_number_str}{suffix}"
+            except ValueError:
+                return ""
+
+        # No recognizable pattern
+        return ""
+
     @property
     def default_image(self):
         """Get the default image for this collection item"""

@@ -4,7 +4,12 @@
     {% for location in locations %}
     <button type="button"
             class="w-full px-3 py-2 hover:bg-base-200 cursor-pointer flex items-center gap-2 text-left text-sm"
-            onmousedown="window.comboboxSelect('location', '{{ location.id }}', '{{ location.name|escapejs }}'); return false;">
+            onmousedown="event.preventDefault();
+                        var comboboxId = document.getElementById('combobox-location-search') ? 'location' :
+                                        (document.getElementById('combobox-inline-location-search') ? 'inline-location' :
+                                        (document.getElementById('combobox-form-location-search') ? 'form-location' : null));
+                        if (comboboxId) window.comboboxSelect(comboboxId, '{{ location.id }}', '{{ location.name|escapejs }}');
+                        return false;">
         {% lucide 'map-pin' size=12 %}
         <span data-combobox-item-name="{{ location.name }}"></span>
         {% if location.description %}
@@ -13,18 +18,25 @@
     </button>
     {% endfor %}
     <script>
-        // Show dropdown and highlight query
-        var containerId = document.getElementById('combobox-location-results') ? 'combobox-location-results' : 'combobox-form-location-results';
-        var container = document.getElementById(containerId);
-        if (container) {
+        // Show dropdown and highlight query - check all possible container IDs
+        var possibleIds = ['combobox-location-results', 'combobox-inline-location-results', 'combobox-form-location-results'];
+        var containerId = null;
+        for (var i = 0; i < possibleIds.length; i++) {
+            if (document.getElementById(possibleIds[i])) {
+                containerId = possibleIds[i];
+                break;
+            }
+        }
+        if (containerId) {
+            var container = document.getElementById(containerId);
             container.classList.remove('hidden');
             window.comboboxHighlightQuery(containerId, '{{ query }}');
         }
     </script>
 {% else %}
     <script>
-        // Hide dropdown when no results
-        ['combobox-location-results', 'combobox-form-location-results'].forEach(function(id) {
+        // Hide dropdown when no results - check all possible containers
+        ['combobox-location-results', 'combobox-inline-location-results', 'combobox-form-location-results'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.classList.add('hidden');
         });

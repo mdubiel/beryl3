@@ -1,0 +1,63 @@
+{% load lucide %}
+
+{# Inline edit form for Location with autocomplete #}
+<tr class="align-top" id="location-row-{{ item.hash }}">
+    <td class="font-medium w-1/3 align-top text-right">
+        <span class="inline-flex items-center justify-end">
+            Location:
+        </span>
+    </td>
+    <td class="text-base-content align-top" colspan="2">
+        <form hx-post="{% url 'item_save_personal_info' item.hash %}"
+              hx-target="#item-personal-info-{{ item.hash }}"
+              hx-swap="outerHTML"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              class="flex items-center gap-2">
+
+            <input type="hidden" name="field_name" value="location">
+            <input type="hidden" name="location" id="combobox-inline-location-value" value="{{ item.location.id|default:'' }}">
+            <input type="hidden" name="location_name" id="combobox-inline-location-name" value="">
+
+            <div class="relative flex-1">
+                <input type="text"
+                       id="combobox-inline-location-search"
+                       name="q"
+                       class="input input-bordered input-sm w-full"
+                       placeholder="Type location name..."
+                       value="{{ item.location.name|default:'' }}"
+                       autocomplete="off"
+                       data-combobox="inline-location"
+                       hx-get="{% url 'location_autocomplete' %}"
+                       hx-trigger="keyup changed delay:300ms, input changed delay:300ms"
+                       hx-target="#combobox-inline-location-results"
+                       hx-swap="innerHTML"
+                       hx-include="this"
+                       autofocus>
+                <div id="combobox-inline-location-results"
+                     class="absolute w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden z-[9999]">
+                    <!-- Autocomplete results will appear here -->
+                </div>
+            </div>
+
+            <button type="button"
+                    class="btn btn-ghost btn-sm btn-square text-error"
+                    title="Clear"
+                    onclick="window.comboboxClear('inline-location'); this.closest('form').requestSubmit();">
+                {% lucide 'trash-2' size=16 %}
+            </button>
+
+            <button type="button"
+                    class="btn btn-ghost btn-sm"
+                    hx-get="{% url 'item_reload_personal_info' item.hash %}"
+                    hx-target="#item-personal-info-{{ item.hash }}"
+                    hx-swap="outerHTML">
+                Cancel
+            </button>
+
+            <button type="submit" class="btn btn-primary btn-sm">
+                {% lucide 'save' size=16 class='mr-1' %}
+                Save
+            </button>
+        </form>
+    </td>
+</tr>

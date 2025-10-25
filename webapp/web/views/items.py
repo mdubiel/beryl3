@@ -160,9 +160,22 @@ def collection_item_create_view(request, collection_hash):
     else:
         form = CollectionItemForm(user=request.user)
 
+    # Task 50: Calculate suggested ID for new items
+    temp_item = CollectionItem(collection=collection, created_by=request.user)
+    suggested_id = temp_item.predict_next_id()
+
+    # Get last used ID for display
+    last_item_with_id = CollectionItem.objects.filter(
+        collection=collection,
+        your_id__isnull=False
+    ).exclude(your_id='').order_by('-created').first()
+    last_used_id = last_item_with_id.your_id if last_item_with_id else None
+
     context = {
         'form': form,
         'collection': collection,
+        'suggested_id': suggested_id,
+        'last_used_id': last_used_id,
     }
     return render(request, 'items/item_form.html', context)
 
@@ -196,6 +209,7 @@ def collection_item_detail_view(request, hash):
             'item': item,
             'collection': item.collection, # Pass collection for convenience
             'item_types': item_types,
+            'suggested_id': item.predict_next_id(),  # Task 50: Smart ID suggestion
         }
         logger.info("Rendering detail view for item '%s' in collection '%s'", item.name, item.collection.name)
         return render(request, 'items/item_detail.html', context)
@@ -277,10 +291,25 @@ def collection_item_update_view(request, hash):
         logger.info("User '%s [%s]' is viewing the update form for item '%s' in collection '%s' [%s]", request.user.username, request.user.id, item.name, item.collection.name, item.collection.hash)
         form = CollectionItemForm(instance=item, user=request.user)
 
+    # Task 50: Calculate suggested ID
+    suggested_id = item.predict_next_id()
+
+    # Get last used ID for display
+    last_item_with_id = CollectionItem.objects.filter(
+        collection=item.collection,
+        your_id__isnull=False
+    ).exclude(
+        your_id='',
+        pk=item.pk
+    ).order_by('-created').first()
+    last_used_id = last_item_with_id.your_id if last_item_with_id else None
+
     context = {
         'form': form,
         'item': item,
         'collection': item.collection, # Pass the collection for the breadcrumbs
+        'suggested_id': suggested_id,
+        'last_used_id': last_used_id,
     }
     return render(request, 'items/item_form.html', context)
 
