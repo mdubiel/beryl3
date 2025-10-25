@@ -59,8 +59,7 @@ Use the combobox when:
 
 <!-- Results container -->
 <div id="combobox-{UNIQUE_ID}-results"
-     class="absolute w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden"
-     style="z-index: 9999;">
+     class="absolute w-full bg-base-100 shadow-lg rounded-box mt-1 max-h-60 overflow-y-auto border border-base-300 hidden z-[9999]">
     <!-- Autocomplete results will appear here -->
 </div>
 ```
@@ -215,7 +214,7 @@ Highlight search query in results (called automatically by results template).
 - Padding: `px-3 py-2` (compact spacing)
 
 ### Z-Index
-Results dropdown uses `style="z-index: 9999;"` to appear above modals.
+Results dropdown uses Tailwind's `z-[9999]` class to appear above modals. DaisyUI modals typically use z-index around 999, so 9999 ensures the autocomplete dropdown is always visible.
 
 ### Colors
 - Default: Uses Daisy UI theme colors
