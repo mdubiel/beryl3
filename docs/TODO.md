@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 48, 49, 50, 51, 52, 53, 56, 58, 59, 62)
+### ✅ Completed Tasks (1-47, 48, 49, 50, 51, 52, 53, 56, 58, 59, 60, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -76,6 +76,7 @@ See detailed reports in `docs/reports/` directory:
 | 56 | Implement error pages | (implemented) | b3572f3 |
 | 58 | Group display of multiple same attributes | [task058.md](reports/task058.md) | 772825b |
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
+| 60 | Fix item type popup layout | (implemented) | 09bfe23 |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
 
 ---
@@ -158,17 +159,6 @@ Then, similar like in task 50, it should autocomplete this value, pointing to ex
 - Filter by item type
 - Fuzzy matching
 - Fast response (<100ms)
-
----
-
-### Task 60: Fix Layout of Item Type Popup and Items Order
-
-**Status:** Pending
-
-**Description:**
-Layout of item type popup and items order.
-
-The number of item types is too big, and it is very hard to make it fully visible on the page. the displayed dialog must be dynamic and fit into visible area (currently is too wide, and expand out of the visible area). It can be centered, eventually modal if there is no good way to make it happened, howevere I would insist to use flexibility of 'flex' utility. Also, the items inside this dialog should be sorted alphabetically and sorted from top to bottom (not left to right as it is now)
 
 ---
 
