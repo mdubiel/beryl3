@@ -253,7 +253,7 @@ def collection_detail_view(request, hash):
 
         # Task 45: Get available statuses and item types in collection (before filtering)
         all_items = collection.items.all()
-        available_statuses = all_items.values_list('status', flat=True).distinct()
+        available_statuses = list(all_items.values_list('status', flat=True).distinct())
         available_item_types = ItemType.objects.filter(
             id__in=all_items.exclude(item_type__isnull=True).values_list('item_type_id', flat=True).distinct()
         ).order_by('display_name')
