@@ -100,10 +100,6 @@
                          alt="{{ collection.name }}"
                          class="w-full h-full object-cover">
                 </figure>
-                {% else %}
-                <figure class="h-48 bg-base-200 flex items-center justify-center">
-                    {% lucide 'package' size=64 class='text-base-content/30' %}
-                </figure>
                 {% endif %}
 
                 <div class="card-body">
@@ -164,14 +160,6 @@
                     <img src="{{ item.image_url }}"
                          alt="{{ item.name }}"
                          class="w-full h-full object-cover">
-                </figure>
-                {% else %}
-                <figure class="h-32 bg-base-200 flex items-center justify-center">
-                    {% if item.item_type %}
-                        {% lucide item.item_type.icon size=32 class='text-base-content/30' %}
-                    {% else %}
-                        {% lucide 'box' size=32 class='text-base-content/30' %}
-                    {% endif %}
                 </figure>
                 {% endif %}
 
