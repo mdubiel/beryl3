@@ -207,49 +207,87 @@
     </div>
     {% endif %}
 
-    {# Task 45: Filtering UI #}
+    {# Task 45: Filtering UI - Enhanced with available filters only #}
     {% if stats.total_items > 0 %}
     <div class="card bg-base-200 shadow-sm p-4 mb-6">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {# Search filter #}
-            <div class="form-control">
-                <label class="label"><span class="label-text">Search</span></label>
-                <input type="text" name="search" value="{{ filter_search }}" placeholder="Search by name or description..." class="input input-bordered input-sm">
-            </div>
+        <form method="get" id="filter-form">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {# Search filter #}
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Search</span></label>
+                    <input type="text" name="search" value="{{ filter_search }}" placeholder="Search by name..." class="input input-bordered input-sm">
+                </div>
 
-            {# Status filter #}
-            <div class="form-control">
-                <label class="label"><span class="label-text">Status</span></label>
-                <select name="status" class="select select-bordered select-sm">
-                    <option value="">All Statuses</option>
-                    {% for status_value, status_label in collection.Status.choices %}
-                    <option value="{{ status_value }}" {% if filter_status == status_value %}selected{% endif %}>{{ status_label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                {# Status filter - Task 45: Show only available statuses #}
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Status</span></label>
+                    <select name="status" class="select select-bordered select-sm">
+                        <option value="">All Statuses</option>
+                        {% for status_value, status_label in collection.Status.choices %}
+                        {% if status_value in available_statuses %}
+                        <option value="{{ status_value }}" {% if filter_status == status_value %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
 
-            {# Item Type filter #}
-            <div class="form-control">
-                <label class="label"><span class="label-text">Item Type</span></label>
-                <select name="item_type" class="select select-bordered select-sm">
-                    <option value="">All Types</option>
-                    <option value="none" {% if filter_item_type == 'none' %}selected{% endif %}>No Type</option>
-                    {% for item_type in item_types %}
-                    <option value="{{ item_type.id }}" {% if filter_item_type == item_type.id|stringformat:"s" %}selected{% endif %}>{{ item_type.display_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                {# Item Type filter - Task 45: Show only available item types #}
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Item Type</span></label>
+                    <select name="item_type" class="select select-bordered select-sm">
+                        <option value="">All Types</option>
+                        {% if has_items_without_type %}
+                        <option value="none" {% if filter_item_type == 'none' %}selected{% endif %}>No Type</option>
+                        {% endif %}
+                        {% for item_type in available_item_types %}
+                        <option value="{{ item_type.id }}" {% if filter_item_type == item_type.id|stringformat:"s" %}selected{% endif %}>
+                            {{ item_type.display_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-            {# Filter buttons #}
-            <div class="form-control flex flex-col justify-end">
-                <label class="label">&nbsp;</label>
-                <div class="flex gap-2">
-                    <button type="submit" class="btn btn-primary btn-sm flex-1">
-                        {% lucide 'filter' size=14 class='mr-1' %} Filter
-                    </button>
-                    <a href="?" class="btn btn-ghost btn-sm">
-                        {% lucide 'x' size=14 %} Clear
-                    </a>
+                {# Attribute filter - Task 45: Add attribute filter dropdown #}
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Filter by Attribute</span></label>
+                    <select name="attribute" id="attribute-filter" class="select select-bordered select-sm" onchange="this.form.submit()">
+                        <option value="">Select Attribute...</option>
+                        {% for attribute in available_attributes %}
+                        <option value="{{ attribute.id }}" {% if filter_attribute == attribute.id|stringformat:"s" %}selected{% endif %}>
+                            {{ attribute.display_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Attribute value filter - Task 45: Show only when attribute selected #}
+                {% if filter_attribute and available_attribute_values %}
+                <div class="form-control">
+                    <label class="label"><span class="label-text">Attribute Value</span></label>
+                    <select name="attribute_value" class="select select-bordered select-sm">
+                        <option value="">All Values</option>
+                        {% for value in available_attribute_values %}
+                        <option value="{{ value }}" {% if filter_attribute_value == value %}selected{% endif %}>
+                            {% if value|length > 30 %}{{ value|truncatechars:30 }}{% else %}{{ value }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                {# Filter buttons #}
+                <div class="form-control flex flex-col justify-end">
+                    <label class="label">&nbsp;</label>
+                    <div class="flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-1">
+                            {% lucide 'filter' size=14 class='mr-1' %} Filter
+                        </button>
+                        <a href="?" class="btn btn-ghost btn-sm">
+                            {% lucide 'x' size=14 %} Clear
+                        </a>
+                    </div>
                 </div>
             </div>
         </form>

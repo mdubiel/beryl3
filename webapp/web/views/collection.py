@@ -251,6 +251,29 @@ def collection_detail_view(request, hash):
         # Task 52: Calculate attribute statistics
         attribute_stats = get_attribute_statistics(items, collection)
 
+        # Task 45: Get available statuses and item types in collection (before filtering)
+        all_items = collection.items.all()
+        available_statuses = all_items.values_list('status', flat=True).distinct()
+        available_item_types = ItemType.objects.filter(
+            id__in=all_items.exclude(item_type__isnull=True).values_list('item_type_id', flat=True).distinct()
+        ).order_by('display_name')
+        has_items_without_type = all_items.filter(item_type__isnull=True).exists()
+
+        # Task 45: Get available attributes for filtering
+        from web.models import ItemAttribute
+        available_attributes = ItemAttribute.objects.filter(
+            id__in=all_items.values_list('attribute_values__item_attribute_id', flat=True).distinct()
+        ).order_by('display_name')
+
+        # Task 45: Get available values for selected attribute
+        available_attribute_values = []
+        if filter_attribute:
+            from web.models import CollectionItemAttributeValue
+            available_attribute_values = CollectionItemAttributeValue.objects.filter(
+                item__collection=collection,
+                item_attribute_id=filter_attribute
+            ).values_list('value', flat=True).distinct().order_by('value')
+
         # Task 47: Apply grouping if enabled
         grouped_items = None
         if collection.group_by != Collection.GroupBy.NONE:
@@ -385,6 +408,11 @@ def collection_detail_view(request, hash):
             'stats': stats,
             'visibility_choices': Collection.Visibility.choices,
             'item_types': ItemType.objects.all(),
+            'available_statuses': available_statuses,
+            'available_item_types': available_item_types,
+            'has_items_without_type': has_items_without_type,
+            'available_attributes': available_attributes,
+            'available_attribute_values': available_attribute_values,
             'filter_status': filter_status,
             'filter_item_type': filter_item_type,
             'filter_search': filter_search,
