@@ -491,7 +491,7 @@ Test at various widths:
 ## ✅ Task 64: Public User Profile Page
 
 **Version:** 0.2.84
-**Commit:** (pending)
+**Commit:** c74fbf1
 **Description:** Create public user profile pages showing user info and PUBLIC collections only
 
 ### Verification Steps

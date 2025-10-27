@@ -79,7 +79,7 @@ See detailed reports in `docs/reports/` directory:
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
 | 60 | Fix item type popup layout | (implemented) | 09bfe23 |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
-| 64 | Create public user profile page | [task064.md](reports/task064.md) | (pending) |
+| 64 | Create public user profile page | [task064.md](reports/task064.md) | c74fbf1 |
 
 ---
 
