@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 48, 50, 58, 59, 62)
+### ✅ Completed Tasks (1-47, 48, 49, 50, 52, 58, 59, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -68,7 +68,9 @@ See detailed reports in `docs/reports/` directory:
 | 46 | Add pagination to collection | [task046.md](reports/task046.md) | 2c4e8b7 |
 | 47 | Implement attribute grouping in collections | [task047.md](reports/task047.md) | 2c4e8b7 |
 | 48 | Add hidden attributes hint | (implemented) | 689eaac |
+| 49 | Attribute sorting and grouping | (implemented) | 2c4e8b7 |
 | 50 | Add custom item fields (Location and Your ID) | [task050_progress.md](reports/task050_progress.md) | 689eaac, 12f2819, eecdef6, 4e09d9b |
+| 52 | Smart filter attribute statistics and filtering | (implemented) | 2c4e8b7 |
 | 58 | Group display of multiple same attributes | [task058.md](reports/task058.md) | 772825b |
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
@@ -102,23 +104,6 @@ Add filtering options in collection view to limit number of displayed items
 
 ## 📋 Planned Tasks
 
-### Task 49: Implement Attribute Sorting and Grouping
-
-**Status:** Pending, but verify first - this should be already completed.
-
-**Description:**
-Add grouping and "sort by this attribute (or name, or status or...)"
-
-**Requirements:**
-- Sort by attribute value
-- Sort by name
-- Sort by status
-- Group by attribute value
-- Configurable per collection
-
----
-
-
 ### Task 51: Improve Move Item Dialog UI
 
 **Status:** Pending
@@ -131,21 +116,6 @@ Add grouping and "sort by this attribute (or name, or status or...)"
 - Show collection details (item count, etc.)
 - Confirm before moving
 - Handle errors gracefully
-
----
-
-### Task 52: Display Attribute Statistics and Filtering
-
-**Status:** Pending
-
-**Description:**
-Display on top (above items) a "smart filter" statistics from attributes (how many read, authors, etc.) and let filter with that values. It should be "badge" from daisyUI collection with indication of number of items of this type/attribute like "[ Terry Pratchet | 12 ]" where "terry pratchett" is attribute value and "12" is a count. Make this badge borderless.
-
-**Requirements:**
-- Aggregate statistics by attribute
-- Display in collection header
-- Clickable to filter
-- Show counts and percentages
 
 ---
 
