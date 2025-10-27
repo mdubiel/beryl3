@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 45, 48, 49, 50, 51, 52, 53, 56, 58, 59, 60, 62)
+### ✅ Completed Tasks (1-47, 45, 48, 49, 50, 51, 52, 53, 56, 58, 59, 60, 62, 64)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -79,6 +79,7 @@ See detailed reports in `docs/reports/` directory:
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
 | 60 | Fix item type popup layout | (implemented) | 09bfe23 |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
+| 64 | Create public user profile page | [task064.md](reports/task064.md) | (pending) |
 
 ---
 
@@ -158,25 +159,6 @@ Review entire codebase and remove image placeholders that are still in use.
 - Search for placeholder image references
 - Replace with proper image handling or icons
 - Ensure no broken image displays
-
----
-
-### Task 64: Create Public User Profile Page
-
-**Status:** Pending
-
-**Description:**
-Create a public user page showing basic info and shared collections - only marked as PUBLIC, do not include those marked as 'with link'.
-
-**Requirements:**
-- Show user basic information (username, avatar, join date)
-- Display list of PUBLIC collections only
-- Show aggregated statistics (from public collections only)
-- Display favorites (from public collections only)
-- Responsive design
-- SEO-friendly URLs
-
-**URL Pattern:** `/users/<username>/` or `/u/<username>/`
 
 ---
 
@@ -288,10 +270,11 @@ Instead of grid, show table with columns:
 
 ## Notes
 
-- All completed tasks (1-47, 45, 48-53, 56, 58-60, 62) have detailed reports in `docs/reports/` directory
+- All completed tasks (1-47, 45, 48-53, 56, 58-60, 62, 64) have detailed reports in `docs/reports/` directory
 - Task 61 is declined due to ethical concerns
 - Task 33 additional requirements need implementation
 - Tasks 54, 55, 57 are next priority pending tasks
-- Unnumbered tasks (remove placeholders, public user page, performance plan) are pending
+- Task 64 implemented - public user profiles at `/u/<username>/`
+- Unnumbered tasks (remove placeholders, performance plan) are pending
 - When starting new tasks, follow the workflow: plan → review → implement → test → commit
 - Always check CLAUDE.md for workflow guidelines

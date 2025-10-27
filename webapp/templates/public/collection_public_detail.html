@@ -34,7 +34,7 @@
                 <div class="flex items-center gap-2">
                     {% lucide 'user' size=16 class='text-gray-800' %}
                     <p class="text-lg text-gray-800">
-                        Owned by {{ collection.created_by.profile.get_display_name }}
+                        Owned by <a href="{{ collection.created_by.profile.get_public_profile_url }}" class="link link-primary hover:link-accent">{{ collection.created_by.profile.get_display_name }}</a>
                     </p>
                 </div>
 

@@ -36,6 +36,9 @@ urlpatterns = [
     # Public view for sharable collections
     path('share/collections/<str:hash>/', public.public_collection_view, name='public_collection_view'),
 
+    # Task 64: Public user profile
+    path('u/<str:username>/', public.public_user_profile, name='public_user_profile'),
+
     # Item
     path('collections/<str:collection_hash>/add-item/', items.collection_item_create_view, name='item_create'),
     # HTMX endpoint for item creation - must come before items/<str:hash>/ to avoid matching

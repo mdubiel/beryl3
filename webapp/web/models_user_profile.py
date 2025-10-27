@@ -155,17 +155,30 @@ class UserProfile(models.Model):
     def get_display_name(self):
         """
         Get the user's preferred display name
-        
+
         Returns the nickname if use_nickname is True and nickname exists,
         otherwise returns the user's full name or email
         """
         if self.use_nickname and self.nickname:
             return self.nickname
-        
+
         if self.user.first_name or self.user.last_name:
             return self.user.get_full_name().strip()
-        
+
         return self.user.email.split('@')[0]  # Use email prefix as fallback
+
+    def get_public_profile_url(self):
+        """
+        Task 64: Get the URL to this user's public profile
+
+        Returns URL using nickname if set, otherwise uses user ID
+        """
+        from django.urls import reverse
+
+        if self.use_nickname and self.nickname:
+            return reverse('public_user_profile', kwargs={'username': self.nickname})
+        else:
+            return reverse('public_user_profile', kwargs={'username': str(self.user.id)})
     
     def get_sync_status_display(self):
         """

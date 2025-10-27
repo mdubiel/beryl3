@@ -26,7 +26,9 @@ from django.views.decorators.http import require_POST
 from faker import Faker
 
 from web.models import Collection, CollectionItem, RecentActivity, ItemType
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 logger = logging.getLogger("webapp") # Ensure logger is initialized
 
 def public_collection_view(request, hash):
@@ -431,3 +433,123 @@ def unreserve_guest_item(request, hash, token):
             'item': item,
             'error': 'Unable to cancel reservation. Please contact the collection owner.'
         })
+
+
+def public_user_profile(request, username):
+    """
+    Task 64: Public user profile page showing basic info and PUBLIC collections only.
+
+    URL: /u/<username>/
+    - If user has nickname, use nickname for URL
+    - If no nickname, use user ID and suggest setting nickname
+    - Never use email for URL
+
+    Displays:
+    - User basic information (display name, avatar if exists, join date)
+    - List of PUBLIC collections only (not UNLISTED/PRIVATE)
+    - Aggregated statistics from public collections only
+    - Public favorites from public collections
+    """
+    # Try to find user by nickname first, then by ID
+    user = None
+    try:
+        # Try to find by nickname
+        if hasattr(User.objects.first(), 'profile'):
+            user = User.objects.select_related('profile').filter(
+                profile__nickname=username,
+                profile__use_nickname=True
+            ).first()
+
+        # If not found by nickname, try by ID (for users without nickname)
+        if not user:
+            try:
+                user_id = int(username)
+                user = User.objects.select_related('profile').get(id=user_id, is_active=True)
+            except (ValueError, User.DoesNotExist):
+                pass
+    except Exception as e:
+        logger.error(
+            'public_user_profile: Error finding user "%s": %s',
+            username,
+            str(e),
+            extra={'function': 'public_user_profile', 'username': username, 'error': str(e)}
+        )
+
+    if not user:
+        logger.warning(
+            'public_user_profile: User not found for username "%s"',
+            username,
+            extra={'function': 'public_user_profile', 'username': username}
+        )
+        raise Http404("User profile not found")
+
+    # Get display name
+    display_name = user.profile.get_display_name() if hasattr(user, 'profile') else user.get_full_name() or user.email.split('@')[0]
+
+    # Check if user should be suggested to set nickname (using ID in URL)
+    suggest_nickname = False
+    try:
+        int(username)  # If username is numeric, it's using ID
+        suggest_nickname = True
+    except ValueError:
+        pass
+
+    # Get only PUBLIC collections
+    public_collections = Collection.objects.filter(
+        created_by=user,
+        visibility=Collection.Visibility.PUBLIC
+    ).select_related('created_by__profile').prefetch_related(
+        'images__media_file',
+        'items'
+    ).annotate(
+        item_count=Count('items')
+    ).order_by('-updated')
+
+    # Calculate aggregated statistics from public collections only
+    total_collections = public_collections.count()
+    total_items = 0
+    total_favorites = 0
+
+    for collection in public_collections:
+        total_items += collection.item_count
+        total_favorites += collection.items.filter(is_favorite=True).count()
+
+    # Get public favorites (from public collections only)
+    public_favorites = CollectionItem.objects.filter(
+        collection__created_by=user,
+        collection__visibility=Collection.Visibility.PUBLIC,
+        is_favorite=True
+    ).select_related(
+        'collection',
+        'item_type'
+    ).prefetch_related(
+        'images__media_file'
+    ).order_by('-updated')[:12]  # Limit to 12 most recent favorites
+
+    logger.info(
+        'public_user_profile: Viewing profile for user "%s" (display: "%s")',
+        username,
+        display_name,
+        extra={
+            'function': 'public_user_profile',
+            'username': username,
+            'display_name': display_name,
+            'user_id': user.id,
+            'public_collections_count': total_collections,
+            'suggest_nickname': suggest_nickname
+        }
+    )
+
+    context = {
+        'profile_user': user,
+        'display_name': display_name,
+        'suggest_nickname': suggest_nickname and request.user == user,  # Only suggest to the user themselves
+        'public_collections': public_collections,
+        'total_collections': total_collections,
+        'total_items': total_items,
+        'total_favorites': total_favorites,
+        'public_favorites': public_favorites,
+        'join_date': user.date_joined,
+    }
+
+    return render(request, 'public/user_profile.html', context)
