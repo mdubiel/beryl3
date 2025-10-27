@@ -147,17 +147,57 @@ Prevent users from specific countries (configurable as env variable) to access t
 
 ---
 
-## Task
- We are still using placeholders for images? Review entire codebase and remove them.
- 
+### Task 63: Remove Image Placeholders
+
+**Status:** Pending
+
+**Description:**
+Review entire codebase and remove image placeholders that are still in use.
+
+**Requirements:**
+- Search for placeholder image references
+- Replace with proper image handling or icons
+- Ensure no broken image displays
+
 ---
 
-## Task
-Create a public user page, showing its basing info and shared collections - only marked os public, do not include these marked as 'with link'.
-Show a list of shared collections, some aggregated statistics (but only from shared ) and favourites (but only from public lists)
+### Task 64: Create Public User Profile Page
+
+**Status:** Pending
+
+**Description:**
+Create a public user page showing basic info and shared collections - only marked as PUBLIC, do not include those marked as 'with link'.
+
+**Requirements:**
+- Show user basic information (username, avatar, join date)
+- Display list of PUBLIC collections only
+- Show aggregated statistics (from public collections only)
+- Display favorites (from public collections only)
+- Responsive design
+- SEO-friendly URLs
+
+**URL Pattern:** `/users/<username>/` or `/u/<username>/`
+
 ---
-## Task
-Collection when have more items and attributes loads very slow, it might require some improvement. Make a plan, do not implement
+
+### Task 65: Performance Optimization Plan
+
+**Status:** Pending
+
+**Description:**
+Collections with many items and attributes load very slow. Create a performance improvement plan.
+
+**Requirements:**
+- Analyze current bottlenecks (make a plan, do not implement)
+- Identify slow database queries
+- Review template rendering performance
+- Propose caching strategies
+- Consider pagination improvements
+- Suggest database indexing
+- Recommend lazy loading strategies
+
+**Deliverable:** Performance analysis document, not implementation
+
 ---
 
 
