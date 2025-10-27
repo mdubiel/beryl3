@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load lucide %}
+
+{% block title %}Access Denied (403){% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-[60vh] px-4">
+    <div class="text-center max-w-2xl">
+        {# Error Icon #}
+        <div class="mb-8">
+            {% lucide 'shield-alert' size=120 class='text-warning mx-auto' %}
+        </div>
+
+        {# Error Code #}
+        <h1 class="text-8xl font-bold text-warning mb-4">403</h1>
+
+        {# Error Message #}
+        <h2 class="text-3xl font-semibold mb-4">Access Denied</h2>
+
+        <p class="text-lg text-base-content/70 mb-8">
+            You don't have permission to access this resource.
+            {% if exception %}
+            <br>
+            <span class="text-sm text-neutral mt-2 inline-block">{{ exception }}</span>
+            {% endif %}
+        </p>
+
+        {# Action Buttons #}
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="javascript:history.back()" class="btn btn-outline btn-lg gap-2">
+                {% lucide 'arrow-left' size=20 %}
+                Go Back
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg gap-2">
+                {% lucide 'home' size=20 %}
+                Go to Dashboard
+            </a>
+        </div>
+
+        {# Additional Info #}
+        <div class="mt-12 pt-8 border-t border-base-300">
+            <div class="alert alert-info">
+                <div class="flex-1">
+                    <p class="text-sm">
+                        If you believe this is an error, please contact the site administrator.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

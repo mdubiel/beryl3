@@ -1,0 +1,57 @@
+{% load static %}
+{% load lucide %}
+
+<!DOCTYPE html>
+<html lang="en" data-theme="berylfe">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Unavailable (503) | Beryl</title>
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+    <meta http-equiv="refresh" content="30">
+</head>
+<body class="bg-base-100 text-base-content font-system-mono">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-col items-center justify-center min-h-screen">
+            <div class="text-center max-w-2xl">
+                {# Error Icon #}
+                <div class="mb-8">
+                    {% lucide 'construction' size=120 class='text-info mx-auto' %}
+                </div>
+
+                {# Error Code #}
+                <h1 class="text-8xl font-bold text-info mb-4">503</h1>
+
+                {# Error Message #}
+                <h2 class="text-3xl font-semibold mb-4">Service Temporarily Unavailable</h2>
+
+                <p class="text-lg text-base-content/70 mb-8">
+                    We're currently performing maintenance or experiencing high traffic.
+                    Please try again in a few moments.
+                </p>
+
+                {# Loading Indicator #}
+                <div class="flex justify-center mb-8">
+                    <span class="loading loading-spinner loading-lg text-info"></span>
+                </div>
+
+                <p class="text-sm text-neutral">
+                    This page will automatically refresh in 30 seconds.
+                </p>
+
+                {# Action Buttons #}
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                    <button onclick="location.reload()" class="btn btn-outline btn-lg gap-2">
+                        {% lucide 'refresh-cw' size=20 %}
+                        Refresh Now
+                    </button>
+                    <a href="/" class="btn btn-primary btn-lg gap-2">
+                        {% lucide 'home' size=20 %}
+                        Go to Homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

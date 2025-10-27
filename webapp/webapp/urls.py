@@ -32,3 +32,9 @@ if settings.DEBUG:
     urlpatterns.append(path("__reload__/", include("django_browser_reload.urls")),)
     # Serve media files in development
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Task 56: Custom error handlers
+handler400 = 'web.views.errors.bad_request'
+handler403 = 'web.views.errors.permission_denied'
+handler404 = 'web.views.errors.page_not_found'
+handler500 = 'web.views.errors.server_error'
