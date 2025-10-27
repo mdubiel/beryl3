@@ -118,7 +118,7 @@ When item has attributes which do not belong to current item type, there should 
 
 ### Task 49: Implement Attribute Sorting and Grouping
 
-**Status:** Pending, but verify forst - this should be already completed.
+**Status:** Pending, but verify first - this should be already completed.
 
 **Description:**
 Add grouping and "sort by this attribute (or name, or status or...)"
@@ -278,6 +278,15 @@ Prevent users from specific countries (configurable as env variable) to access t
  We are still using placeholders for images? Review entire codebase and remove them.
  
 ---
+
+## Task
+Create a public user page, showing its basing info and shared collections - only marked os public, do not include these marked as 'with link'.
+Show a list of shared collections, some aggregated statistics (but only from shared ) and favourites (but only from public lists)
+---
+## Task
+Collection when have more items and attributes loads very slow, it might require some improvement. Make a plan, do not implement
+---
+
 
 ## Task 33 Additional Requirements
 
