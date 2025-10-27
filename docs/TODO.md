@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 48, 49, 50, 52, 58, 59, 62)
+### ✅ Completed Tasks (1-47, 48, 49, 50, 52, 53, 56, 58, 59, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -71,6 +71,8 @@ See detailed reports in `docs/reports/` directory:
 | 49 | Attribute sorting and grouping | (implemented) | 2c4e8b7 |
 | 50 | Add custom item fields (Location and Your ID) | [task050_progress.md](reports/task050_progress.md) | 689eaac, 12f2819, eecdef6, 4e09d9b |
 | 52 | Smart filter attribute statistics and filtering | (implemented) | 2c4e8b7 |
+| 53 | Make thumbnails clickable | (implemented) | 576beb5 |
+| 56 | Implement error pages | (implemented) | b3572f3 |
 | 58 | Group display of multiple same attributes | [task058.md](reports/task058.md) | 772825b |
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
@@ -119,21 +121,6 @@ Add filtering options in collection view to limit number of displayed items
 
 ---
 
-### Task 53: Make Thumbnails Clickable
-
-**Status:** Pending
-
-**Description:**
-Thumbnail image (the main image for the item, should be clickable and lead to item details), same for categories
-
-**Requirements:**
-- Thumbnail clicks go to item detail
-- Category clicks go to filtered view
-- Clear hover indication
-- Works in all views (list, grid, etc.)
-
----
-
 ### Task 54: Mobile UI Improvements
 
 **Status:** Pending
@@ -164,28 +151,6 @@ Compact all JavaScript to one file and reference JS from there. No inline javasc
 - Better caching
 - Easier maintenance
 - Minification support
-
----
-
-### Task 56: Implement Error Pages
-
-**Status:** Pending
-
-**Description:**
-Currently error pages (40x, 50x and similar) are not handled. Implement handling of all this kind of error pages, with same styling like other views.
-
-**Pages Needed:**
-- 400 Bad Request
-- 403 Forbidden
-- 404 Not Found
-- 500 Internal Server Error
-- 503 Service Unavailable
-
-**Requirements:**
-- Match application styling (DaisyUI)
-- Helpful error messages
-- Links to return home
-- Log errors appropriately
 
 ---
 
