@@ -24,8 +24,8 @@
 
 **Issues Found:**
 ```
-(User to fill in any issues discovered)
-
+- Status change button is now gone, all the previous buttons are now compacted to one with elipsisis, what is OK, but status change is missing.
+- Status filter still have only "all statuses" available to select. Are you sure you are pulling data from right place?
 
 
 
@@ -127,7 +127,9 @@
 
 **Issues Found:**
 ```
-(User to fill in any issues discovered)
+- Action "change status" is missing.
+- Action "change item type" is missign
+- Move/copy dialog shows only move (copy is missing). Make instead big blue buttons two smaller (like the action items in item) icon only "copy" and "move"
 
 
 
@@ -169,7 +171,7 @@
 
 **Issues Found:**
 ```
-(User to fill in any issues discovered)
+User name should be linked to public user page.
 
 
 
@@ -218,7 +220,7 @@
 
 **Issues Found:**
 ```
-(User to fill in any issues discovered)
+This do not work. Would you mind use same technique as previously developed for Locations?
 
 
 
@@ -285,7 +287,7 @@
 
 **Issues Found:**
 ```
-(User to fill in any issues discovered)
+- do not work, see note on previous verification
 
 
 
