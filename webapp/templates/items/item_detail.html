@@ -24,7 +24,7 @@
 <div class="mb-8 flex items-center justify-end gap-2">
             {# Main Actions Group - Item Type, Status, Move, Edit #}
             <div class="btn-group">
-                {# Item Type Selector #}
+                {# Item Type Selector - Task 60: Fixed layout #}
                 <div class="dropdown dropdown-end dropdown-bottom">
                     <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Item Type">
                         {% if item.item_type %}
@@ -33,17 +33,20 @@
                             {% lucide 'package' size=18 %}
                         {% endif %}
                     </button>
-                    <div tabindex="0" class="dropdown-content shadow bg-base-100 rounded-box p-4 z-10 w-screen max-w-5xl">
-                        <div class="mb-2 px-2 font-semibold text-sm">Item Type</div>
-                        <div class="flex flex-wrap gap-1">
-                            {% for item_type in item_types %}
+                    <div tabindex="0" class="dropdown-content shadow bg-base-100 rounded-box p-4 z-10 max-w-4xl w-max max-h-96 overflow-y-auto">
+                        <div class="mb-3 px-2 font-semibold text-sm flex items-center gap-2">
+                            {% lucide 'package' size=16 %}
+                            Select Item Type
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
+                            {% for item_type in item_types|dictsort:"display_name" %}
                                 {% if item.item_type == item_type %}
-                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-not-allowed opacity-50 font-bold text-sm w-60">
-                                        {% lucide item_type.icon size=16 %}
+                                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 font-semibold text-sm border-2 border-primary">
+                                        {% lucide item_type.icon size=16 class='text-primary' %}
                                         <span class="truncate">{{ item_type.display_name }}</span>
-                                    </a>
+                                    </div>
                                 {% else %}
-                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-base-200 cursor-pointer text-sm w-60"
+                                    <a class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-base-200 hover:border-primary cursor-pointer text-sm border border-transparent transition-colors"
                                        hx-post="{% url 'item_change_type' item.hash %}"
                                        hx-vals='{"item_type_id": "{{ item_type.id }}"}'
                                        hx-target="body"
