@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 48, 49, 50, 51, 52, 53, 56, 58, 59, 60, 62)
+### ✅ Completed Tasks (1-47, 45, 48, 49, 50, 51, 52, 53, 56, 58, 59, 60, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -65,6 +65,7 @@ See detailed reports in `docs/reports/` directory:
 | 42 | Fix link modal text wrapping | [task042.md](reports/task042.md) | 67822f7 |
 | 43 | Redirect to item after edit/create | [task043.md](reports/task043.md) | 67822f7 |
 | 44 | Add extra add buttons in attributes/links tables | [task044.md](reports/task044.md) | 67822f7 |
+| 45 | Enhanced collection filtering (status, type, attribute) | [task045.md](reports/task045.md) | 1b8c566 |
 | 46 | Add pagination to collection | [task046.md](reports/task046.md) | 2c4e8b7 |
 | 47 | Implement attribute grouping in collections | [task047.md](reports/task047.md) | 2c4e8b7 |
 | 48 | Add hidden attributes hint | (implemented) | 689eaac |
@@ -78,31 +79,6 @@ See detailed reports in `docs/reports/` directory:
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
 | 60 | Fix item type popup layout | (implemented) | 09bfe23 |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
-
----
-
-## ⏳ In Progress Tasks
-
-### Task 45: Add Filtering Options in Collection View
-
-**Status:** ⏳ In progress (partially completed)
-
-**Description:**
-Add filtering options in collection view to limit number of displayed items
-
-**Current State:**
-- Basic filtering implemented
-- Needs additional filter types
-- UI refinement required
-- Status shows only 'All Statuses', but should show this option + what is available in collection.
-- Item type, when filtering - should also be limited only to items type which are on the list
-- Add 'filter by attribute' and its value. For example I might be looking for "Publication Year = 2002", where "publication year" is attribute and "2002" is value. List only available attributes in the list.
-
-**Next Steps:**
-- [ ] Add attribute-based filtering
-- [ ] Add status filtering
-- [ ] Add item type filtering
-- [ ] Test with large collections
 
 ---
 
@@ -272,11 +248,10 @@ Instead of grid, show table with columns:
 
 ## Notes
 
-- All completed tasks (1-47, 59) have detailed reports in `docs/reports/` directory
-- Task 45 is partially completed and in progress
+- All completed tasks (1-47, 45, 48-53, 56, 58-60, 62) have detailed reports in `docs/reports/` directory
 - Task 61 is declined due to ethical concerns
-- Task 62 is ready to implement next
 - Task 33 additional requirements need implementation
-- Tasks 48-58, 60 are pending implementation
+- Tasks 54, 55, 57 are next priority pending tasks
+- Unnumbered tasks (remove placeholders, public user page, performance plan) are pending
 - When starting new tasks, follow the workflow: plan → review → implement → test → commit
 - Always check CLAUDE.md for workflow guidelines

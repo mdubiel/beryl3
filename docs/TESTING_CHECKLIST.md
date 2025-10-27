@@ -1,8 +1,8 @@
-# Testing Checklist - Session Tasks (48-62)
+# Testing Checklist - Session Tasks (45, 48-62)
 
-**Version:** 0.2.73
+**Version:** 0.2.75
 **Session Date:** 2025-10-27
-**Tasks Implemented:** 12 tasks
+**Tasks Implemented:** 13 tasks
 
 ---
 
@@ -26,6 +26,80 @@
 
 **Files to Check:**
 - `/items/<hash>/` - Item detail page
+
+---
+
+## ✅ Task 45: Enhanced Collection Filtering
+
+**What to Test:**
+1. Create collection with items in different statuses (In Collection, Wanted, Reserved)
+2. Create items with different types (Books, Movies, etc.)
+3. Add some items without any type
+4. Add attributes to items (e.g., Author, Genre, Publisher)
+5. Go to collection detail view
+6. Look for filter form above items list
+
+### Status Filter Test:
+1. Open Status dropdown
+2. Verify only statuses present in collection are shown
+3. **Expected:** If you have only "In Collection" and "Wanted" items, dropdown shows:
+   - All Statuses
+   - In Collection
+   - Wanted
+4. Select a status and click Filter
+5. Verify only items with that status appear
+
+### Item Type Filter Test:
+1. Open Item Type dropdown
+2. Verify only types present in collection are shown
+3. Verify "No Type" option appears if collection has items without type
+4. **Expected:** If you have Books and Movies, dropdown shows:
+   - All Types
+   - No Type (if applicable)
+   - Book
+   - Movie
+5. Select a type and click Filter
+6. Verify only items of that type appear
+
+### Attribute Filter Test:
+1. Open "Filter by Attribute" dropdown
+2. Verify only attributes used in collection are shown
+3. Select an attribute (e.g., "Author")
+4. **Expected:** Form auto-submits and page reloads
+5. Verify "Attribute Value" dropdown appears
+6. **Expected:** Dropdown shows all distinct values for that attribute
+7. Select a value and click Filter
+8. Verify only items with that attribute value appear
+
+### Combined Filters Test:
+1. Enter text in Search field
+2. Select a Status
+3. Select an Item Type
+4. Select an Attribute and Value
+5. Click Filter
+6. **Expected:** All filters work together, showing only items matching ALL criteria
+7. Navigate to page 2 (if pagination available)
+8. **Expected:** Filters persist in URL and page 2 respects filters
+9. Click "Clear" button
+10. **Expected:** All filters reset and full collection displayed
+
+### Edge Cases:
+1. Collection with all items same status → Only that status shows
+2. Collection with all items without type → Only "All Types" and "No Type"
+3. Collection with no attributes → Attribute dropdown disabled or shows only placeholder
+4. Change attribute selection → Value dropdown updates correctly
+
+**Expected Behavior:**
+- Filter dropdowns show only relevant options based on collection content
+- "No Type" option appears conditionally
+- Attribute value dropdown appears only when attribute selected
+- All filters work together correctly
+- Filters persist across pagination
+- Clear button resets everything
+- Responsive grid layout adapts to screen size
+
+**Files to Check:**
+- `/collections/<hash>/` - Collection detail view with filters
 
 ---
 
@@ -364,13 +438,14 @@ Before deploying to production:
 
 ## 📊 Session Summary
 
-**Tasks Completed:** 12
-**Version:** 0.2.73
-**Commits:** 14
-**Files Modified:** 30+
-**Files Created:** 20+
+**Tasks Completed:** 13
+**Version:** 0.2.75
+**Commits:** 15
+**Files Modified:** 32+
+**Files Created:** 21+
 
 **Completed Tasks:**
+- Task 45: Enhanced collection filtering ✓
 - Task 48: Hidden attributes hint
 - Task 49: Sorting and grouping (verified)
 - Task 50: Location and Your ID
@@ -384,10 +459,10 @@ Before deploying to production:
 - Task 62: Background images (verified)
 
 **Next Priority Tasks:**
-- Task 45: Complete attribute filtering
 - Task 57: Attribute autocompletion
 - Task 54: Mobile UI improvements
 - Task 55: Consolidate JavaScript
+- Unnumbered: Remove placeholders, public user page, performance plan
 
 ---
 
