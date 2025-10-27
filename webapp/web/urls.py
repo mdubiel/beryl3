@@ -70,6 +70,7 @@ urlpatterns = [
     path('items/<str:hash>/change-type/', items_hx.change_item_type, name='item_change_type'),
     path('items/<str:hash>/add-attribute/', items_hx.item_add_attribute, name='item_add_attribute'),
     path('items/<str:hash>/get-attribute-input/', items_hx.item_get_attribute_input, name='item_get_attribute_input'),
+    path('items/<str:hash>/autocomplete-attribute-value/', items_hx.item_autocomplete_attribute_value, name='item_autocomplete_attribute_value'),
     path('items/<str:hash>/edit-attribute-value/<str:attr_value_hash>/', items_hx.item_edit_attribute_value, name='item_edit_attribute_value'),
     path('items/<str:hash>/save-attribute/', items_hx.item_save_attribute, name='item_save_attribute'),
     path('items/<str:hash>/remove-attribute-value/<str:attr_value_hash>/', items_hx.item_remove_attribute_value, name='item_remove_attribute_value'),

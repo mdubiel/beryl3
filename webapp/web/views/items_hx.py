@@ -9,6 +9,7 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST, require_http_methods
@@ -337,9 +338,85 @@ def item_get_attribute_input(request, hash):
     context = {
         'attribute': attribute,
         'current_value': None,
+        'item': item,  # Task 57: Needed for autocomplete URL
     }
 
     return render(request, 'partials/_attribute_input_field.html', context)
+
+
+@login_required
+@log_execution_time
+def item_autocomplete_attribute_value(request, hash):
+    """
+    Task 57: HTMX endpoint for attribute value autocomplete.
+    Returns JSON array of suggested values based on user's existing attribute values.
+
+    Requirements:
+    - Min 3 characters to trigger
+    - Search user's existing values
+    - Filter by item type (if applicable)
+    - Fuzzy matching (substring search)
+    """
+    item = get_object_or_404(CollectionItem, hash=hash)
+
+    # Check if user owns the collection
+    if item.collection.created_by != request.user:
+        return JsonResponse({'suggestions': []})
+
+    # Get parameters
+    query = request.GET.get('q', '').strip()
+    attribute_name = request.GET.get('attribute_name', '')
+
+    # Min 3 characters requirement
+    if len(query) < 3 or not attribute_name:
+        return JsonResponse({'suggestions': []})
+
+    # Get the attribute definition
+    try:
+        if item.item_type:
+            attribute = item.item_type.attributes.get(name=attribute_name)
+        else:
+            # If no item type, search all attributes with this name owned by user
+            attribute = ItemAttribute.objects.filter(
+                name=attribute_name
+            ).first()
+            if not attribute:
+                return JsonResponse({'suggestions': []})
+    except ItemAttribute.DoesNotExist:
+        return JsonResponse({'suggestions': []})
+
+    # Query CollectionItemAttributeValue for user's items
+    # Filter by attribute and item type if available
+    values_query = CollectionItemAttributeValue.objects.filter(
+        item__collection__created_by=request.user,
+        item_attribute=attribute
+    )
+
+    # Task 57: Filter by item type if item has one
+    if item.item_type:
+        values_query = values_query.filter(item__item_type=item.item_type)
+
+    # Fuzzy matching: search anywhere in the string (case-insensitive)
+    values_query = values_query.filter(value__icontains=query)
+
+    # Get distinct values, order by frequency (most used first)
+    suggestions = values_query.values('value').annotate(
+        count=Count('id')
+    ).order_by('-count', 'value')[:10]  # Limit to top 10 suggestions
+
+    # Extract just the values for response
+    suggestion_list = [s['value'] for s in suggestions]
+
+    logger.info("item_autocomplete_attribute_value: Autocomplete for attribute '%s' query '%s' returned %d suggestions for item '%s' [%s]",
+               attribute_name, query, len(suggestion_list), item.name, item.hash,
+               extra={'function': 'item_autocomplete_attribute_value', 'action': 'autocomplete',
+                     'object_type': 'CollectionItem', 'object_hash': item.hash,
+                     'attribute_name': attribute_name, 'query': query, 'suggestions_count': len(suggestion_list),
+                     'function_args': {'hash': hash, 'query': query, 'attribute_name': attribute_name}})
+
+    # Return HTML options for datalist
+    context = {'suggestions': suggestion_list}
+    return render(request, 'partials/_attribute_autocomplete_options.html', context)
 
 
 @login_required

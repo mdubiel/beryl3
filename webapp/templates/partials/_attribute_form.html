@@ -85,9 +85,25 @@
                        value="{{ current_value }}" {% if attribute.required %}required{% endif %} 
                        placeholder="https://example.com">
             {% else %}
-                {# TEXT or fallback #}
-                <input type="text" name="attribute_value" class="input input-bordered w-full" 
-                       value="{{ current_value }}" {% if attribute.required %}required{% endif %}>
+                {# TEXT or fallback - Task 57: Add autocomplete #}
+                <div class="relative">
+                    <input type="text" name="attribute_value"
+                           id="attr-edit-value-input-{{ attribute.name }}"
+                           list="attr-edit-suggestions-{{ attribute.name }}"
+                           class="input input-bordered w-full"
+                           value="{{ current_value }}"
+                           {% if attribute.required %}required{% endif %}
+                           placeholder="Type at least 3 characters for suggestions..."
+                           autocomplete="off"
+                           hx-get="{% url 'item_autocomplete_attribute_value' item.hash %}"
+                           hx-trigger="keyup changed delay:300ms[target.value.length >= 3]"
+                           hx-target="#attr-edit-suggestions-{{ attribute.name }}"
+                           hx-swap="innerHTML"
+                           hx-vals='js:{"q": document.getElementById("attr-edit-value-input-{{ attribute.name }}").value, "attribute_name": "{{ attribute.name }}"}'>
+                    <datalist id="attr-edit-suggestions-{{ attribute.name }}">
+                        {# Suggestions will be loaded here via HTMX #}
+                    </datalist>
+                </div>
             {% endif %}
         </div>
     {% endif %}
