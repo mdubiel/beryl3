@@ -54,8 +54,34 @@
                 {# Action buttons for Owner #}
                 {% if request.user == item.collection.created_by %}
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    {# Main Actions Group #}
-                    <div class="btn-group">
+                    {# Task 54: Mobile-responsive actions - Show key actions on mobile, rest in dropdown #}
+                    {# Mobile: Show only Edit + More dropdown #}
+                    <div class="flex md:hidden items-center gap-1">
+                        {# Edit button - most common action #}
+                        <a href="{% url 'item_update' item.hash %}" class="btn btn-ghost btn-sm" title="Edit Item">
+                            {% lucide 'pencil' size=20 %}
+                        </a>
+
+                        {# More Actions dropdown #}
+                        <div class="dropdown dropdown-end">
+                            <button tabindex="0" class="btn btn-ghost btn-sm" title="More Actions">
+                                {% lucide 'more-vertical' size=20 %}
+                            </button>
+                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-56 z-10">
+                                <li class="menu-title"><span>Actions</span></li>
+                                <li><a href="{% url 'item_manage_images' item.hash %}">{% lucide 'images' size=16 class='mr-2' %} Manage Images</a></li>
+                                <li><a hx-get="{% url 'item_add_attribute' item.hash %}" hx-target="#attribute-edit-modal-content" hx-trigger="click" onclick="document.getElementById('attribute-edit-modal').showModal()">{% lucide 'book-key' size=16 class='mr-2' %} Add Attribute</a></li>
+                                <li><a hx-get="{% url 'item_add_link' item.hash %}" hx-target="#link-edit-modal-content" hx-trigger="click" onclick="document.getElementById('link-edit-modal').showModal()">{% lucide 'link' size=16 class='mr-2' %} Add Link</a></li>
+                                <li><a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">{% lucide 'move' size=16 class='mr-2' %} Move/Copy</a></li>
+                                <li class="menu-title"><span>Delete</span></li>
+                                <li><button onclick="document.getElementById('delete-modal-{{ item.hash }}').showModal()" class="text-error">{% lucide 'trash-2' size=16 class='mr-2' %} Delete Item</button></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {# Desktop: Show all buttons #}
+                    <div class="hidden md:flex items-center gap-2">
+                        <div class="btn-group">
                         {# Item Type Selector - Task 60: Fixed layout #}
                         <div class="dropdown dropdown-end dropdown-top">
                             <button tabindex="0" class="btn btn-ghost btn-square btn-sm" title="Change Item Type">
@@ -173,10 +199,12 @@
                         </a>
                     </div>
 
-                    {# Danger Actions Group - Delete #}
-                    <div class="btn-group">
-                        {% include "partials/_item_delete_dropdown.html" with item=item %}
+                        {# Danger Actions Group - Delete #}
+                        <div class="btn-group">
+                            {% include "partials/_item_delete_dropdown.html" with item=item %}
+                        </div>
                     </div>
+                    {# End desktop actions #}
                 </div>
                 {% endif %}
             </div>

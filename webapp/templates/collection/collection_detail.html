@@ -107,18 +107,19 @@
             
             <div id="share-section-{{ collection.hash }}" class="share-section">
             {% if collection.visibility != 'PRIVATE' %}
+            {# Task 54: Mobile-responsive share URL controls #}
             <div class="mt-3 flex flex-col sm:flex-row items-center lg:items-start gap-2">
-                <div class="join">
-                    <input type="text" value="{{ collection.get_sharable_url }}" readonly class="input input-xs input-bordered join-item text-xs w-96" />
-                    <button class="btn btn-xs join-item" onclick="copyToClipboard(this.previousElementSibling, this)">
-                        {% lucide 'copy' size=12 %}
+                <div class="join w-full sm:w-auto">
+                    <input type="text" value="{{ collection.get_sharable_url }}" readonly class="input input-sm input-bordered join-item text-xs w-full sm:w-96" />
+                    <button class="btn btn-sm join-item" onclick="copyToClipboard(this.previousElementSibling, this)">
+                        {% lucide 'copy' size=14 %}
                     </button>
-                    <a href="{{ collection.get_sharable_url }}" target="_blank" class="btn btn-xs join-item" title="Open public view">
-                        {% lucide 'external-link' size=12 %}
+                    <a href="{{ collection.get_sharable_url }}" target="_blank" class="btn btn-sm join-item" title="Open public view">
+                        {% lucide 'external-link' size=14 %}
                     </a>
-                    <div class="btn btn-xs join-item gap-1 {% if collection.visibility == 'PUBLIC' %}btn-accent{% else %}btn-info{% endif %} cursor-default">
-                        {% lucide 'globe' size=10 %}
-                        {{ collection.get_visibility_display }}
+                    <div class="btn btn-sm join-item gap-1 {% if collection.visibility == 'PUBLIC' %}btn-accent{% else %}btn-info{% endif %} cursor-default">
+                        {% lucide 'globe' size=12 %}
+                        <span class="hidden sm:inline">{{ collection.get_visibility_display }}</span>
                     </div>
                 </div>
             </div>
