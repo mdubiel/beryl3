@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 50, 58, 59, 62)
+### ✅ Completed Tasks (1-47, 48, 50, 58, 59, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -67,6 +67,7 @@ See detailed reports in `docs/reports/` directory:
 | 44 | Add extra add buttons in attributes/links tables | [task044.md](reports/task044.md) | 67822f7 |
 | 46 | Add pagination to collection | [task046.md](reports/task046.md) | 2c4e8b7 |
 | 47 | Implement attribute grouping in collections | [task047.md](reports/task047.md) | 2c4e8b7 |
+| 48 | Add hidden attributes hint | (implemented) | 689eaac |
 | 50 | Add custom item fields (Location and Your ID) | [task050_progress.md](reports/task050_progress.md) | 689eaac, 12f2819, eecdef6, 4e09d9b |
 | 58 | Group display of multiple same attributes | [task058.md](reports/task058.md) | 772825b |
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
@@ -100,21 +101,6 @@ Add filtering options in collection view to limit number of displayed items
 ---
 
 ## 📋 Planned Tasks
-
-### Task 48: Add Hidden Attributes Hint
-
-**Status:** Pending
-
-**Description:**
-When item has attributes which do not belong to current item type, there should be some hint that there are hidden attributes
-
-**Considerations:**
-- Badge showing count of hidden attributes
-- Tooltip explaining why hidden
-- Option to show all attributes
-- Clear visual indication
-
----
 
 ### Task 49: Implement Attribute Sorting and Grouping
 
