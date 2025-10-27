@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 48, 49, 50, 52, 53, 56, 58, 59, 62)
+### ✅ Completed Tasks (1-47, 48, 49, 50, 51, 52, 53, 56, 58, 59, 62)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -70,6 +70,7 @@ See detailed reports in `docs/reports/` directory:
 | 48 | Add hidden attributes hint | (implemented) | 689eaac |
 | 49 | Attribute sorting and grouping | (implemented) | 2c4e8b7 |
 | 50 | Add custom item fields (Location and Your ID) | [task050_progress.md](reports/task050_progress.md) | 689eaac, 12f2819, eecdef6, 4e09d9b |
+| 51 | Improve move item dialog UI | (implemented) | 85ed5c1 |
 | 52 | Smart filter attribute statistics and filtering | (implemented) | 2c4e8b7 |
 | 53 | Make thumbnails clickable | (implemented) | 576beb5 |
 | 56 | Implement error pages | (implemented) | b3572f3 |
@@ -105,21 +106,6 @@ Add filtering options in collection view to limit number of displayed items
 ---
 
 ## 📋 Planned Tasks
-
-### Task 51: Improve Move Item Dialog UI
-
-**Status:** Pending
-
-**Description:**
-(Item) move dialog to another collection need some UI improvements
-
-**Issues to Address:**
-- Better collection selection UI
-- Show collection details (item count, etc.)
-- Confirm before moving
-- Handle errors gracefully
-
----
 
 ### Task 54: Mobile UI Improvements
 
