@@ -87,14 +87,14 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for collection in public_collections %}
             <a href="{% url 'public_collection_view' collection.hash %}" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
-                {# Collection Image - skip placeholders #}
+                {# Collection Image #}
                 {% if collection.default_image.media_file %}
                 <figure class="h-48">
                     <img src="{{ collection.default_image.media_file.file_url }}"
                          alt="{{ collection.name }}"
                          class="w-full h-full object-cover">
                 </figure>
-                {% elif collection.image_url and 'placehold.co' not in collection.image_url %}
+                {% elif collection.image_url %}
                 <figure class="h-48">
                     <img src="{{ collection.image_url }}"
                          alt="{{ collection.name }}"
@@ -148,14 +148,14 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {% for item in public_favorites %}
             <a href="{% url 'public_collection_view' item.collection.hash %}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow duration-300">
-                {# Item Image - skip placeholders #}
+                {# Item Image #}
                 {% if item.default_image.media_file %}
                 <figure class="h-32">
                     <img src="{{ item.default_image.media_file.file_url }}"
                          alt="{{ item.name }}"
                          class="w-full h-full object-cover">
                 </figure>
-                {% elif item.image_url and 'placehold.co' not in item.image_url %}
+                {% elif item.image_url %}
                 <figure class="h-32">
                     <img src="{{ item.image_url }}"
                          alt="{{ item.name }}"

@@ -54,8 +54,8 @@ class Command(BaseCommand):
             collection = Collection.objects.create(
                 created_by=user,
                 name=collection_name,
-                description=faker.sentence(nb_words=10),
-                image_url=f"https://picsum.photos/seed/{faker.slug()}/800/600"
+                description=faker.sentence(nb_words=10)
+                # No placeholder image_url
             )
             self.stdout.write(f"  Created Collection: '{collection.name}'")
 
@@ -68,8 +68,8 @@ class Command(BaseCommand):
                     created_by=user,
                     name=item_name,
                     description=faker.bs(),
-                    status=random.choice(CollectionItem.Status.values),
-                    image_url=f"https://picsum.photos/seed/{faker.slug()}/400/300"
+                    status=random.choice(CollectionItem.Status.values)
+                    # No placeholder image_url
                 )
 
             self.stdout.write(f"    - Added {num_items} items to '{collection.name}'")
