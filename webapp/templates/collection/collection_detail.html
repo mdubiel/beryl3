@@ -224,7 +224,7 @@
                     <label class="label"><span class="label-text">Status</span></label>
                     <select name="status" class="select select-bordered select-sm">
                         <option value="">All Statuses</option>
-                        {% for status_value, status_label in collection.Status.choices %}
+                        {% for status_value, status_label in status_choices %}
                         {% if status_value in available_statuses %}
                         <option value="{{ status_value }}" {% if filter_status == status_value %}selected{% endif %}>
                             {{ status_label }}

@@ -407,6 +407,7 @@ def collection_detail_view(request, hash):
             'items': items_page,
             'stats': stats,
             'visibility_choices': Collection.Visibility.choices,
+            'status_choices': CollectionItem.Status.choices,  # Task 45: Add status choices for filter
             'item_types': ItemType.objects.all(),
             'available_statuses': available_statuses,
             'available_item_types': available_item_types,
