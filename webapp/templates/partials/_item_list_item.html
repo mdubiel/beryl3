@@ -103,8 +103,16 @@
                                 <li><a href="{% url 'item_manage_images' item.hash %}">{% lucide 'images' size=16 class='mr-2' %} Manage Images</a></li>
                                 <li><a hx-get="{% url 'item_add_attribute' item.hash %}" hx-target="#attribute-edit-modal-content" hx-trigger="click" onclick="document.getElementById('attribute-edit-modal').showModal()">{% lucide 'book-key' size=16 class='mr-2' %} Add Attribute</a></li>
                                 <li><a hx-get="{% url 'item_add_link' item.hash %}" hx-target="#link-edit-modal-content" hx-trigger="click" onclick="document.getElementById('link-edit-modal').showModal()">{% lucide 'link' size=16 class='mr-2' %} Add Link</a></li>
-                                <li><a onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')">{% lucide 'arrow-right-left' size=16 class='mr-2' %} Move Item</a></li>
-                                <li><a onclick="showCopyModal('{{ item.hash }}', '{{ item.name|escapejs }}')">{% lucide 'copy' size=16 class='mr-2' %} Copy Item</a></li>
+                                <li>
+                                    <div class="flex gap-1 p-2">
+                                        <button onclick="showMoveModal('{{ item.hash }}', '{{ item.name|escapejs }}')" class="btn btn-ghost btn-sm btn-square" title="Move Item">
+                                            {% lucide 'arrow-right-left' size=18 %}
+                                        </button>
+                                        <button onclick="showCopyModal('{{ item.hash }}', '{{ item.name|escapejs }}')" class="btn btn-ghost btn-sm btn-square" title="Copy Item">
+                                            {% lucide 'copy' size=18 %}
+                                        </button>
+                                    </div>
+                                </li>
                                 <li class="menu-title"><span>Delete</span></li>
                                 <li><button onclick="document.getElementById('delete-modal-{{ item.hash }}').showModal()" class="text-error">{% lucide 'trash-2' size=16 class='mr-2' %} Delete Item</button></li>
                             </ul>
