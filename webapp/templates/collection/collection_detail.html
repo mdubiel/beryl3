@@ -253,7 +253,7 @@
                 {# Attribute filter - Task 45: Add attribute filter dropdown #}
                 <div class="form-control">
                     <label class="label"><span class="label-text">Filter by Attribute</span></label>
-                    <select name="attribute" id="attribute-filter" class="select select-bordered select-sm" onchange="this.form.submit()">
+                    <select name="attribute" id="attribute-filter" class="select select-bordered select-sm" onchange="var valueField = document.getElementsByName('attribute_value')[0]; if (valueField) valueField.value=''; this.form.submit()">
                         <option value="">Select Attribute...</option>
                         {% for attribute in available_attributes %}
                         <option value="{{ attribute.id }}" {% if filter_attribute == attribute.id|stringformat:"s" %}selected{% endif %}>
