@@ -92,28 +92,12 @@
                                         </ul>
                                     </details>
                                 </li>
-                                {# Item Type submenu #}
+                                {# Item Type - Open modal for selection #}
                                 <li>
-                                    <details>
-                                        <summary>{% lucide 'package' size=16 class='mr-2' %} Type: {% if item.item_type %}{{ item.item_type.display_name }}{% else %}None{% endif %}</summary>
-                                        <ul class="max-h-64 overflow-y-auto">
-                                            {% for item_type in item_types|dictsort:"display_name" %}
-                                            <li>
-                                                {% if item.item_type == item_type %}
-                                                <a class="disabled font-bold">{{ item_type.display_name }}</a>
-                                                {% else %}
-                                                <a hx-post="{% url 'item_change_type' item.hash %}"
-                                                   hx-vals='{"item_type_id": "{{ item_type.id }}"}'
-                                                   hx-target="#item-row-{{ item.hash }}"
-                                                   hx-swap="outerHTML"
-                                                   hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                                                    {{ item_type.display_name }}
-                                                </a>
-                                                {% endif %}
-                                            </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </details>
+                                    <a onclick="showItemTypeModal('{{ item.hash }}', '{{ item.name|escapejs }}', {% if item.item_type %}'{{ item.item_type.id }}'{% else %}null{% endif %})">
+                                        {% lucide 'package' size=16 class='mr-2' %}
+                                        Change Type: {% if item.item_type %}{{ item.item_type.display_name }}{% else %}None{% endif %}
+                                    </a>
                                 </li>
                                 <li class="menu-title"><span>Actions</span></li>
                                 <li><a href="{% url 'item_manage_images' item.hash %}">{% lucide 'images' size=16 class='mr-2' %} Manage Images</a></li>
