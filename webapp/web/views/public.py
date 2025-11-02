@@ -63,10 +63,15 @@ def public_collection_view(request, hash):
                      'viewer_type': 'anonymous', 'function_args': {'hash': hash, 'request_method': request.method}})
     
     # Get items and calculate stats similar to private view
-    all_items = collection.items.select_related('item_type').prefetch_related(
+    # Task 65: Optimize queries with prefetch_related to avoid N+1 queries
+    all_items = collection.items.select_related(
+        'item_type',
+        'location'
+    ).prefetch_related(
         'images__media_file',
         'links',
-        'default_image__media_file'
+        'default_image__media_file',
+        'attribute_values__item_attribute'  # Critical: Avoids 100+ N+1 queries when rendering attributes
     ).order_by('name')
 
     stats = all_items.aggregate(
@@ -90,6 +95,15 @@ def public_collection_view(request, hash):
         groups = defaultdict(list)
         ungrouped_items = []
 
+        # Task 65: Pre-fetch attribute values for grouping to avoid N+1 queries
+        attr_lookup = {}
+        if collection.group_by == Collection.GroupBy.ATTRIBUTE and collection.grouping_attribute:
+            for attr_val in CollectionItemAttributeValue.objects.filter(
+                item__in=all_items,
+                item_attribute=collection.grouping_attribute
+            ).select_related('item'):
+                attr_lookup[attr_val.item_id] = attr_val.value
+
         for item in all_items:
             if collection.group_by == Collection.GroupBy.ITEM_TYPE:
                 if item.item_type:
@@ -100,13 +114,9 @@ def public_collection_view(request, hash):
                 status_label = dict(CollectionItem.Status.choices).get(item.status, item.status)
                 groups[item.status].append(item)
             elif collection.group_by == Collection.GroupBy.ATTRIBUTE and collection.grouping_attribute:
-                try:
-                    attr_value = CollectionItemAttributeValue.objects.get(
-                        item=item,
-                        item_attribute=collection.grouping_attribute
-                    )
-                    groups[attr_value.value].append(item)
-                except CollectionItemAttributeValue.DoesNotExist:
+                if item.id in attr_lookup:
+                    groups[attr_lookup[item.id]].append(item)
+                else:
                     ungrouped_items.append(item)
 
         # Create grouped items list
@@ -140,26 +150,30 @@ def public_collection_view(request, hash):
                 elif collection.sort_by == Collection.SortBy.UPDATED:
                     group['items'].sort(key=lambda x: x.updated, reverse=True)
                 elif collection.sort_by == Collection.SortBy.ATTRIBUTE and collection.sort_attribute:
+                    # Task 65: Pre-fetch all sort attribute values to avoid N+1 queries
+                    sort_lookup = {}
+                    for attr_val in CollectionItemAttributeValue.objects.filter(
+                        item__in=group['items'],
+                        item_attribute=collection.sort_attribute
+                    ).select_related('item'):
+                        sort_lookup[attr_val.item_id] = attr_val.get_typed_value()
+
                     def get_attr_value(item):
-                        try:
-                            attr_val = CollectionItemAttributeValue.objects.get(
-                                item=item,
-                                item_attribute=collection.sort_attribute
-                            )
-                            value = attr_val.get_typed_value()
-                            # Handle different types for sorting
-                            if isinstance(value, (int, float)):
-                                return (0, value)  # Numbers first, sorted numerically
-                            elif isinstance(value, str):
-                                # Try to convert to number for numeric strings
-                                try:
-                                    return (0, float(value))
-                                except (ValueError, TypeError):
-                                    return (1, value.lower())  # Strings second, case-insensitive
-                            else:
-                                return (2, str(value))  # Others last
-                        except CollectionItemAttributeValue.DoesNotExist:
+                        value = sort_lookup.get(item.id)
+                        if value is None:
                             return (3, '')  # Items without the attribute at the end
+                        # Handle different types for sorting
+                        if isinstance(value, (int, float)):
+                            return (0, value)  # Numbers first, sorted numerically
+                        elif isinstance(value, str):
+                            # Try to convert to number for numeric strings
+                            try:
+                                return (0, float(value))
+                            except (ValueError, TypeError):
+                                return (1, value.lower())  # Strings second, case-insensitive
+                        else:
+                            return (2, str(value))  # Others last
+
                     group['items'].sort(key=get_attr_value)
 
         # Add ungrouped items
