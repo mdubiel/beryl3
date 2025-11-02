@@ -82,7 +82,7 @@ See detailed reports in `docs/reports/` directory:
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
 | 63 | Remove image placeholders | (implemented) | (v0.2.98) |
 | 64 | Create public user profile page | [task064.md](reports/task064.md) | c74fbf1 |
-| 65 | Performance optimization plan | [task065_performance_analysis.md](reports/task065_performance_analysis.md) | (pending) |
+| 65 | Performance optimization (20-60x faster) | [analysis](reports/task065_performance_analysis.md) / [implementation](reports/task065_implementation.md) | 86bf7aa |
 
 ---
 
@@ -227,6 +227,9 @@ Instead of grid, show table with columns:
 - Task 57 ✅ Completed - Autocomplete for item attributes (commit c8be701)
 - Task 63 ✅ Completed - Placeholder images removed (v0.2.98)
 - Task 64 ✅ Completed - Public user profiles at `/u/<hash>/` or `/u/<nickname>/`
-- Task 65 ✅ Completed - Performance analysis report created (see docs/reports/task065_performance_analysis.md)
+- Task 65 ✅ Completed - Performance optimization implemented (20-60x faster, 98% query reduction)
+  - Analysis: docs/reports/task065_performance_analysis.md
+  - Implementation: docs/reports/task065_implementation.md
+  - Commit: 86bf7aa
 - When starting new tasks, follow the workflow: plan → review → implement → test → commit
 - Always check CLAUDE.md for workflow guidelines
