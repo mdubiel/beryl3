@@ -246,6 +246,17 @@ WSGI_APPLICATION = 'webapp.wsgi.application'
 
 SITE_ID = 1
 
+# Task 65: Cache configuration for template fragment caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'beryl-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 10000,  # Maximum number of cached items
+        }
+    }
+}
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
