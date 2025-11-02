@@ -1018,7 +1018,9 @@ class CollectionItem(BerylModel):
         from collections import defaultdict
         relational_attrs = defaultdict(list)
 
-        for attr_value in self.attribute_values.select_related('item_attribute').all():
+        # Task 65 fix: Use .all() without select_related to leverage prefetch_related from view
+        # Calling select_related() here would override the prefetch and create N+1 queries
+        for attr_value in self.attribute_values.all():
             attr_name = attr_value.item_attribute.name
             relational_attrs[attr_name].append(attr_value)
 
