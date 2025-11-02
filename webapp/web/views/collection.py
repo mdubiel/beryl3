@@ -200,7 +200,8 @@ def collection_detail_view(request, hash):
             'location'
         ).prefetch_related(
             'images__media_file',
-            'attribute_values__item_attribute'  # Critical: Avoids 100+ N+1 queries when rendering attributes
+            'attribute_values__item_attribute',  # Critical: Avoids 100+ N+1 queries when rendering attributes
+            'item_type__attributes'  # Task 65 fix: Prefetch item type attributes to avoid N+1 in get_display_attributes()
         )
 
         # Task 45: Apply filters

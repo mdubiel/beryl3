@@ -71,7 +71,8 @@ def public_collection_view(request, hash):
         'images__media_file',
         'links',
         'default_image__media_file',
-        'attribute_values__item_attribute'  # Critical: Avoids 100+ N+1 queries when rendering attributes
+        'attribute_values__item_attribute',  # Critical: Avoids 100+ N+1 queries when rendering attributes
+        'item_type__attributes'  # Task 65 fix: Prefetch item type attributes to avoid N+1 in get_display_attributes()
     ).order_by('name')
 
     stats = all_items.aggregate(
