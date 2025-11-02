@@ -5,10 +5,26 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+from nanoid import generate
 import logging
 
 logger = logging.getLogger("webapp")
 User = get_user_model()
+
+
+def generate_user_hash():
+    """Generate a unique hash for user profile"""
+    return generate(size=10)
+
+
+def validate_nickname(value):
+    """Validate nickname format - only letters, digits, dash, and underscore"""
+    if value and not all(c.isalnum() or c in '-_' for c in value):
+        raise ValidationError(
+            'Nickname can only contain letters, digits, dash (-), and underscore (_).'
+        )
 
 
 class UserProfile(models.Model):
@@ -16,19 +32,28 @@ class UserProfile(models.Model):
     Extended user profile for marketing preferences and other user-specific settings
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    hash = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=True,
+        verbose_name="User Hash",
+        help_text="Unique hash for public profile URL"
+    )
     receive_marketing_emails = models.BooleanField(
-        default=False, 
+        default=False,
         verbose_name="Receive Marketing Emails",
         help_text="If checked, you will receive marketing emails from us"
     )
-    
+
     # Display name preferences
     nickname = models.CharField(
         max_length=50,
         blank=True,
         null=True,
+        unique=True,
         verbose_name="Nickname",
-        help_text="Optional nickname to display instead of your first name"
+        help_text="Optional nickname for public profile URL (letters, digits, dash, underscore only)",
+        validators=[validate_nickname]
     )
     use_nickname = models.BooleanField(
         default=False,
@@ -123,7 +148,7 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = "User Profile"
         verbose_name_plural = "User Profiles"
-    
+
     def __str__(self):
         return f"Profile for {self.user.email}"
     
@@ -169,16 +194,12 @@ class UserProfile(models.Model):
 
     def get_public_profile_url(self):
         """
-        Task 64: Get the URL to this user's public profile
+        Get the URL to this user's public profile
 
-        Returns URL using nickname if set, otherwise uses user ID
+        Always returns URL using hash. If nickname is set, that URL also works.
         """
         from django.urls import reverse
-
-        if self.use_nickname and self.nickname:
-            return reverse('public_user_profile', kwargs={'username': self.nickname})
-        else:
-            return reverse('public_user_profile', kwargs={'username': str(self.user.id)})
+        return reverse('public_user_profile', kwargs={'username': self.hash})
     
     def get_sync_status_display(self):
         """
@@ -219,8 +240,16 @@ class UserProfile(models.Model):
     
     def save(self, *args, **kwargs):
         """
-        Override save to sync marketing email subscription with Resend
+        Override save to generate hash, convert nickname to lowercase and sync marketing email subscription with Resend
         """
+        # Generate hash if not present
+        if not self.hash:
+            self.hash = generate_user_hash()
+
+        # Convert nickname to lowercase
+        if self.nickname:
+            self.nickname = self.nickname.lower()
+
         # Check if marketing email preference changed
         marketing_changed = False
         if self.pk:
@@ -232,7 +261,7 @@ class UserProfile(models.Model):
         else:
             # New profile, check if we should sync on creation
             marketing_changed = self.receive_marketing_emails
-        
+
         super().save(*args, **kwargs)
         
         # Sync with Resend if marketing preference changed

@@ -437,12 +437,12 @@ def unreserve_guest_item(request, hash, token):
 
 def public_user_profile(request, username):
     """
-    Task 64: Public user profile page showing basic info and PUBLIC collections only.
+    Public user profile page showing basic info and PUBLIC collections only.
 
     URL: /u/<username>/
-    - If user has nickname, use nickname for URL
-    - If no nickname, use user ID and suggest setting nickname
-    - Never use email for URL
+    - username can be user's profile hash (always works)
+    - username can also be user's nickname (if set, case-insensitive)
+    - Never use email or user ID for URL
 
     Displays:
     - User basic information (display name, avatar if exists, join date)
@@ -450,23 +450,22 @@ def public_user_profile(request, username):
     - Aggregated statistics from public collections only
     - Public favorites from public collections
     """
-    # Try to find user by nickname first, then by ID
+    # Try to find user by hash first, then by nickname
     user = None
     try:
-        # Try to find by nickname
-        if hasattr(User.objects.first(), 'profile'):
+        # Try to find by hash first (most common case)
+        user = User.objects.select_related('profile').filter(
+            profile__hash=username,
+            is_active=True
+        ).first()
+
+        # If not found by hash, try by nickname (case-insensitive)
+        if not user:
             user = User.objects.select_related('profile').filter(
-                profile__nickname=username,
-                profile__use_nickname=True
+                profile__nickname=username.lower(),  # Nicknames are stored in lowercase
+                is_active=True
             ).first()
 
-        # If not found by nickname, try by ID (for users without nickname)
-        if not user:
-            try:
-                user_id = int(username)
-                user = User.objects.select_related('profile').get(id=user_id, is_active=True)
-            except (ValueError, User.DoesNotExist):
-                pass
     except Exception as e:
         logger.error(
             'public_user_profile: Error finding user "%s": %s',
@@ -486,13 +485,10 @@ def public_user_profile(request, username):
     # Get display name
     display_name = user.profile.get_display_name() if hasattr(user, 'profile') else user.get_full_name() or user.email.split('@')[0]
 
-    # Check if user should be suggested to set nickname (using ID in URL)
+    # Suggest nickname if user is viewing their own profile and doesn't have one set
     suggest_nickname = False
-    try:
-        int(username)  # If username is numeric, it's using ID
-        suggest_nickname = True
-    except ValueError:
-        pass
+    if request.user.is_authenticated and request.user == user and hasattr(user, 'profile'):
+        suggest_nickname = not user.profile.nickname
 
     # Get only PUBLIC collections
     public_collections = Collection.objects.filter(

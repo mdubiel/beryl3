@@ -12,12 +12,17 @@
 <div class="mb-8 flex items-center justify-between">
     <h1 class="text-3xl font-bold">Your Dashboard</h1>
     <div class="flex items-center justify-end gap-2">
+        {# Public Profile Link #}
+        <a href="{{ user.profile.get_public_profile_url }}" target="_blank" class="btn btn-outline btn-sm" title="View your public profile">
+            {% lucide 'user' size=16 class='mr-2' %} Public Profile
+        </a>
+
         {# Main Actions Group #}
         <div class="btn-group">
             <a href="{% url "collection_create" %}" class="btn btn-secondary btn-sm">
                 {% lucide 'plus' size=16 class='mr-2' %} Create New List
             </a>
-            
+
             <a href="{% url "collection_list" %}" class="btn btn-ghost btn-square btn-sm" title="View All Lists">
                 {% lucide 'list' size=18 %}
             </a>
