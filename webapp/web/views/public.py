@@ -564,3 +564,14 @@ def public_user_profile(request, username):
     }
 
     return render(request, 'public/user_profile.html', context)
+
+
+def lazy_load_item_image(request, item_hash):
+    """
+    HTMX endpoint to lazy load item images.
+    Returns just the image HTML for a specific item.
+    """
+    item = get_object_or_404(CollectionItem, hash=item_hash)
+
+    # Just return the image partial
+    return render(request, 'partials/_item_image_lazy.html', {'item': item})

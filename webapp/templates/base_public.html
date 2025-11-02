@@ -95,6 +95,22 @@
         }, true); // Use capture phase to ensure we get the event first
     </script>
 
+    {# Task 65: CSS animation for lazy-loaded images #}
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+    </style>
+
 </head>
 
 <body class="bg-base-100 text-base-content font-sans {% if background_image_url %}public-collection-bg public-collection-overlay{% endif %}" {% if background_image_url %}style="background-image: url('{{ background_image_url }}');"{% endif %}>
