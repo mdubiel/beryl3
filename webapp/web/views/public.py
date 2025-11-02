@@ -64,13 +64,12 @@ def public_collection_view(request, hash):
     
     # Get items and calculate stats similar to private view
     # Task 65: Optimize queries with prefetch_related to avoid N+1 queries
+    # NOTE: We DON'T prefetch images here because they're lazy-loaded via HTMX
     all_items = collection.items.select_related(
         'item_type',
         'location'
     ).prefetch_related(
-        'images__media_file',
         'links',
-        'default_image__media_file',
         'attribute_values__item_attribute',  # Critical: Avoids 100+ N+1 queries when rendering attributes
         'item_type__attributes'  # Task 65 fix: Prefetch item type attributes to avoid N+1 in get_display_attributes()
     ).order_by('name')
@@ -570,8 +569,17 @@ def lazy_load_item_image(request, item_hash):
     """
     HTMX endpoint to lazy load item images.
     Returns just the image HTML for a specific item.
+    Only fetches the specific images/media files needed for this one item.
     """
-    item = get_object_or_404(CollectionItem, hash=item_hash)
+    # Optimize: Only select_related what we need for this item
+    item = get_object_or_404(
+        CollectionItem.objects.select_related(
+            'default_image__media_file'
+        ).prefetch_related(
+            'images__media_file'
+        ),
+        hash=item_hash
+    )
 
     # Just return the image partial
     return render(request, 'partials/_item_image_lazy.html', {'item': item})
