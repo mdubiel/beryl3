@@ -114,7 +114,11 @@
                         {# Group items #}
                         {% for item in group.items %}
                             <div id="item-{{ item.hash }}-container">
-                                {% include "partials/_item_public_card.html" with item=item %}
+                                {# Task 65: Cache each item card for 1 hour to speed up rendering #}
+                                {% load cache %}
+                                {% cache 3600 public_item_card item.id item.updated %}
+                                    {% include "partials/_item_public_card.html" with item=item %}
+                                {% endcache %}
                             </div>
                         {% endfor %}
                     {% endfor %}
@@ -122,7 +126,11 @@
                     {# Regular ungrouped display #}
                     {% for item in items %}
                         <div id="item-{{ item.hash }}-container">
-                            {% include "partials/_item_public_card.html" with item=item %}
+                            {# Task 65: Cache each item card for 1 hour to speed up rendering #}
+                            {% load cache %}
+                            {% cache 3600 public_item_card item.id item.updated %}
+                                {% include "partials/_item_public_card.html" with item=item %}
+                            {% endcache %}
                         </div>
                     {% endfor %}
                 {% endif %}

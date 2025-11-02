@@ -36,6 +36,10 @@ def public_collection_view(request, hash):
     Displays a collection to the public if its visibility is set to
     'PUBLIC' or 'UNLISTED'.
     """
+    # Task 65: Add timing instrumentation
+    import time as time_module
+    view_start = time_module.time()
+
     collection = get_object_or_404(
         Collection.objects.select_related('created_by__profile'), 
         hash=hash
@@ -265,6 +269,11 @@ def public_collection_view(request, hash):
         "items_per_page": items_per_page,
         "background_image_url": background_image_url,  # Task 62
     }
+
+    # Task 65: Log view execution time
+    view_duration = time_module.time() - view_start
+    logger.info(f"[PERF] public_collection_view took {view_duration:.3f}s for collection {collection.hash} ({len(all_items)} items)")
+
     return render(request, "public/collection_public_detail.html", context)
 
 @require_POST
