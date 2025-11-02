@@ -15,7 +15,7 @@ All completed tasks documentation is stored in `docs/reports/taskXXX.md` files.
 
 ## Table of Contents
 
-### ✅ Completed Tasks (1-47, 45, 48, 49, 50, 51, 52, 53, 56, 58, 59, 60, 62, 64)
+### ✅ Completed Tasks (1-47, 45, 48, 49, 50, 51, 52, 53, 56, 57, 58, 59, 60, 62, 63, 64, 65)
 
 See detailed reports in `docs/reports/` directory:
 
@@ -78,8 +78,11 @@ See detailed reports in `docs/reports/` directory:
 | 58 | Group display of multiple same attributes | [task058.md](reports/task058.md) | 772825b |
 | 59 | Easy toggle for boolean attributes | [task059.md](reports/task059.md) | (confirmed working) |
 | 60 | Fix item type popup layout | (implemented) | 09bfe23 |
+| 57 | Add autocompletion for item attributes | (implemented) | c8be701 |
 | 62 | Dynamic background images for public collections | [task062.md](reports/task062.md) | 68a827c |
+| 63 | Remove image placeholders | (implemented) | (v0.2.98) |
 | 64 | Create public user profile page | [task064.md](reports/task064.md) | c74fbf1 |
+| 65 | Performance optimization plan | [task065_performance_analysis.md](reports/task065_performance_analysis.md) | (pending) |
 
 ---
 
@@ -118,26 +121,6 @@ Compact all JavaScript to one file and reference JS from there. No inline javasc
 
 ---
 
-### Task 57: Add Autocompletion for Item Attributes
-
-**Status:** Pending
-
-**Description:**
-When adding or editing item attribute the system (with HX) should try to autocomplete that information (min. 3 characters, search anywhere in the string). For autocomplete data you need to query CollectionItemAttributeValue for the items user own, and are the same type.
-
-**Example:**
-When I'm trying to add to the 'book' the 'Author' attribute it should look up for all CollectionItemAttributeValue records where user is an owner, and are the records are type 'Author' referenced to book item attribute.
-Then, similar like in task 50, it should autocomplete this value, pointing to existing entry to the database to avoid duplicates with same value. If value for current user is unknown then create new one.
-
-**Technical Requirements:**
-- HTMX endpoint for autocomplete
-- Min 3 characters to trigger
-- Search user's existing values
-- Filter by item type
-- Fuzzy matching
-- Fast response (<100ms)
-
----
 
 ### Task 61: Geographic Access Restrictions
 
@@ -148,39 +131,6 @@ Prevent users from specific countries (configurable as env variable) to access t
 
 ---
 
-### Task 63: Remove Image Placeholders
-
-**Status:** Pending
-
-**Description:**
-Review entire codebase and remove image placeholders that are still in use.
-
-**Requirements:**
-- Search for placeholder image references
-- Replace with proper image handling or icons
-- Ensure no broken image displays
-
----
-
-### Task 65: Performance Optimization Plan
-
-**Status:** Pending
-
-**Description:**
-Collections with many items and attributes load very slow. Create a performance improvement plan.
-
-**Requirements:**
-- Analyze current bottlenecks (make a plan, do not implement)
-- Identify slow database queries
-- Review template rendering performance
-- Propose caching strategies
-- Consider pagination improvements
-- Suggest database indexing
-- Recommend lazy loading strategies
-
-**Deliverable:** Performance analysis document, not implementation
-
----
 
 
 ## Task 33 Additional Requirements
@@ -270,11 +220,13 @@ Instead of grid, show table with columns:
 
 ## Notes
 
-- All completed tasks (1-47, 45, 48-53, 56, 58-60, 62, 64) have detailed reports in `docs/reports/` directory
+- All completed tasks (1-47, 45, 48-53, 56-60, 62-65) have detailed reports in `docs/reports/` directory
 - Task 61 is declined due to ethical concerns
 - Task 33 additional requirements need implementation
-- Tasks 54, 55, 57 are next priority pending tasks
-- Task 64 implemented - public user profiles at `/u/<username>/`
-- Unnumbered tasks (remove placeholders, performance plan) are pending
+- Tasks 54, 55 are next priority pending tasks
+- Task 57 ✅ Completed - Autocomplete for item attributes (commit c8be701)
+- Task 63 ✅ Completed - Placeholder images removed (v0.2.98)
+- Task 64 ✅ Completed - Public user profiles at `/u/<hash>/` or `/u/<nickname>/`
+- Task 65 ✅ Completed - Performance analysis report created (see docs/reports/task065_performance_analysis.md)
 - When starting new tasks, follow the workflow: plan → review → implement → test → commit
 - Always check CLAUDE.md for workflow guidelines
