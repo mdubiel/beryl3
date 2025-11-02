@@ -162,7 +162,9 @@
                             <span>{{ user.display_name }}</span>
                         </li>
                         <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                        <li><a href="{% url 'collection_list' %}">Your collections</a></li>
+                        <li><a href="{% url 'collection_list' %}">Your Collections</a></li>
+                        <li><a href="{% url 'location_list' %}">My Locations</a></li>
+                        <li><a href="{{ user.profile.get_public_profile_url }}" target="_blank">{% lucide 'external-link' size=16 class='inline' %} Public Profile</a></li>
                         <li></li>
                         <li><a href="{% url 'user_settings' %}">Account Settings</a></li>
                         <li></li>

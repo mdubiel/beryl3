@@ -772,21 +772,10 @@ class Collection(BerylModel):
 
     def save(self, *args, **kwargs):
         """
-        Overrides the save method to add a placehold.co image URL
-        if one isn't provided.
+        Override save method.
+        NOTE: Placeholder image generation has been removed.
+        Collections without images will show no image instead of placeholder.
         """
-        # We only generate a URL if the image_url field is empty and a name exists.
-        if not self.image_url and self.name:
-
-            # URL-encode the collection name to handle spaces and special characters
-            # e.g., "Vintage Toys" becomes "Vintage+Toys"
-            encoded_text = urllib.parse.quote_plus(self.name)
-
-            # Construct the final URL for placehold.co
-            # Format: https://placehold.co/{width}x{height}/{bg_color}/{text_color}.png?text={your_text}
-            self.image_url = f"https://placehold.co/800x600/262626/FFFFFF.png?text={encoded_text}"
-
-        # It's crucial to call the original save() method at the end.
         super().save(*args, **kwargs)
     
     @property

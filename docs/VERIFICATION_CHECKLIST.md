@@ -1,705 +1,594 @@
-# Verification Checklist - Tasks 45, 54, 57
+# Verification Checklist
 
-**Current Version:** 0.2.83
-**Date:** 2025-10-27
-**Tasks to Verify:** 3
-**Bug Fixes Applied:** 3 (v0.2.81-0.2.83)
-
----
-
-## 📝 Session Summary
-
-This verification checklist covers work completed in a comprehensive session implementing three major features with iterative bug fixes based on user testing feedback.
-
-### Commits Overview (Most Recent First)
-
-1. **e6e8e1d** - fix: Convert available_statuses QuerySet to list (v0.2.83)
-2. **4b0bc35** - fix: Add Status and Type changes to mobile dropdown (v0.2.82)
-3. **d520ca1** - fix: Correct invalid Lucide icon name (v0.2.81)
-4. **0231a7d** - docs: Enumerate unnumbered tasks and create verification checklist
-5. **f21244d** - feat: Implement Task 54 Phase 1 - Mobile UI improvements (v0.2.79)
-6. **fa0cc37** - docs: Update progress tracking file with current session status
-7. **c8be701** - feat: Implement Task 57 - Attribute value autocompletion (v0.2.77)
-8. **3478492** - docs: Add Task 45 report and update documentation
-9. **1b8c566** - feat: Complete Task 45 - Enhanced collection filtering (v0.2.75-0.2.76)
-
-### Features Implemented
-
-**Task 45 - Enhanced Collection Filtering:**
-- Status filter (shows only statuses present in collection)
-- Item type filter (shows only types used in collection)
-- Attribute-based filtering (dynamic attribute selection)
-- Combined multi-filter support with URL persistence
-- Pagination compatibility with all filters
-
-**Task 54 Phase 1 - Mobile UI Improvements:**
-- Responsive item action buttons (Edit + More dropdown on mobile)
-- Status change submenu in mobile dropdown
-- Item type change submenu in mobile dropdown
-- Separated Move/Copy actions
-- Mobile-friendly share URL controls
-- Comprehensive mobile UI audit report (31 pages)
-
-**Task 57 - Attribute Value Autocompletion:**
-- Initial implementation using HTML5 datalist (needs rework)
-- HTMX endpoint for autocomplete suggestions
-- Item type filtering for suggestions
-- Frequency-based sorting
-
-### User Testing & Iterative Fixes
-
-**Round 1 - Icon Error (v0.2.81):**
-- ❌ `IconDoesNotExist: 'more-vertical'`
-- ✅ Fixed: Changed to 'ellipsis-vertical'
-
-**Round 2 - Mobile Dropdown Enhancement (v0.2.82):**
-- ❌ Missing Status change action
-- ❌ Missing Item Type change action
-- ❌ Move/Copy combined (wanted separate)
-- ✅ Fixed: Added collapsible submenus for Status and Type
-- ✅ Fixed: Separated Move and Copy into individual items
-
-**Round 3 - Status Filter Bug (v0.2.83):**
-- ❌ Status filter showing only "All Statuses"
-- ✅ Fixed: Converted QuerySet to list for proper template evaluation
+**Current Version:** 0.2.98
+**Last Updated:** 2025-11-02
+**Tasks Covered:** Task 45, Task 54, Task 57, Task 64
 
 ---
 
-## 🐛 Bug Fixes Applied (Re-test These)
+## 📋 How to Use This Checklist
 
-### v0.2.81 - Fixed invalid icon
-- ✅ Fixed `IconDoesNotExist` error for 'more-vertical' → 'ellipsis-vertical'
+This document groups **similar testing scenarios** into logical buckets for efficient testing.
 
-### v0.2.82 - Enhanced mobile dropdown
-- ✅ Added Change Status submenu to mobile actions
-- ✅ Added Change Item Type submenu to mobile actions
-- ✅ Separated Move and Copy into individual menu items
-- **Action Required:** Re-test mobile dropdown with new structure
-
-### v0.2.83 - Fixed status filter
-- ✅ Fixed status filter showing only "All Statuses"
-- ✅ Now correctly shows only statuses that exist in collection
-- **Action Required:** Re-test status filter dropdown
+**Instructions:**
+1. Pick a bucket to test (Filtering, Mobile UI, Public Profiles)
+2. Follow verification steps in order
+3. Mark checkboxes `[ ]` → `[x]` as you complete each step
+4. Write any issues in the "Issues Found" section
+5. I will read your feedback and fix reported issues
 
 ---
 
-## ✅ Task 45: Enhanced Collection Filtering
+## 🆕 Recent Updates
 
-**Version:** 0.2.75-0.2.76
-**Commits:** 1b8c566, 3478492
-**Report:** docs/reports/task045.md
-
-### Verification Steps
-
-#### Status Filter
-**⚠️ RE-TEST REQUIRED**: This section was fixed in v0.2.83 (QuerySet→list conversion)
-
-- [ ] Go to a collection with items in different statuses (In Collection, Wanted, Reserved)
-- [ ] Open Status dropdown in filter form
-- [ ] Verify only statuses that exist in collection are shown (not just "All Statuses")
-- [ ] Example: If collection has items with "In Collection" and "Wanted", only those two should appear
-- [ ] Verify "All Statuses" appears as the first option
-- [ ] Select a specific status and click Filter
-- [ ] Verify only items with that status are displayed
-- [ ] Verify status filter persists when navigating to page 2
-- [ ] Test with collection that has all status types
-- [ ] Test with collection that has only one status type
-
-**Issues Found:**
+### ⚠️ MIGRATION REQUIRED - November 2, 2025
+**Before testing v0.2.96**, run:
+```bash
+DJANGO_SETTINGS_MODULE=webapp.settings python manage.py makemigrations
+DJANGO_SETTINGS_MODULE=webapp.settings python manage.py migrate
 ```
-FIXED in v0.2.83 - Re-test above:
-- ✅ Converted QuerySet to list to fix template evaluation
-- ✅ Status dropdown now shows only statuses present in collection
 
-(User: Add any new issues discovered during re-test)
+### Latest Fixes - v0.2.98 (November 2, 2025)
 
+**NEW FIXES (v0.2.98):**
+- **Icons**: Fixed invalid 'home' icon - changed to 'house' (all templates)
+- **Breadcrumbs**: Added user breadcrumb to public profiles (Home > User > Collection)
+- **Placeholder Images**: Removed ALL placeholder generation from Collection.save()
+- **Placeholder Cleanup**: Removed 26 placeholder URLs from database
+- **Stats Colors**: Yellow (warning) for favorites, green (success) for total items
+- **User Card**: Removed border and shadow from public profile header
+- **User Menu**: Made dropdown consistent between public and regular pages
 
-```
+**PREVIOUS FIXES (v0.2.97):**
+- **Public Profiles**: Hash-based URLs - default `/u/<hash>/`, optional `/u/<nickname>/`
+- **Hash Field**: Auto-generated 10-char nanoID for each user profile
+- **URL Logic**: Both hash and nickname URLs work if nickname set
+- **Dashboard**: Added "Public Profile" button in top section
+- **Migration**: Auto-populates hash for existing users
+
+**PREVIOUS FIXES (v0.2.96):**
+- **Move Confirmation**: Fixed "copied" message when item was moved
+- **Move/Copy Modal**: Added 3rd "Stay Here" button, refreshes on click
+- **Move Icon**: Changed from 'move' to 'folder-sync'
+- **Modal Buttons**: Styled with primary/secondary colors (was ghost)
+- **Copy Item**: Fixed attributes error, now properly copies attribute values
+- **Copy Button**: Fixed Share URL copy button
+- **Public Stats**: Fixed stats cards not wrapping
+- **Nickname Validation**: Form validation added (was only in model)
+
+**PREVIOUS FIXES:**
+- **v0.2.95** - Move/Copy buttons consolidated
+- **v0.2.94** - Item Type modal for 100+ types
+- **v0.2.93** - Mobile dropdown scrolling removed
+- **v0.2.92** - Attribute value clearing fixed
+- **v0.2.91** - Status filter fixed (shows all statuses)
+- **v0.2.90** - Remove placeholder images command
+- **v0.2.84** - Public user profiles (Task 64)
 
 ---
 
-#### Item Type Filter
-- [ ] Create collection with multiple item types (Books, Movies, etc.)
-- [ ] Add some items without any type
-- [ ] Open Item Type dropdown in filter form
-- [ ] Verify only types present in collection are shown
-- [ ] Verify "No Type" option appears (since you have items without type)
-- [ ] Select a type and click Filter
-- [ ] Verify only items of that type are displayed
-- [ ] Select "No Type" and verify items without type are shown
+## 📑 Test Buckets
 
-**Issues Found:**
-```
-(User to fill in any issues discovered)
+Jump to the section you want to test:
 
+1. [🔍 BUCKET: Collection Filtering (Task 45)](#bucket-collection-filtering)
+2. [📱 BUCKET: Mobile UI & Desktop Actions (Task 54)](#bucket-mobile-ui--desktop-actions)
+3. [👤 BUCKET: Public User Profiles (Task 64)](#bucket-public-user-profiles)
+4. [⚠️ Known Issue: Autocomplete (Task 57)](#known-issue-autocomplete)
 
+# 🔍 BUCKET: Collection Filtering
 
+**Task 45** | **Version:** 0.2.91-0.2.96 | **Status:** ✅ Fixed (re-test required)
 
-```
+## What Was Fixed
+- **v0.2.96** - Filter panel no longer disappears when no results found
+- **v0.2.92** - Attribute value clears when changing attribute
+- **v0.2.91** - Status filter now shows available statuses correctly
+
+## Test Setup
+Go to a collection with diverse items:
+- [x] Multiple item types (Books, Movies, etc.)
+- [x] Multiple statuses (In Collection, Wanted, Reserved, etc.)
+- [x] Items with attributes (e.g., Books with "Author", "Publisher")
+- [x] Some items without type or attributes
 
 ---
 
-#### Attribute Filter
-- [ ] Go to collection with items that have attributes (e.g., Books with Author)
-- [ ] Open "Filter by Attribute" dropdown
-- [ ] Verify only attributes used in collection are shown
-- [ ] Select an attribute (e.g., "Author")
-- [ ] Verify form auto-submits and page reloads
-- [ ] Verify "Attribute Value" dropdown appears
-- [ ] Verify dropdown shows all values for that attribute
-- [ ] Select a value and click Filter
-- [ ] Verify only items with that attribute value are shown
-- [ ] Click "Clear" and verify all filters reset
+## Part A: Individual Filters
 
-**Issues Found:**
-```
-(User to fill in any issues discovered)
+### Status Filter
+- [x] Open **Status** dropdown in filter form
+- [x] ✅ **VERIFY:** Shows actual statuses ("In Collection", "Wanted", etc.) - not just "All Statuses"
+- [x] Select a specific status and click **Filter**
+- [x] ✅ **VERIFY:** Only items with that status displayed
 
+### Item Type Filter
+- [x] Open **Item Type** dropdown
+- [x] ✅ **VERIFY:** Only types present in collection shown
+- [x] ✅ **VERIFY:** "No Type" option appears if applicable
+- [x] Select a type and click **Filter**
+- [x] ✅ **VERIFY:** Only items of that type displayed
 
+### Attribute Filter
+- [x] Open **Filter by Attribute** dropdown
+- [x] ✅ **VERIFY:** Only attributes used in collection shown
+- [x] Select an attribute (e.g., "Author")
+- [x] ✅ **VERIFY:** "Attribute Value" dropdown appears with all values
+- [x] Select a value and click **Filter**
+- [x] ✅ **VERIFY:** Only matching items shown
+- [x] **Change** to different attribute
+- [x] ✅ **VERIFY:** Attribute Value field clears (v0.2.92 fix)
 
+### Search Filter
+- [x] Enter text in **Search** field and click **Filter**
+- [x] ✅ **VERIFY:** Results match search term
 
+---
+
+## Part B: Combined Filters & Persistence
+
+- [ ] Apply ALL filters: Search + Status + Item Type + Attribute
+- [ ] ✅ **VERIFY:** Items match ALL criteria (AND logic)
+- [ ] Navigate to page 2 (if available)
+- [ ] ✅ **VERIFY:** Filters persist in URL
+- [ ] ✅ **VERIFY:** Page 2 respects all filters
+- [ ] Refresh the page
+- [ ] ✅ **VERIFY:** Filters still applied
+- [ ] Click **Clear** button
+- [ ] ✅ **VERIFY:** All filters reset, showing all items
+
+---
+
+## Part C: No Results Scenario (v0.2.96 FIX)
+
+- [x] Apply filter that returns **zero results** (e.g., status that doesn't exist)
+- [x] ✅ **VERIFY:** "No items match your filters" message appears
+- [x] ✅ **VERIFY:** Filter panel is STILL VISIBLE (v0.2.96 fix)
+- [x] ✅ **VERIFY:** Can click "Clear" to reset filters
+- [x] Click **Clear**
+- [x] ✅ **VERIFY:** All items shown again
+
+---
+
+## Seed Data for Testing
+To generate test data with multiple collections and items for pagination testing:
+```bash
+DJANGO_SETTINGS_MODULE=webapp.settings python manage.py seed_data
 ```
 
 ---
 
-#### Combined Filters
-- [ ] Enter text in Search field
-- [ ] Select a Status
-- [ ] Select an Item Type
-- [ ] Select an Attribute and Value
-- [ ] Click Filter
-- [ ] Verify all filters work together (items match ALL criteria)
-- [ ] Navigate to page 2
-- [ ] Verify filters persist in URL parameters
-- [ ] Verify page 2 still respects all filters
-- [ ] Click "Clear" and verify everything resets
-
-**Issues Found:**
+## Issues Found:
 ```
-(User to fill in any issues discovered)
+(Write any new issues here)
 
 
 
+```
 
+# 📱 BUCKET: Mobile UI & Desktop Actions
+
+**Task 54** | **Version:** 0.2.93-0.2.96 | **Status:** ✅ Fixed (re-test required)
+
+## What Was Fixed
+- **v0.2.96** - Move/Copy redesigned: single menu item, modal with 2 buttons per collection
+- **v0.2.96** - Item Type modal buttons now borderless/subtle
+- **v0.2.96** - Delete modal now works on mobile
+- **v0.2.96** - Desktop Item Type now uses modal (consistent with mobile)
+- **v0.2.96** - Copy button in Share URL section now works
+- **v0.2.96** - Stats cards use flex-wrap, no rounded borders
+- **v0.2.94** - Item Type uses searchable modal (not submenu)
+- **v0.2.93** - Removed scrolling from mobile dropdown (opens upward)
+
+---
+
+## Part A: Mobile Item Actions (< 768px)
+
+### Setup
+- [x] Resize browser to mobile width (< 768px) or use device emulator
+- [x] Go to any collection with items
+
+### Dropdown Structure & Basic Actions
+- [x] ✅ **VERIFY:** Only 2 visible buttons: Edit (pencil) + More (three dots)
+- [x] Click **More Actions** button (three dots)
+- [x] ✅ **VERIFY:** Dropdown opens **upward** (v0.2.93)
+- [x] ✅ **VERIFY:** No scrolling required (v0.2.93)
+- [x] ✅ **VERIFY:** Three sections: Change / Actions / Delete
+
+### Status Submenu
+- [x] Click **Status** submenu
+- [x] ✅ **VERIFY:** All statuses shown, current is disabled/bold
+- [x] Select different status
+- [x] ✅ **VERIFY:** Item updates via HTMX
+
+### Item Type Modal (v0.2.94/v0.2.96)
+- [x] Click **Change Type**
+- [x] ✅ **VERIFY:** Modal opens (not submenu)
+- [x] ✅ **VERIFY:** Search box at top
+- [x] ✅ **VERIFY:** Grid layout (2-4 columns), current type highlighted
+- [x] ✅ **VERIFY:** Buttons are borderless/ghost style (v0.2.96 fix)
+- [x] ✅ **VERIFY:** Current type has primary color
+- [x] Type in search box
+- [x] ✅ **VERIFY:** Instant filtering works
+- [x] Click a type
+- [x] ✅ **VERIFY:** Modal closes, item updates
+
+### Move/Copy to Collection (v0.2.96 REDESIGN)
+- [x] Find Actions section in dropdown
+- [x] ✅ **VERIFY:** Single menu item "Move or Copy to Collection" (not two separate items)
+- [x] Click **Move or Copy to Collection**
+- [x] ✅ **VERIFY:** Modal opens with title "Move or Copy Item"
+- [x] ✅ **VERIFY:** Each collection has TWO icon-only buttons side-by-side
+- [x] Hover over first button (arrow icon)
+- [x] ✅ **VERIFY:** Tooltip shows "Move here"
+- [x] Hover over second button (copy icon)
+- [x] ✅ **VERIFY:** Tooltip shows "Copy here"
+- [x] Click **Move** button on a collection
+- [x] ✅ **VERIFY:** Item moves, confirmation appears
+- [x] Try **Copy** button on another collection
+- [ ] ✅ **VERIFY:** Item copies, confirmation appears
+
+### Delete Item (v0.2.96 FIX)
+- [x] Click **Delete Item** from dropdown
+- [x] ✅ **VERIFY:** Modal opens with "Delete Item?" title (v0.2.96 fix)
+- [x] ✅ **VERIFY:** Shows item name and "cannot be undone" warning
+- [x] ✅ **VERIFY:** Has Cancel and Delete buttons
+- [x] Click **Cancel**
+- [x] ✅ **VERIFY:** Modal closes, item not deleted
+
+### Other Mobile Actions
+- [x] Test **Manage Images** → ✅ Navigates correctly
+- [x] Test **Add Attribute** → ✅ HTMX modal opens
+- [x] Test **Add Link** → ✅ HTMX modal opens
+
+---
+
+## Part B: Desktop Actions (>= 768px)
+
+### Layout & Functionality
+- [x] Resize browser to desktop width (>= 768px)
+- [x] ✅ **VERIFY:** All action buttons in horizontal row
+- [x] ✅ **VERIFY:** Buttons properly grouped (btn-group)
+- [x] ✅ **VERIFY:** "More Actions" dropdown is HIDDEN
+
+### Item Type Modal (v0.2.96 FIX - Consistent with Mobile)
+- [x] Click **Item Type** button (package icon)
+- [x] ✅ **VERIFY:** Modal opens (v0.2.96 fix - NOT dropdown)
+- [x] ✅ **VERIFY:** Same modal as mobile: search box + grid
+- [x] ✅ **VERIFY:** Buttons are borderless/ghost style
+- [x] Test search and selection
+- [x] ✅ **VERIFY:** Works same as mobile
+
+### Move/Copy Dropdown (v0.2.96 REDESIGN)
+- [x] Click **Move** button (move icon)
+- [x] ✅ **VERIFY:** Dropdown shows single "Move or Copy to Collection" item
+- [x] Click the menu item
+- [x] ✅ **VERIFY:** Same modal as mobile with two buttons per collection
+- [x] Test Move and Copy buttons
+- [x] ✅ **VERIFY:** Works same as mobile
+
+### Other Desktop Buttons
+- [x] Test **Add Attribute** → ✅ HTMX modal opens
+- [x] Test **Add Link** → ✅ HTMX modal opens
+- [x] Test **Status** dropdown → ✅ Shows all statuses
+- [x] Test **Manage Images** → ✅ Navigates correctly
+- [x] Test **Edit Item** → ✅ Navigates correctly
+- [x] Test **Delete** dropdown → ✅ Shows confirmation
+
+---
+
+## Part C: Share URL Controls
+
+### Copy Button (v0.2.96 FIX)
+- [x] Go to PUBLIC or UNLISTED collection
+- [x] Resize to mobile width (< 768px)
+- [x] Find share URL section below collection name
+- [x] ✅ **VERIFY:** Share URL input full width on mobile
+- [x] ✅ **VERIFY:** Buttons are larger (not tiny)
+- [x] ✅ **VERIFY:** Visibility badge shows icon only (text hidden)
+- [x] Click **Copy** button
+- [x] ✅ **VERIFY:** URL copied to clipboard (v0.2.96 fix)
+- [x] ✅ **VERIFY:** Button shows checkmark briefly
+- [x] Click **Open** button
+- [x] ✅ **VERIFY:** Public view opens in new tab
+
+---
+
+## Part D: Stats Cards (v0.2.96 FIX)
+
+### Collection Stats (Private View)
+- [x] Go to any collection
+- [x] Scroll to stats section (below description)
+- [x] ✅ **VERIFY:** Stats cards use flex-wrap layout (v0.2.96 fix)
+- [x] ✅ **VERIFY:** No rounded borders/shadow (v0.2.96 fix)
+- [x] Resize browser from wide to narrow
+- [x] ✅ **VERIFY:** Cards wrap as needed based on screen size
+
+### Collection Stats (Public View)
+- [x] Visit a public collection
+- [x] Check stats cards
+- [x] ✅ **VERIFY:** Same flex-wrap behavior
+- [x] ✅ **VERIFY:** No rounded borders
+
+---
+
+## Issues Found:
+```
+### Move/Copy to Collection (v0.2.96 REDESIGN)
+ - after move there is this dialog: "✅ Success!
+
+Item successfully copied to "Smile Hear Collection"."
+Few items to fix here: Make all 3 buttons in the row: [ go to new collection ] [ item details ] [ go to originall collection ]. When user decides to see originall collection, this view should be refreshed (so load paga again instead of closing the dialog). Also, when user moves object the text should be "moved" not "copied".
+
+ - Also I do not like move item icon, find somethign else
+ - I do not like how the icons are styled. Use the same styling as action buttons.
+
+ - copy erroring with "Failed to copy item" 📱 ERROR | items.copy_item_to_collection | Error copying item 'Darkblue Modern' [12eelozfai]: 'CollectionItem' object has no attribute 'attributes'
+
+## Part C: Share URL Controls
+- public URL do not work, there is an error "Failed to copy. Please try again or copy manually."
+
+## Part D
+### Collection Stats (Public View) - stats still do not wrap
+
+```
+
+# 👤 BUCKET: Public User Profiles
+
+**Task 64** | **Version:** 0.2.84-0.2.97 | **Status:** ✅ Completed (NEW URL LOGIC v0.2.97)
+
+## What Was Implemented
+- **v0.2.97** - Hash-based URLs (default `/u/<hash>/`, optional `/u/<nickname>/`)
+- **v0.2.97** - Auto-generated nanoID hash for each user (10 characters)
+- **v0.2.97** - Dashboard "Public Profile" button added
+- **v0.2.97** - Migration to populate hash for existing users
+- **v0.2.96** - Nickname validation, case-insensitive matching, lowercase storage
+- **v0.2.96** - Stats cards flex-wrap layout
+- **v0.2.84-0.2.90** - Public profile pages, PUBLIC-only collections, responsive design
+
+---
+
+## Part A: Profile URLs & Access (v0.2.97 UPDATED)
+
+### Hash-Based URL (Always Works)
+- [x] Visit your dashboard
+- [x] ✅ **VERIFY:** "Public Profile" button visible in top right section (v0.2.97 NEW)
+- [x] Click "Public Profile" button
+- [x] ✅ **VERIFY:** Opens in new tab
+- [x] Check the URL format
+- [x] ✅ **VERIFY:** URL is `/u/<10-char-hash>/` (NOT numeric user ID) (v0.2.97 FIX)
+- [x] Example: `/u/x9k2mP4aB1/` (10 random characters)
+- [x] ✅ **VERIFY:** Profile loads correctly
+- [x] Copy hash from URL
+- [x] Log out
+- [x] Visit same hash URL as guest
+- [x] ✅ **VERIFY:** Profile still loads (hash is permanent)
+
+### Nickname URL (Optional, Works Alongside Hash)
+- [x] Set a valid nickname in account settings (e.g., "john-doe")
+- [x] Save and return to dashboard
+- [x] Click "Public Profile" button
+- [x] ✅ **VERIFY:** URL still uses hash (primary URL)
+- [x] Manually visit `/u/john-doe/`
+- [x] ✅ **VERIFY:** Works! Same profile loads (v0.2.97 NEW)
+- [x] Try mixed case: `/u/John-Doe/`
+- [x] ✅ **VERIFY:** Works (case-insensitive)
+- [x] ✅ **VERIFY:** Both URLs work simultaneously:
+  - `/u/<hash>/` - Always works
+  - `/u/john-doe/` - Works when nickname is set
+
+### Nickname Validation
+- [x] Go to Account Settings
+- [x] Try setting nickname with **spaces** (e.g., "My Name")
+- [x] ✅ **VERIFY:** Validation error shown
+- [x] Try setting nickname with **special chars** (e.g., "user@123" or "user!")
+- [x] ✅ **VERIFY:** Validation error shown
+- [x] Set valid nickname with **mixed case** (e.g., "JohnDoe123")
+- [x] Save and check
+- [x] ✅ **VERIFY:** Nickname stored as lowercase "johndoe123"
+- [x] Try setting duplicate nickname (use another user's nickname)
+- [x] ✅ **VERIFY:** Unique constraint error
+
+### Nickname Suggestion Banner
+- [x] Clear your nickname in account settings (leave it empty)
+- [x] Visit your public profile via hash URL
+- [x] ✅ **VERIFY:** Banner suggests setting nickname (v0.2.97 UPDATED)
+- [x] ✅ **VERIFY:** Banner includes link to account settings
+- [x] Log out and visit same profile
+- [x] ✅ **VERIFY:** Banner does NOT appear (only for owner)
+- [x] Set a valid nickname
+- [x] Visit your profile again
+- [x] ✅ **VERIFY:** Banner no longer appears
+
+### Invalid URLs
+- [x] Visit `/u/nonexistent/`
+- [x] ✅ **VERIFY:** 404 error page
+- [x] Visit `/u/12345/` (numeric, old-style ID)
+- [x] ✅ **VERIFY:** 404 error (IDs no longer used) (v0.2.97 CHANGE)
+- [x] ✅ **VERIFY:** URLs never expose email addresses
+
+---
+
+## Part B: Profile Content & Display
+
+### Basic Information
+- [x] Visit your public profile
+- [x] ✅ **VERIFY:** Display name shows correctly
+- [x] ✅ **VERIFY:** Join date displays (Month Year format)
+- [ ] ✅ **VERIFY:** Three statistics cards:
+  - Public Collections count
+  - Total Items (from public collections only)
+  - Favorites (from public collections only)
+- [x] ✅ **VERIFY:** Statistics are accurate
+
+### Stats Cards (v0.2.96 FIX)
+- [x] Check stats cards layout
+- [x] ✅ **VERIFY:** Cards use flex-wrap (v0.2.96 fix)
+- [x] ✅ **VERIFY:** No rounded borders/shadow (v0.2.96 fix)
+- [x] Resize browser from wide to narrow
+- [x] ✅ **VERIFY:** Cards wrap as needed
+
+### No Placeholders
+- [x] ✅ **VERIFY:** No avatar placeholder (removed v0.2.86)
+- [failed] ✅ **VERIFY:** Collections without images show no placeholder
+- [x] ✅ **VERIFY:** Items without images show no placeholder
+- [failed] ✅ **VERIFY:** No picsum.photos or placehold.co URLs
+
+---
+
+## Part C: Privacy & Visibility
+
+### Privacy Controls
+- [x] Create collections with different visibility:
+  - At least 2 PUBLIC
+  - At least 1 UNLISTED
+  - At least 1 PRIVATE
+- [x] Visit your public profile
+- [x] ✅ **VERIFY:** Only PUBLIC collections shown (UNLISTED/PRIVATE hidden)
+- [x] Mark items as favorites in PRIVATE collections
+- [x] ✅ **VERIFY:** Private favorites NOT shown on profile
+- [x] Log out and visit another user's profile
+- [x] ✅ **VERIFY:** Can only see their PUBLIC collections
+- [x] ✅ **VERIFY:** Statistics only count PUBLIC data
+
+---
+
+## Part D: Navigation & Links
+
+### Username Linking
+- [x] Visit a PUBLIC collection (not your own)
+- [x] Find "Owned by [username]" text
+- [x] ✅ **VERIFY:** Username is clickable link with hover effect
+- [x] Click username
+- [x] ✅ **VERIFY:** Navigates to that user's public profile
+
+### User Dropdown Link
+- [x] Click your user avatar/menu in top navigation
+- [x] ✅ **VERIFY:** "Public Profile" option with external-link icon
+- [x] Click **Public Profile**
+- [x] ✅ **VERIFY:** Opens in new tab showing your public profile
+
+---
+
+## New Tests for v0.2.98
+
+### Breadcrumbs
+- [ ] Visit a public user profile
+- [ ] ✅ **VERIFY:** Breadcrumb shows "Home > {{ display_name }}"
+- [ ] Visit a public collection
+- [ ] ✅ **VERIFY:** Breadcrumb shows "Home > {{ owner_name }} > {{ collection_name }}"
+- [ ] Click on owner name in breadcrumb
+- [ ] ✅ **VERIFY:** Navigates to owner's public profile
+
+### Placeholder Images (v0.2.98 FIX)
+- [ ] Create a new collection without adding an image
+- [ ] Save the collection
+- [ ] ✅ **VERIFY:** No placeholder image is generated (image_url is empty)
+- [ ] ✅ **VERIFY:** Collection shows without any image (no placehold.co URLs)
+- [ ] Visit public collections
+- [ ] ✅ **VERIFY:** No placehold.co, picsum.photos, or any placeholder URLs anywhere
+
+### Stats Colors (v0.2.98 FIX)
+- [ ] Visit your public profile
+- [ ] Check stats card colors
+- [ ] ✅ **VERIFY:** "Total Items" uses green (text-success)
+- [ ] ✅ **VERIFY:** "Favorites" uses yellow (text-warning)
+- [ ] ✅ **VERIFY:** "Public Collections" uses primary color
+
+### User Card Styling (v0.2.98 FIX)
+- [ ] Visit your public profile
+- [ ] Check the main user info card
+- [ ] ✅ **VERIFY:** No border around the card
+- [ ] ✅ **VERIFY:** No shadow (shadow-lg removed)
+- [ ] ✅ **VERIFY:** Clean, flat appearance
+
+### User Dropdown Consistency (v0.2.98 FIX)
+- [ ] Log in and visit a public collection page
+- [ ] Click user avatar dropdown
+- [ ] ✅ **VERIFY:** Menu includes:
+  - Dashboard
+  - Your Collections
+  - My Locations (v0.2.98 NEW)
+  - Public Profile (v0.2.98 NEW)
+  - Account Settings
+  - Manage Emails
+  - Change Password
+  - Logout
+- [ ] Now visit your regular dashboard
+- [ ] Click user avatar dropdown
+- [ ] ✅ **VERIFY:** Same menu items appear (consistency)
+
+## Issues Found:
+```
+(Write any new issues here)
 ```
 
 ---
 
-## ✅ Task 54 Phase 1: Mobile UI Improvements
+# ⚠️ Known Issue: Autocomplete
 
-**Version:** 0.2.79
-**Commit:** f21244d
-**Audit Report:** docs/MOBILE_UI_AUDIT.md
+**Task 57** | **Version:** 0.2.77 | **Status:** ⚠️ Needs Reimplementation
 
-### Verification Steps
+## Known Issue
 
-#### Mobile Item Actions (< 768px width)
-**⚠️ RE-TEST REQUIRED**: This section was updated in v0.2.82 with Status/Type submenus
+**The current autocomplete implementation does not work.**
 
-- [ ] Resize browser to mobile width (< 768px) or use device emulator
-- [ ] Go to any collection with items
-- [ ] Verify action buttons do NOT overflow horizontally
-- [ ] Verify you see only 2 buttons: Edit (pencil icon) and More (three dots)
-- [ ] Click the "More Actions" button (three vertical dots)
-- [ ] Verify dropdown appears with menu structure:
-  - **Change section:**
-    - [ ] Status submenu (shows current status, click to expand)
-    - [ ] Item Type submenu (shows current type, click to expand)
-  - **Actions section:**
-    - [ ] Manage Images
-    - [ ] Add Attribute
-    - [ ] Add Link
-    - [ ] Move Item (separate from Copy)
-    - [ ] Copy Item (separate from Move)
-  - **Delete section:**
-    - [ ] Delete Item (in red)
-- [ ] Click Status submenu and verify:
-  - [ ] All item statuses are shown (In Collection, Wanted, Reserved, etc.)
-  - [ ] Current status is disabled/bold
-  - [ ] Clicking a status updates the item via HTMX
-- [ ] Click Item Type submenu and verify:
-  - [ ] All item types are shown in alphabetical order
-  - [ ] Current type is disabled/bold
-  - [ ] Clicking a type updates the item via HTMX
-  - [ ] Submenu is scrollable if many types exist
-- [ ] Click "Move Item" and verify modal opens (separate from Copy)
-- [ ] Click "Copy Item" and verify modal opens (separate from Move)
-- [ ] Click "Manage Images" from dropdown
-- [ ] Verify it navigates correctly
-- [ ] Test other dropdown actions (Add Attribute, Add Link)
-- [ ] Verify HTMX modals open correctly
+**Requested Solution:** Reimplement using Location field technique (Task 50):
+- Combobox pattern with hidden inputs
+- Visible search field
+- HTMX endpoint
+- JavaScript handlers
 
-**Issues Found:**
-```
-FIXED in v0.2.82 - Re-test above:
-- ✅ Added Status submenu
-- ✅ Added Item Type submenu
-- ✅ Separated Move and Copy into individual items
+**Impact:** Users cannot autocomplete attribute values when adding/editing attributes.
 
-(User: Add any new issues discovered during re-test)
-
-
-```
+**Skip testing this until reimplemented.**
 
 ---
 
-#### Desktop Item Actions (>= 768px width)
-- [ ] Resize browser to desktop width (>= 768px)
-- [ ] Go to same collection
-- [ ] Verify you see ALL action buttons in horizontal row
-- [ ] Verify buttons are properly grouped
-- [ ] Verify "More Actions" dropdown is HIDDEN on desktop
-- [ ] Verify all buttons work (Type, Add Attribute, Add Link, Status, Move, Images, Edit, Delete)
+# 📋 Cross-Cutting Tests
 
-**Issues Found:**
-```
-(User to fill in any issues discovered)
+## Responsive Testing
+Test each bucket at multiple widths to ensure layouts adapt correctly:
 
+- [x] **320px** (small phone) - Mobile layouts, no horizontal scrolling
+- [x] **375px** (iPhone SE) - Standard mobile experience
+- [x] **768px** (tablet) - Breakpoint where mobile/desktop switch occurs
+- [x] **1024px** (desktop) - Standard desktop layout
+- [x] **1920px** (large desktop) - Wide screen layouts
 
+## Browser Testing
+Test core functionality in each browser:
 
-
-```
-
----
-
-#### Mobile Share URL Controls
-- [ ] Go to a PUBLIC or LINK collection detail page
-- [ ] Resize to mobile width (< 768px)
-- [ ] Find the share URL section below collection name
-- [ ] Verify share URL input takes full width on mobile
-- [ ] Verify buttons are larger (not tiny)
-- [ ] Verify visibility badge text is HIDDEN on mobile (icon only)
-- [ ] Click "Copy" button
-- [ ] Verify URL is copied to clipboard
-- [ ] Click "Open" button (external link icon)
-- [ ] Verify public view opens in new tab
-
-**Issues Found:**
-```
-User name should be linked to public user page.
-
-
-
-
-```
+- [x] **Chrome/Edge** (latest) - Primary browser
+- [x] **Firefox** (latest) - Gecko engine
+- [x] **Safari** (latest) - WebKit engine
 
 ---
 
-#### Desktop Share URL Controls
-- [ ] Resize browser to desktop width (>= 768px)
-- [ ] Verify share URL input has fixed width (not full width)
-- [ ] Verify visibility badge shows both icon AND text
-- [ ] Verify all buttons work correctly
+## 📊 Testing Summary
 
-**Issues Found:**
-```
-(User to fill in any issues discovered)
+**Tester:** ___________
+**Date:** ___________
 
+### Results by Bucket
 
+| Bucket | Status | Issues Count |
+|--------|--------|--------------|
+| 🔍 Collection Filtering | ⬜ Pass / ⬜ Fail / ⬜ Pass with Issues | ___ |
+| 📱 Mobile UI & Desktop | ⬜ Pass / ⬜ Fail / ⬜ Pass with Issues | ___ |
+| 👤 Public User Profiles | ⬜ Pass / ⬜ Fail / ⬜ Pass with Issues | ___ |
 
-
-```
-
----
-
-## ✅ Task 57: Attribute Value Autocompletion
-
-**Version:** 0.2.77
-**Commit:** c8be701
-
-### Verification Steps
-
-#### Autocomplete - First Use
-- [ ] Create a new item with type "Book"
-- [ ] Add attribute "Author" with value "Terry Pratchett"
-- [ ] Save the item
-- [ ] Create another Book item
-- [ ] Click "Add Attribute"
-- [ ] Select "Author" from attribute dropdown
-- [ ] In the value field, type "ter" (3 characters)
-- [ ] Wait ~300ms
-- [ ] Verify autocomplete dropdown appears with "Terry Pratchett"
-- [ ] Click on "Terry Pratchett" from suggestions
-- [ ] Verify value field is filled
-- [ ] Save attribute
-
-**Issues Found:**
-```
-This do not work. Would you mind use same technique as previously developed for Locations?
-
-
-
-
-```
-
----
-
-#### Autocomplete - Multiple Values
-- [ ] Add several books with different authors:
-  - [ ] "Terry Pratchett"
-  - [ ] "Terry Brooks"
-  - [ ] "Neil Gaiman"
-  - [ ] "Terry Goodkind"
-- [ ] Create a new Book item
-- [ ] Add "Author" attribute
-- [ ] Type "ter" in value field
-- [ ] Verify autocomplete shows all "Terry" authors (Pratchett, Brooks, Goodkind)
-- [ ] Verify they are ordered by frequency (most used first)
-- [ ] Type "terry p" (more specific)
-- [ ] Verify suggestions filter to only "Terry Pratchett"
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-
-```
-
----
-
-#### Autocomplete - Item Type Filtering
-- [ ] Add a Movie item with attribute "Director" = "Terry Gilliam"
-- [ ] Create a new Book item
-- [ ] Add "Author" attribute
-- [ ] Type "ter" in value field
-- [ ] Verify autocomplete DOES NOT show "Terry Gilliam" (different item type)
-- [ ] Verify it only shows Book authors
-- [ ] Now create a new Movie item
-- [ ] Add "Director" attribute
-- [ ] Type "ter" in value field
-- [ ] Verify autocomplete shows "Terry Gilliam" (correct item type)
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-
-```
-
----
-
-#### Autocomplete - Edit Mode
-- [ ] Go to existing item with attributes
-- [ ] Edit an existing attribute value
-- [ ] Type 3+ characters
-- [ ] Verify autocomplete works in edit mode
-- [ ] Verify suggestions appear
-- [ ] Select a suggestion and save
-
-**Issues Found:**
-```
-- do not work, see note on previous verification
-
-
-
-
-```
-
----
-
-#### Autocomplete - Minimum Character Requirement
-- [ ] Add attribute to any item
-- [ ] Type only 1 character in value field
-- [ ] Verify autocomplete DOES NOT trigger
-- [ ] Type 2 characters
-- [ ] Verify autocomplete DOES NOT trigger
-- [ ] Type 3 characters
-- [ ] Wait 300ms
-- [ ] Verify autocomplete triggers and shows suggestions
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-
-```
-
----
-
-#### Autocomplete - No Suggestions
-- [ ] Add attribute with a completely new value that doesn't exist
-- [ ] Type 3+ characters that don't match anything
-- [ ] Verify no autocomplete dropdown appears (or empty dropdown)
-- [ ] Verify you can still type and submit the new value
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-
-```
-
----
-
-## General Testing Notes
-
-### Browser Testing
-Test on multiple browsers:
-- [ ] Chrome/Edge (latest)
-- [ ] Firefox (latest)
-- [ ] Safari (latest)
-
-### Mobile Device Testing
-Test on actual devices (if possible):
-- [ ] iPhone (iOS Safari)
-- [ ] Android phone (Chrome)
-- [ ] Tablet (iPad or Android)
-
-### Responsive Breakpoints
-Test at various widths:
-- [ ] 320px (small phone)
-- [ ] 375px (iPhone SE)
-- [ ] 768px (tablet)
-- [ ] 1024px (desktop)
-- [ ] 1920px (large desktop)
-
----
-
-## Summary
-
-**Tester Name:** ___________
-**Date Tested:** ___________
 **Overall Status:** ⬜ Pass / ⬜ Fail / ⬜ Pass with Issues
 
-**Total Issues Found:** ___________
-
-**Notes:**
-```
-(General notes about testing experience, browser compatibility, performance, etc.)
-
-
-
-
-
-
-
-
-```
-
 ---
 
----
+## 🔄 Workflow
 
-## ✅ Task 64: Public User Profile Page
+1. **Pick a bucket** to test (Filtering, Mobile UI, or Public Profiles)
+2. **Follow steps** in order, mark checkboxes as you go
+3. **Document issues** in "Issues Found" sections
+4. **Submit feedback** - I will read this file and fix reported issues
+5. **Re-test** after fixes are deployed
+6. **Repeat** until all buckets pass
 
-**Version:** 0.2.84
-**Commit:** c74fbf1
-**Description:** Create public user profile pages showing user info and PUBLIC collections only
-
-### Verification Steps
-
-#### Public Profile URL Structure
-- [ ] Test profile URL with nickname: Create/visit profile at `/u/testnickname/`
-- [ ] Verify nickname-based URL works when user has nickname set
-- [ ] Test profile URL with ID: Visit `/u/1/` (replace 1 with actual user ID)
-- [ ] Verify ID-based URL works for users without nickname
-- [ ] Try invalid username/ID: `/u/nonexistent/`
-- [ ] Verify 404 error for non-existent users
-- [ ] Verify URLs never expose email addresses
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Profile Display - Basic Information
-- [ ] Visit your own public profile (logged in)
-- [ ] Verify display name shows correctly (nickname or full name)
-- [ ] Verify avatar placeholder shows first letter of display name
-- [ ] Verify join date displays correctly (Month Year format)
-- [ ] Verify all three statistics cards display:
-  - [ ] Public Collections count
-  - [ ] Total Items count (from public collections only)
-  - [ ] Favorites count (from public collections only)
-- [ ] Verify statistics are accurate
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Nickname Suggestion
-- [ ] Create a test user without nickname set
-- [ ] Log in as that user
-- [ ] Visit your own profile at `/u/[YOUR_USER_ID]/`
-- [ ] Verify alert appears suggesting to set nickname
-- [ ] Verify alert includes link to account settings
-- [ ] Log out and visit same profile URL as anonymous user
-- [ ] Verify nickname suggestion does NOT appear for other users
-- [ ] Set nickname in account settings
-- [ ] Verify profile URL changes to `/u/[nickname]/`
-- [ ] Verify nickname suggestion no longer appears
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Public Collections Display
-- [ ] Create several collections with different visibility settings:
-  - [ ] At least 2 PUBLIC collections
-  - [ ] At least 1 UNLISTED collection
-  - [ ] At least 1 PRIVATE collection
-- [ ] Visit your public profile
-- [ ] Verify only PUBLIC collections are shown
-- [ ] Verify UNLISTED and PRIVATE collections are NOT shown
-- [ ] Verify each collection card shows:
-  - [ ] Collection image or placeholder icon
-  - [ ] Collection name
-  - [ ] Collection description (truncated if long)
-  - [ ] Item count
-  - [ ] "Public" visibility badge
-- [ ] Click on a collection card
-- [ ] Verify it navigates to public collection view
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Favorites Display
-- [ ] Mark several items as favorites in PUBLIC collections
-- [ ] Mark some items as favorites in PRIVATE/UNLISTED collections
-- [ ] Visit your public profile
-- [ ] Verify "Favorite Items" section appears
-- [ ] Verify only favorites from PUBLIC collections are shown
-- [ ] Verify favorites from PRIVATE/UNLISTED collections are NOT shown
-- [ ] Verify maximum 12 favorites are displayed
-- [ ] Verify each favorite shows:
-  - [ ] Item image or placeholder icon
-  - [ ] Item name
-  - [ ] Collection name (truncated)
-  - [ ] Star icon
-- [ ] Click on a favorite item
-- [ ] Verify it navigates to the public collection containing that item
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Username Linking from Public Collections
-- [ ] Visit a PUBLIC collection (not your own)
-- [ ] Find the "Owned by [username]" text
-- [ ] Verify username is a clickable link
-- [ ] Click the username link
-- [ ] Verify it navigates to that user's public profile
-- [ ] Verify link styling (primary color, hover effect)
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Privacy and Access Control
-- [ ] Log out and visit another user's public profile
-- [ ] Verify you can see their PUBLIC collections
-- [ ] Verify you cannot see their PRIVATE/UNLISTED collections
-- [ ] Verify statistics only count PUBLIC collection data
-- [ ] Create a user with NO public collections
-- [ ] Visit their profile
-- [ ] Verify message: "[name] hasn't made any collections public yet"
-- [ ] Verify no favorites section appears if no public favorites exist
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-#### Responsive Design
-- [ ] Visit public profile on mobile (< 768px width)
-- [ ] Verify avatar and user info stack vertically
-- [ ] Verify statistics cards stack vertically
-- [ ] Verify collection grid adjusts to 1 column
-- [ ] Verify favorites grid shows 2 columns on mobile
-- [ ] Visit on tablet (768px - 1024px)
-- [ ] Verify layout adapts appropriately
-- [ ] Visit on desktop (> 1024px)
-- [ ] Verify statistics cards display horizontally
-- [ ] Verify collections show 3 columns
-- [ ] Verify favorites show up to 6 columns
-
-**Issues Found:**
-```
-(User to fill in any issues discovered)
-
-
-
-```
-
----
-
-## 🔧 Known Issues (Not Yet Fixed)
-
-### Task 57: Autocomplete Implementation
-**Status:** Needs reimplementation
-**Issue:** Current HTML5 datalist approach doesn't work reliably
-**Requested Solution:** Use same combobox pattern as Location field (Task 50)
-**Impact:** Users cannot autocomplete attribute values when adding/editing attributes
-
-**Technical Details:**
-- Location field uses: hidden inputs + visible search field + HTMX endpoint + JavaScript handlers
-- Current implementation uses: HTML5 `<datalist>` element (simpler but not working)
-- Need to refactor to match Location combobox pattern
-
-**Files Affected:**
-- Templates with attribute value inputs (add/edit attribute modals)
-- HTMX endpoint for autocomplete suggestions
-- JavaScript for selection handling
-
----
-
-## Next Steps
-
-After verification is complete:
-1. If issues found, create list of specific problems
-2. Claude will read this file and fix reported issues
-3. Re-test after fixes
-4. Mark tasks as fully complete
-
-**Priority Fixes:**
-1. Task 57: Reimplement autocomplete using Location combobox pattern
-2. Task 64: Create public user profile page (dependency for username linking)
+**Note:** Test one bucket at a time for better focus and faster feedback cycles.

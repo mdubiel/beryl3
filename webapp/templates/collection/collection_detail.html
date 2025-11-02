@@ -147,22 +147,22 @@
             
         </div>
         
-        {# Bottom section - Stats #}
+        {# Bottom section - Stats - flex-wrap without borders #}
         <div class="mt-6">
-            <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-100/60 backdrop-blur-sm">
-                <div class="stat">
+            <div class="flex flex-wrap gap-4">
+                <div class="stat bg-base-100/60 backdrop-blur-sm p-4 flex-1 min-w-[120px]">
                     <div class="stat-title">Total Items</div>
                     <div class="stat-value">{{ stats.total_items }}</div>
                 </div>
-                <div class="stat">
+                <div class="stat bg-base-100/60 backdrop-blur-sm p-4 flex-1 min-w-[120px]">
                     <div class="stat-title">In Collection</div>
                     <div class="stat-value text-success">{{ stats.in_collection_count }}</div>
                 </div>
-                <div class="stat">
+                <div class="stat bg-base-100/60 backdrop-blur-sm p-4 flex-1 min-w-[120px]">
                     <div class="stat-title">Wanted</div>
                     <div class="stat-value text-info">{{ stats.wanted_count }}</div>
                 </div>
-                <div class="stat">
+                <div class="stat bg-base-100/60 backdrop-blur-sm p-4 flex-1 min-w-[120px]">
                     <div class="stat-title">Reserved</div>
                     <div class="stat-value text-warning">{{ stats.reserved_count }}</div>
                 </div>
@@ -209,7 +209,8 @@
     {% endif %}
 
     {# Task 45: Filtering UI - Enhanced with available filters only #}
-    {% if stats.total_items > 0 %}
+    {# Show filter panel if collection has items OR if filters are active #}
+    {% if stats.total_items > 0 or filter_search or filter_status or filter_item_type or filter_attribute %}
     <div class="card bg-base-200 shadow-sm p-4 mb-6">
         <form method="get" id="filter-form">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
@@ -419,6 +420,10 @@
                     {% lucide 'eye' size=16 class='mr-2' %}
                     View Item Details
                 </a>
+                <button onclick="stayInCurrentCollection()" class="btn btn-outline flex-1">
+                    {% lucide 'house' size=16 class='mr-2' %}
+                    Stay Here
+                </button>
             </div>
         </div>
         <div class="modal-action">
@@ -446,7 +451,7 @@
             <div id="item-types-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-96 overflow-y-auto">
                 {% for item_type in item_types|dictsort:"display_name" %}
                 <button type="button"
-                        class="btn btn-outline btn-sm justify-start item-type-option"
+                        class="btn btn-ghost btn-sm justify-start item-type-option hover:bg-base-200"
                         data-type-id="{{ item_type.id }}"
                         data-type-name="{{ item_type.display_name|lower }}"
                         onclick="selectItemType('{{ item_type.id }}', '{{ item_type.display_name|escapejs }}')">
@@ -598,20 +603,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function showMoveModal(itemHash, itemName) {
     currentItemHash = itemHash;
-    currentOperation = 'move';
-    document.getElementById('move-copy-modal-title').textContent = 'Move Item';
+    currentOperation = null; // No specific operation - show both buttons
+    document.getElementById('move-copy-modal-title').textContent = 'Move or Copy Item';
     document.getElementById('move-copy-item-name').textContent = itemName;
     loadCollectionsForMoveOrCopy(itemHash);
     document.getElementById('move-copy-modal').showModal();
 }
 
 function showCopyModal(itemHash, itemName) {
-    currentItemHash = itemHash;
-    currentOperation = 'copy';
-    document.getElementById('move-copy-modal-title').textContent = 'Copy Item';
-    document.getElementById('move-copy-item-name').textContent = itemName;
-    loadCollectionsForMoveOrCopy(itemHash);
-    document.getElementById('move-copy-modal').showModal();
+    // Redirect to showMoveModal - same functionality now
+    showMoveModal(itemHash, itemName);
 }
 
 // Item Type Modal Functions
@@ -629,10 +630,10 @@ function showItemTypeModal(itemHash, itemName, currentTypeId) {
     document.querySelectorAll('.item-type-option').forEach(btn => {
         if (btn.dataset.typeId === currentTypeId) {
             btn.classList.add('btn-primary');
-            btn.classList.remove('btn-outline');
+            btn.classList.remove('btn-ghost');
         } else {
             btn.classList.remove('btn-primary');
-            btn.classList.add('btn-outline');
+            btn.classList.add('btn-ghost');
         }
     });
 
@@ -701,32 +702,39 @@ function loadCollectionsForMoveOrCopy(itemHash) {
 function displayCollections(collections) {
     const listElement = document.getElementById('collections-list');
     listElement.innerHTML = '';
-    
+
     collections.forEach(collection => {
         const collectionDiv = document.createElement('div');
-        collectionDiv.className = 'card bg-base-200 p-4 cursor-pointer hover:bg-base-300 transition-colors';
-        collectionDiv.onclick = () => performMoveOrCopy(collection.id, collection.name);
-        
+        collectionDiv.className = 'card bg-base-200 p-4';
+
         collectionDiv.innerHTML = `
             <div class="flex justify-between items-center">
                 <div>
                     <h4 class="font-semibold">${collection.name}</h4>
                     <p class="text-sm text-neutral">${collection.item_count} items</p>
                 </div>
-                <div class="text-right">
-                    <button class="btn btn-primary btn-sm">
-                        ${currentOperation === 'move' ? 'Move Here' : 'Copy Here'}
+                <div class="flex gap-2">
+                    <button class="btn btn-primary btn-sm btn-square"
+                            title="Move here"
+                            onclick="performMoveOrCopy(${collection.id}, '${collection.name.replace(/'/g, "\\'")}', 'move')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h8"/><path d="M14 8V4"/><path d="M9 4h10"/><path d="M9 9h10"/><path d="M9 14h10"/><path d="M17 14v2a2 2 0 0 1-2 2H7"/></svg>
+                    </button>
+                    <button class="btn btn-secondary btn-sm btn-square"
+                            title="Copy here"
+                            onclick="performMoveOrCopy(${collection.id}, '${collection.name.replace(/'/g, "\\'")}', 'copy')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                     </button>
                 </div>
             </div>
         `;
-        
+
         listElement.appendChild(collectionDiv);
     });
 }
 
-function performMoveOrCopy(targetCollectionId, targetCollectionName) {
-    const url = `/items/${currentItemHash}/${currentOperation}/`;
+function performMoveOrCopy(targetCollectionId, targetCollectionName, operation) {
+    currentOperation = operation; // Set the operation so confirmation message is correct
+    const url = `/items/${currentItemHash}/${operation}/`;
     const formData = new FormData();
     formData.append('target_collection_id', targetCollectionId);
     formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
@@ -789,6 +797,12 @@ function showConfirmationModal(data, targetCollectionName) {
     
     // Show the modal
     modal.showModal();
+}
+
+function stayInCurrentCollection() {
+    // Close the confirmation modal and reload the page to refresh the item list
+    document.getElementById('confirmation-modal').close();
+    window.location.reload();
 }
 
 function showNotification(type, message) {

@@ -8,6 +8,12 @@
 
 {% block breadcrumbs %}
     <li>
+        <a href="{{ collection.created_by.profile.get_public_profile_url }}" class="inline-flex gap-2 items-center hover:text-primary">
+            {% lucide 'user' size=16 %}
+            {{ collection.created_by.profile.get_display_name }}
+        </a>
+    </li>
+    <li>
         <span class="inline-flex gap-2 items-center">
             {% lucide 'package' size=16 %}
             {{ collection.name }}
@@ -64,22 +70,22 @@
             
             {# Bottom section - Stats #}
             <div class="mt-4 flex justify-center">
-                <div class="public-collection-stats stats stats-vertical sm:stats-horizontal shadow-none border-0 bg-transparent rounded-none">
-                    <div class="stat rounded-none">
-                        <div class="stat-title text-gray-900">Total Items</div>
-                        <div class="stat-value">{{ stats.total_items }}</div>
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <div class="bg-transparent p-4 flex-1 min-w-[120px] max-w-[200px] text-center">
+                        <div class="text-sm text-gray-900 opacity-70">Total Items</div>
+                        <div class="text-3xl font-bold">{{ stats.total_items }}</div>
                     </div>
-                    <div class="stat rounded-none">
-                        <div class="stat-title text-gray-900">In Collection</div>
-                        <div class="stat-value text-success">{{ stats.in_collection_count }}</div>
+                    <div class="bg-transparent p-4 flex-1 min-w-[120px] max-w-[200px] text-center">
+                        <div class="text-sm text-gray-900 opacity-70">In Collection</div>
+                        <div class="text-3xl font-bold text-success">{{ stats.in_collection_count }}</div>
                     </div>
-                    <div class="stat rounded-none">
-                        <div class="stat-title text-gray-900">Wanted</div>
-                        <div class="stat-value text-info">{{ stats.wanted_count }}</div>
+                    <div class="bg-transparent p-4 flex-1 min-w-[120px] max-w-[200px] text-center">
+                        <div class="text-sm text-gray-900 opacity-70">Wanted</div>
+                        <div class="text-3xl font-bold text-info">{{ stats.wanted_count }}</div>
                     </div>
-                    <div class="stat rounded-none">
-                        <div class="stat-title text-gray-900">Reserved</div>
-                        <div class="stat-value text-warning">{{ stats.reserved_count }}</div>
+                    <div class="bg-transparent p-4 flex-1 min-w-[120px] max-w-[200px] text-center">
+                        <div class="text-sm text-gray-900 opacity-70">Reserved</div>
+                        <div class="text-3xl font-bold text-warning">{{ stats.reserved_count }}</div>
                     </div>
                 </div>
             </div>

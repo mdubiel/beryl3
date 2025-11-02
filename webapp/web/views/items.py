@@ -16,7 +16,7 @@ from django.db import transaction
 
 from web.decorators import log_execution_time
 from web.forms import CollectionItemForm
-from web.models import Collection, CollectionItem, RecentActivity, ItemType
+from web.models import Collection, CollectionItem, RecentActivity, ItemType, CollectionItemAttributeValue
 
 logger = logging.getLogger('webapp')
 
@@ -428,10 +428,18 @@ def copy_item_to_collection(request, item_hash):
                 status=original_item.status,  # Copy status
                 is_favorite=original_item.is_favorite,  # Copy favorite status
                 item_type=original_item.item_type,
-                attributes=original_item.attributes.copy() if original_item.attributes else {},
                 # Note: guest_reservation_token is NOT copied (will be None)
             )
-            
+
+            # Copy attribute values
+            for attr_value in original_item.attribute_values.all():
+                CollectionItemAttributeValue.objects.create(
+                    item=copied_item,
+                    item_attribute=attr_value.item_attribute,
+                    value=attr_value.value,
+                    created_by=request.user
+                )
+
             # Log the activity
             RecentActivity.log_item_copied(
                 user=request.user,

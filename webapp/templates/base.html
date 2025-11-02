@@ -70,8 +70,11 @@
         });
 
         // Copy to clipboard functionality
-        async function copyToClipboard(inputId, button) {
-            const input = document.getElementById(inputId);
+        async function copyToClipboard(inputIdOrElement, button) {
+            // Support both ID string and element reference
+            const input = typeof inputIdOrElement === 'string'
+                ? document.getElementById(inputIdOrElement)
+                : inputIdOrElement;
             if (!input) return;
 
             try {

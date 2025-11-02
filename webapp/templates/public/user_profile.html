@@ -18,8 +18,8 @@
 <div class="container mx-auto px-4 py-8">
 
     {# Task 64: Public User Profile Header #}
-    <div class="bg-base-100 rounded-lg shadow-lg mb-8">
-        <div class="card-body">
+    <div class="bg-base-100 mb-8">
+        <div class="py-8">
             <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {# User Info #}
                 <div class="flex-1 text-center md:text-left">
@@ -32,9 +32,9 @@
                         </div>
                     </div>
 
-                    {# Statistics Cards #}
-                    <div class="stats stats-vertical md:stats-horizontal shadow mt-4">
-                        <div class="stat">
+                    {# Statistics Cards - flex-wrap without borders #}
+                    <div class="flex flex-wrap gap-4 mt-4">
+                        <div class="stat bg-base-100 p-4 flex-1 min-w-[160px]">
                             <div class="stat-figure text-primary">
                                 {% lucide 'package' size=32 %}
                             </div>
@@ -42,20 +42,20 @@
                             <div class="stat-value text-primary">{{ total_collections }}</div>
                         </div>
 
-                        <div class="stat">
-                            <div class="stat-figure text-secondary">
+                        <div class="stat bg-base-100 p-4 flex-1 min-w-[160px]">
+                            <div class="stat-figure text-success">
                                 {% lucide 'box' size=32 %}
                             </div>
                             <div class="stat-title">Total Items</div>
-                            <div class="stat-value text-secondary">{{ total_items }}</div>
+                            <div class="stat-value text-success">{{ total_items }}</div>
                         </div>
 
-                        <div class="stat">
-                            <div class="stat-figure text-accent">
+                        <div class="stat bg-base-100 p-4 flex-1 min-w-[160px]">
+                            <div class="stat-figure text-warning">
                                 {% lucide 'star' size=32 %}
                             </div>
                             <div class="stat-title">Favorites</div>
-                            <div class="stat-value text-accent">{{ total_favorites }}</div>
+                            <div class="stat-value text-warning">{{ total_favorites }}</div>
                         </div>
                     </div>
 
