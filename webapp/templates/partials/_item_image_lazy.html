@@ -1,12 +1,10 @@
-{% load media_tags %}
-{% if item.default_image and item.default_image.media_file.file_exists %}
-    <img src="{% media_url item.default_image.media_file %}"
-         alt="{{ item.name }}"
-         class="w-full h-full object-cover fade-in" />
-{% elif item.images.all.0 and item.images.all.0.media_file.file_exists %}
-    <img src="{% media_url item.images.all.0.media_file %}"
+{# Task 65: Use pre-computed image URL from view for better performance #}
+{% if image_url %}
+    <img src="{{ image_url }}"
          alt="{{ item.name }}"
          class="w-full h-full object-cover fade-in" />
 {% else %}
-    <div class="w-full h-full bg-white"></div>
+    <div class="w-full h-full bg-base-200 flex items-center justify-center">
+        <span class="text-base-content opacity-30">No image</span>
+    </div>
 {% endif %}

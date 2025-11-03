@@ -579,6 +579,8 @@ def lazy_load_item_image(request, item_hash):
     HTMX endpoint to lazy load item images.
     Returns just the image HTML for a specific item.
     Only fetches the specific images/media files needed for this one item.
+
+    Task 65: Pre-compute image URL to avoid template tag overhead
     """
     # Optimize: Only select_related what we need for this item
     item = get_object_or_404(
@@ -590,5 +592,17 @@ def lazy_load_item_image(request, item_hash):
         hash=item_hash
     )
 
+    # Task 65: Pre-compute image URL to avoid media_url template tag overhead
+    image_url = None
+    if item.default_image and item.default_image.media_file:
+        image_url = item.default_image.media_file.get_user_safe_url(request)
+    elif item.images.all():
+        first_image = item.images.all()[0]
+        if first_image and first_image.media_file:
+            image_url = first_image.media_file.get_user_safe_url(request)
+
     # Just return the image partial
-    return render(request, 'partials/_item_image_lazy.html', {'item': item})
+    return render(request, 'partials/_item_image_lazy.html', {
+        'item': item,
+        'image_url': image_url
+    })
