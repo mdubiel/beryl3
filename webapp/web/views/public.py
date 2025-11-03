@@ -582,11 +582,10 @@ def lazy_load_item_image(request, item_hash):
 
     Task 65: Pre-compute image URL to avoid template tag overhead
     """
-    # Optimize: Only select_related what we need for this item
+    # Optimize: Only fetch the images we need for this item
+    # Note: default_image is a @property, not a field, so we only prefetch images
     item = get_object_or_404(
-        CollectionItem.objects.select_related(
-            'default_image__media_file'
-        ).prefetch_related(
+        CollectionItem.objects.prefetch_related(
             'images__media_file'
         ),
         hash=item_hash
