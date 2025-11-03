@@ -1,4 +1,4 @@
-{% load lucide %}
+{% load lucide_cached %}
 {% load media_tags %}
 {% load attribute_tags %}
 
@@ -26,7 +26,7 @@
                         {# Favorite star - display only (not interactive for public view) #}
                         {% if item.is_favorite %}
                         <div class="tooltip" data-tip="Owner's favorite">
-                            {% lucide 'star' size=20 class='text-warning fill-current' %}
+                            {% lucide_cached 'star' size=20 class='text-warning fill-current' %}
                         </div>
                         {% endif %}
                         
@@ -44,13 +44,13 @@
                     {# Row 3: Status badge and item type badge #}
                     <div class="flex flex-wrap gap-2">
                         <div class="badge {% if item.status == 'IN_COLLECTION' %}badge-success{% elif item.status == 'WANTED' %}badge-info{% elif item.status == 'RESERVED' %}badge-warning{% else %}badge-neutral{% endif %}">
-                            {% lucide 'tag' size=12 class='mr-1' %}
+                            {% lucide_cached 'tag' size=12 class='mr-1' %}
                             {{ item.get_status_display }}
                         </div>
                         {# Item type badge - small screens only #}
                         {% if item.item_type %}
                         <div class="badge badge-secondary lg:hidden">
-                            {% lucide item.item_type.icon size=14 class='mr-1' %}
+                            {% lucide_cached item.item_type.icon size=14 class='mr-1' %}
                             {{ item.item_type.display_name }}
                         </div>
                         {% endif %}
@@ -61,7 +61,7 @@
                 {% if item.item_type %}
                 <div class="hidden lg:flex flex-col items-center justify-center gap-1 min-w-24 max-w-24">
                     <p>
-                        {% lucide item.item_type.icon size=48 class='mr-1' %}
+                        {% lucide_cached item.item_type.icon size=48 class='mr-1' %}
                     </p>
                     <p class="text-center">{{ item.item_type.display_name }}</p>
                 </div>
@@ -82,7 +82,7 @@
                                 {% for group in attributes %}
                                 {# Attribute name - right-aligned, fixed width #}
                                 <div class="text-xs font-bold text-right {% if not forloop.last %}border-b border-base-300 pb-2{% endif %}">
-                                    {{ group.attribute.display_name }}{{ group.values|length|pluralize }}{% if group.attribute.help_text %}<span class="tooltip tooltip-left ml-1" data-tip="{{ group.attribute.help_text }}">{% lucide 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
+                                    {{ group.attribute.display_name }}{{ group.values|length|pluralize }}{% if group.attribute.help_text %}<span class="tooltip tooltip-left ml-1" data-tip="{{ group.attribute.help_text }}">{% lucide_cached 'info' size=12 class='text-neutral opacity-60' %}</span>{% endif %}:
                                 </div>
 
                                 {# Values - left-aligned with left padding #}
@@ -99,12 +99,12 @@
                                                     {% elif group.attribute.attribute_type == 'BOOLEAN' %}
                                                         {% if value_data.value %}
                                                             <span class="flex items-center gap-1 text-success font-semibold">
-                                                                {% lucide 'circle-check' size=14 %}
+                                                                {% lucide_cached 'circle-check' size=14 %}
                                                                 Yes
                                                             </span>
                                                         {% else %}
                                                             <span class="flex items-center gap-1 text-error font-semibold">
-                                                                {% lucide 'circle-x' size=14 %}
+                                                                {% lucide_cached 'circle-x' size=14 %}
                                                                 No
                                                             </span>
                                                         {% endif %}
@@ -125,12 +125,12 @@
                                                     {% elif group.attribute.attribute_type == 'BOOLEAN' %}
                                                         {% if value_data.value %}
                                                             <span class="flex items-center gap-1 text-success font-semibold">
-                                                                {% lucide 'circle-check' size=14 %}
+                                                                {% lucide_cached 'circle-check' size=14 %}
                                                                 Yes
                                                             </span>
                                                         {% else %}
                                                             <span class="flex items-center gap-1 text-error font-semibold">
-                                                                {% lucide 'circle-x' size=14 %}
+                                                                {% lucide_cached 'circle-x' size=14 %}
                                                                 No
                                                             </span>
                                                         {% endif %}
@@ -156,7 +156,7 @@
                         <div class="inline-flex items-center gap-1 mr-2 mb-1">
                             <a href="{{ link.url }}" target="_blank" class="text-xs flex items-center gap-1 hover:text-primary" title="{{ link.get_display_name }}: {{ link.url }}">
                                 {{ link.get_display_name }}
-                                {% lucide link.get_icon size=10 %}
+                                {% lucide_cached link.get_icon size=10 %}
                             </a>
                         </div>
                         {% endfor %}
@@ -195,14 +195,14 @@
                             hx-target="#item-{{ item.hash }}-container"
                             hx-swap="innerHTML"
                             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-                        {% lucide 'bookmark' size=14 class='mr-1' %}
+                        {% lucide_cached 'bookmark' size=14 class='mr-1' %}
                         Reserve
                     </button>
                 {% else %}
                     {# Unauthenticated user: Dropdown with an inline form #}
                     <div class="dropdown dropdown-end">
                         <button tabindex="0" class="btn btn-sm btn-primary">
-                            {% lucide 'bookmark' size=14 class='mr-1' %}
+                            {% lucide_cached 'bookmark' size=14 class='mr-1' %}
                             Reserve
                         </button>
                         <div tabindex="0" class="dropdown-content z-10 card card-compact w-64 p-2 shadow bg-base-200 text-base-content">
@@ -217,7 +217,7 @@
                                 </div>
                                 <p class="text-xs text-neutral mt-1">We'll send you a confirmation email with a cancellation link.</p>
                                 <button type="submit" class="btn btn-success btn-sm mt-2">
-                                    {% lucide 'check' size=14 class='mr-1' %}
+                                    {% lucide_cached 'check' size=14 class='mr-1' %}
                                     Confirm
                                 </button>
                             </form>
