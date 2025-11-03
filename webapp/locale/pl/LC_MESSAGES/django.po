@@ -1,0 +1,1103 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-03 20:37+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && "
+"(n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && "
+"n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
+
+#: templates/account/account_inactive.html:4
+#: templates/account/account_inactive.html:9
+msgid "Account Inactive"
+msgstr ""
+
+#: templates/account/account_inactive.html:11
+msgid "This account is inactive."
+msgstr ""
+
+#: templates/account/confirm_email_verification_code.html:5
+#: templates/account/email_confirm.html:4
+#: templates/account/email_confirm.html:9
+msgid "Confirm Email Address"
+msgstr ""
+
+#: templates/account/confirm_email_verification_code.html:13
+msgid "Confirm Email"
+msgstr ""
+
+#: templates/account/confirm_email_verification_code.html:16
+msgid ""
+"We have sent a verification code to your email address. Please enter the "
+"code below to verify your account."
+msgstr ""
+
+#: templates/account/confirm_email_verification_code.html:34
+#: templates/account/confirm_password_reset_code.html:31
+#: templates/account/email_confirm.html:14
+msgid "Confirm"
+msgstr ""
+
+#: templates/account/confirm_login_code.html:5
+#: templates/account/confirm_login_code.html:12
+msgid "Two-Factor Authentication"
+msgstr ""
+
+#: templates/account/confirm_login_code.html:15
+msgid ""
+"Please enter the code from your authenticator app to complete the login "
+"process."
+msgstr ""
+
+#: templates/account/confirm_login_code.html:31
+#: templates/account/password_reset_from_key.html:47
+#: templates/account/password_reset_from_key_done.html:22
+msgid "Log In"
+msgstr ""
+
+#: templates/account/confirm_login_code.html:35
+msgid "Use a recovery code"
+msgstr ""
+
+#: templates/account/confirm_password_reset_code.html:5
+#: templates/account/confirm_password_reset_code.html:12
+msgid "Confirm Password Reset"
+msgstr ""
+
+#: templates/account/confirm_password_reset_code.html:15
+msgid ""
+"To protect your account, please enter the code from your authenticator app "
+"to proceed."
+msgstr ""
+
+#: templates/account/confirm_phone_verification_code.html:5
+#: templates/account/confirm_phone_verification_code.html:12
+msgid "Verify Phone Number"
+msgstr ""
+
+#: templates/account/confirm_phone_verification_code.html:15
+msgid ""
+"We have sent a verification code to your phone number. Please enter it below."
+msgstr ""
+
+#: templates/account/confirm_phone_verification_code.html:31
+msgid "Verify Phone"
+msgstr ""
+
+#: templates/account/email.html:5 templates/account/email.html:10
+msgid "Manage Email Addresses"
+msgstr ""
+
+#: templates/account/email.html:13
+msgid "The following email addresses are associated with your account:"
+msgstr ""
+
+#: templates/account/email.html:32
+msgid "Verified"
+msgstr ""
+
+#: templates/account/email.html:34
+msgid "Unverified"
+msgstr ""
+
+#: templates/account/email.html:37
+msgid "Primary"
+msgstr ""
+
+#: templates/account/email.html:43
+msgid "Make Primary"
+msgstr ""
+
+#: templates/account/email.html:46
+msgid "Re-send"
+msgstr ""
+
+#: templates/account/email.html:48
+msgid "Remove"
+msgstr ""
+
+#: templates/account/email.html:58
+msgid "Warning:"
+msgstr ""
+
+#: templates/account/email.html:58
+msgid "You currently do not have any email addresses set up."
+msgstr ""
+
+#: templates/account/email.html:61
+msgid "Add Email Address"
+msgstr ""
+
+#: templates/account/email.html:70
+msgid "Add Email"
+msgstr ""
+
+#: templates/account/email_confirm.html:11
+#, python-format
+msgid ""
+"Please confirm that <a href=\"mailto:%(email)s\">%(email)s</a> is an email "
+"address for user %(user_display)s."
+msgstr ""
+
+#: templates/account/email_confirm.html:17
+msgid ""
+"Unable to confirm your email address. This link may be expired or invalid."
+msgstr ""
+
+#: templates/account/login.html:6
+msgid "Sign In"
+msgstr ""
+
+#: templates/account/login.html:51
+msgid "Forgot Password?"
+msgstr ""
+
+#: templates/account/logout.html:4 templates/account/logout.html:11
+#: templates/account/logout.html:15
+msgid "Sign Out"
+msgstr ""
+
+#: templates/account/logout.html:13
+msgid "Are you sure you want to sign out?"
+msgstr ""
+
+#: templates/account/password_change.html:5
+#: templates/account/password_change.html:12
+#: templates/account/password_change.html:28
+#: templates/account/password_reset_from_key.html:42
+msgid "Change Password"
+msgstr ""
+
+#: templates/account/password_reset.html:5
+msgid "Password Reset"
+msgstr ""
+
+#: templates/account/password_reset.html:17
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll send you "
+"an email allowing you to reset it."
+msgstr ""
+
+#: templates/account/password_reset.html:35
+msgid "Reset My Password"
+msgstr ""
+
+#: templates/account/password_reset.html:40
+msgid ""
+"We have sent you an email. Please contact us if you do not receive it within "
+"a few minutes."
+msgstr ""
+
+#: templates/account/password_reset.html:47
+msgid "Please contact us if you have any trouble resetting your password."
+msgstr ""
+
+#: templates/account/password_reset_done.html:4
+msgid "Password Reset Sent"
+msgstr ""
+
+#: templates/account/password_reset_done.html:14
+msgid "Check Your Email"
+msgstr ""
+
+#: templates/account/password_reset_done.html:21
+msgid ""
+"We have sent you an e-mail. Please contact us if you do not receive it "
+"within a few minutes."
+msgstr ""
+
+#: templates/account/password_reset_done.html:24
+#: templates/account/verification_sent.html:27
+msgid "Back to Login"
+msgstr ""
+
+#: templates/account/password_reset_from_key.html:5
+msgid "Set New Password"
+msgstr ""
+
+#: templates/account/password_reset_from_key.html:16
+msgid "Please choose your new password."
+msgstr ""
+
+#: templates/account/password_reset_from_key.html:46
+#: templates/account/password_reset_from_key_done.html:17
+msgid "Your password has been changed successfully."
+msgstr ""
+
+#: templates/account/password_reset_from_key_done.html:4
+msgid "Password Changed"
+msgstr ""
+
+#: templates/account/password_reset_from_key_done.html:11
+msgid "Success"
+msgstr ""
+
+#: templates/account/password_set.html:5 templates/account/password_set.html:12
+#: templates/account/password_set.html:24
+msgid "Set Password"
+msgstr ""
+
+#: templates/account/signup.html:6 templates/account/signup.html:76
+msgid "Sign Up"
+msgstr ""
+
+#: templates/account/signup.html:82
+#, python-format
+msgid ""
+"Already have an account? Then please <a href=\"%(login_url)s\" "
+"class=\"link\">sign in</a>."
+msgstr ""
+
+#: templates/account/signup_closed.html:4
+msgid "Sign Up Closed"
+msgstr ""
+
+#: templates/account/verification_sent.html:4
+#: templates/account/verification_sent.html:11
+#: templates/account/verified_email_required.html:4
+msgid "Verify Your Email Address"
+msgstr ""
+
+#: templates/account/verification_sent.html:20
+msgid ""
+"We have sent an email to you for verification. Please follow the link "
+"provided in the email to finalize your registration process."
+msgstr ""
+
+#: templates/account/verification_sent.html:23
+msgid "If you do not see the email, please check your spam folder."
+msgstr ""
+
+#: templates/account/verified_email_required.html:11
+msgid "Verification Required"
+msgstr ""
+
+#: templates/account/verified_email_required.html:15
+msgid ""
+"To continue, you must first verify your email address. We have already sent "
+"a verification email to you. Please click the link in that email."
+msgstr ""
+
+#: templates/account/verified_email_required.html:19
+msgid "If you cannot find the email, you can request another one."
+msgstr ""
+
+#: templates/account/verified_email_required.html:26
+msgid "Resend Verification Email"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:43
+msgid "Owned by"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:55 web/models.py:1658
+msgid "Collection Images"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:75
+#: templates/public/user_profile.html:49
+msgid "Total Items"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:79 web/models.py:791
+msgid "In Collection"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:83 web/models.py:796
+msgid "Wanted"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:87
+msgid "Reserved"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:99
+msgid "Items in this Collection"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:111
+#: templates/public/user_profile.html:115
+#, python-format
+msgid "%(counter)s item"
+msgid_plural "%(counter)s items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/public/collection_public_detail.html:149
+#, python-format
+msgid "Page %(current)s of %(total)s"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:160
+msgid "10 per page"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:161
+msgid "25 per page"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:162
+msgid "50 per page"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:163
+msgid "100 per page"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:171
+msgid "This collection is currently empty."
+msgstr ""
+
+#: templates/public/collection_public_detail.html:172
+msgid "Check back later for new items!"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:186
+msgid "Close"
+msgstr ""
+
+#: templates/public/collection_public_detail.html:192
+msgid "Image Preview"
+msgstr ""
+
+#: templates/public/user_profile.html:6
+msgid "Public Profile"
+msgstr ""
+
+#: templates/public/user_profile.html:31
+msgid "Joined"
+msgstr ""
+
+#: templates/public/user_profile.html:41 templates/public/user_profile.html:84
+msgid "Public Collections"
+msgstr ""
+
+#: templates/public/user_profile.html:57
+msgid "Favorites"
+msgstr ""
+
+#: templates/public/user_profile.html:68
+msgid "Set up your custom profile URL"
+msgstr ""
+
+#: templates/public/user_profile.html:69
+msgid "You're currently using your user ID in the URL. Set a nickname in your"
+msgstr ""
+
+#: templates/public/user_profile.html:69
+msgid "account settings"
+msgstr ""
+
+#: templates/public/user_profile.html:69
+msgid "to get a personalized URL like"
+msgstr ""
+
+#: templates/public/user_profile.html:119 web/models.py:656
+msgid "Public"
+msgstr ""
+
+#: templates/public/user_profile.html:135
+#, python-format
+msgid "%(name)s hasn't made any collections public yet."
+msgstr ""
+
+#: templates/public/user_profile.html:145
+msgid "Favorite Items"
+msgstr ""
+
+#: web/models.py:91
+msgid "Collection Header Image"
+msgstr ""
+
+#: web/models.py:92 web/models.py:1727
+msgid "Collection Item Image"
+msgstr ""
+
+#: web/models.py:93
+msgid "User Avatar"
+msgstr ""
+
+#: web/models.py:94
+msgid "Other Media"
+msgstr ""
+
+#: web/models.py:97
+msgid "Local Filesystem"
+msgstr ""
+
+#: web/models.py:98
+msgid "Google Cloud Storage"
+msgstr ""
+
+#: web/models.py:99
+msgid "Amazon S3"
+msgstr ""
+
+#: web/models.py:102
+msgid "File Path"
+msgstr ""
+
+#: web/models.py:103
+msgid "Original Filename"
+msgstr ""
+
+#: web/models.py:104
+msgid "File Size (bytes)"
+msgstr ""
+
+#: web/models.py:105
+msgid "Content Type"
+msgstr ""
+
+#: web/models.py:112
+msgid "Media Type"
+msgstr ""
+
+#: web/models.py:120
+msgid "Storage Backend"
+msgstr ""
+
+#: web/models.py:125
+msgid "File Exists in Storage"
+msgstr ""
+
+#: web/models.py:126
+msgid "Last Verified"
+msgstr ""
+
+#: web/models.py:129
+msgid "Image Width"
+msgstr ""
+
+#: web/models.py:130
+msgid "Image Height"
+msgstr ""
+
+#: web/models.py:131
+msgid "Additional Metadata"
+msgstr ""
+
+#: web/models.py:135
+msgid "Pending Review"
+msgstr ""
+
+#: web/models.py:136
+msgid "Approved"
+msgstr ""
+
+#: web/models.py:137
+msgid "Flagged"
+msgstr ""
+
+#: web/models.py:138
+msgid "Rejected"
+msgstr ""
+
+#: web/models.py:144
+msgid "Content Moderation Status"
+msgstr ""
+
+#: web/models.py:150
+msgid "Content Moderation Score"
+msgstr ""
+
+#: web/models.py:151
+msgid "AI confidence score for inappropriate content (0.0-1.0)"
+msgstr ""
+
+#: web/models.py:156
+msgid "Content Moderation Details"
+msgstr ""
+
+#: web/models.py:157
+msgid "Detailed results from content moderation analysis"
+msgstr ""
+
+#: web/models.py:162
+msgid "Last Content Check"
+msgstr ""
+
+#: web/models.py:166 web/models.py:1643 web/models.py:1713
+msgid "Media File"
+msgstr ""
+
+#: web/models.py:167
+msgid "Media Files"
+msgstr ""
+
+#: web/models.py:449 web/models.py:531 web/models.py:1367 web/models.py:1406
+msgid "Display Name"
+msgstr ""
+
+#: web/models.py:450 web/models.py:620 web/models.py:1371
+msgid "Description"
+msgstr ""
+
+#: web/models.py:451 web/models.py:1206 web/models.py:1370
+msgid "Lucide Icon Name"
+msgstr ""
+
+#: web/models.py:454 web/models.py:530 web/models.py:670 web/models.py:810
+msgid "Item Type"
+msgstr ""
+
+#: web/models.py:455
+msgid "Item Types"
+msgstr ""
+
+#: web/models.py:522
+msgid "Text"
+msgstr ""
+
+#: web/models.py:523
+msgid "Long Text"
+msgstr ""
+
+#: web/models.py:524
+msgid "Number"
+msgstr ""
+
+#: web/models.py:525
+msgid "Date"
+msgstr ""
+
+#: web/models.py:526 web/models.py:1405
+msgid "URL"
+msgstr ""
+
+#: web/models.py:527
+msgid "Boolean"
+msgstr ""
+
+#: web/models.py:528
+msgid "Choice"
+msgstr ""
+
+#: web/models.py:532
+msgid "Attribute Type"
+msgstr ""
+
+#: web/models.py:533
+msgid "Required"
+msgstr ""
+
+#: web/models.py:534
+msgid "Skip Validation"
+msgstr ""
+
+#: web/models.py:535 web/models.py:1409 web/models.py:1652 web/models.py:1722
+msgid "Display Order"
+msgstr ""
+
+#: web/models.py:536
+msgid "Choices"
+msgstr ""
+
+#: web/models.py:536
+msgid "For choice fields, provide a list of options"
+msgstr ""
+
+#: web/models.py:537
+msgid "Help Text"
+msgstr ""
+
+#: web/models.py:540
+msgid "Item Attribute"
+msgstr ""
+
+#: web/models.py:541
+msgid "Item Attributes"
+msgstr ""
+
+#: web/models.py:619
+msgid "Location Name"
+msgstr ""
+
+#: web/models.py:625
+msgid "Created By"
+msgstr ""
+
+#: web/models.py:629 web/models.py:838
+msgid "Location"
+msgstr ""
+
+#: web/models.py:630
+msgid "Locations"
+msgstr ""
+
+#: web/models.py:654
+msgid "Visible only to me"
+msgstr ""
+
+#: web/models.py:655
+msgid "Shared with link"
+msgstr ""
+
+#: web/models.py:663
+msgid "Visibility"
+msgstr ""
+
+#: web/models.py:669
+msgid "No Grouping"
+msgstr ""
+
+#: web/models.py:671 web/models.py:802
+msgid "Status"
+msgstr ""
+
+#: web/models.py:672
+msgid "Attribute"
+msgstr ""
+
+#: web/models.py:675
+msgid "Name"
+msgstr ""
+
+#: web/models.py:676
+msgid "Date Created"
+msgstr ""
+
+#: web/models.py:677
+msgid "Date Updated"
+msgstr ""
+
+#: web/models.py:678
+msgid "Attribute Value"
+msgstr ""
+
+#: web/models.py:684
+msgid "Group By"
+msgstr ""
+
+#: web/models.py:685
+msgid "Group items by type, status, or attribute"
+msgstr ""
+
+#: web/models.py:693
+msgid "Group By Attribute"
+msgstr ""
+
+#: web/models.py:694
+msgid "Select which attribute to group items by"
+msgstr ""
+
+#: web/models.py:702
+msgid "Sort By"
+msgstr ""
+
+#: web/models.py:703
+msgid "Sort items within groups"
+msgstr ""
+
+#: web/models.py:711
+msgid "Sort By Attribute"
+msgstr ""
+
+#: web/models.py:712
+msgid "Select which attribute to sort items by"
+msgstr ""
+
+#: web/models.py:717
+msgid "Image URL"
+msgstr ""
+
+#: web/models.py:792
+msgid "Previously Owned"
+msgstr ""
+
+#: web/models.py:793
+msgid "Lent to Someone"
+msgstr ""
+
+#: web/models.py:794
+msgid "Reserved by Someone"
+msgstr ""
+
+#: web/models.py:795
+msgid "Ordered (On its way)"
+msgstr ""
+
+#: web/models.py:817
+msgid "Reserved By Name"
+msgstr ""
+
+#: web/models.py:818
+msgid "Reserved By Email"
+msgstr ""
+
+#: web/models.py:819
+msgid "Guest Reservation Token"
+msgstr ""
+
+#: web/models.py:822
+msgid "Is Favorite"
+msgstr ""
+
+#: web/models.py:829
+msgid "Your ID"
+msgstr ""
+
+#: web/models.py:830
+msgid "Your personal identifier for this item"
+msgstr ""
+
+#: web/models.py:839
+msgid "Physical location where this item is stored"
+msgstr ""
+
+#: web/models.py:1210
+msgid "Activity Message"
+msgstr ""
+
+#: web/models.py:1368
+msgid "URL Pattern"
+msgstr ""
+
+#: web/models.py:1369
+msgid "Use * as wildcard, e.g., https://www.amazon.de/*"
+msgstr ""
+
+#: web/models.py:1372
+msgid "Active"
+msgstr ""
+
+#: web/models.py:1375 web/models.py:1408
+msgid "Link Pattern"
+msgstr ""
+
+#: web/models.py:1376
+msgid "Link Patterns"
+msgstr ""
+
+#: web/models.py:1404
+msgid "Item"
+msgstr ""
+
+#: web/models.py:1412
+msgid "Collection Item Link"
+msgstr ""
+
+#: web/models.py:1413
+msgid "Collection Item Links"
+msgstr ""
+
+#: web/models.py:1472 web/models.py:1707
+msgid "Collection Item"
+msgstr ""
+
+#: web/models.py:1478
+msgid "Attribute Definition"
+msgstr ""
+
+#: web/models.py:1479
+msgid "The attribute schema this value conforms to"
+msgstr ""
+
+#: web/models.py:1482
+msgid "Value"
+msgstr ""
+
+#: web/models.py:1483
+msgid "Stored as text, converted to appropriate type on retrieval"
+msgstr ""
+
+#: web/models.py:1487
+msgid "Collection Item Attribute Value"
+msgstr ""
+
+#: web/models.py:1488
+msgid "Collection Item Attribute Values"
+msgstr ""
+
+#: web/models.py:1637
+msgid "Collection"
+msgstr ""
+
+#: web/models.py:1647 web/models.py:1717
+msgid "Default Image"
+msgstr ""
+
+#: web/models.py:1648
+msgid "The primary image shown in collection displays"
+msgstr ""
+
+#: web/models.py:1653 web/models.py:1723
+msgid "Order for thumbnail display (0-2)"
+msgstr ""
+
+#: web/models.py:1657
+msgid "Collection Image"
+msgstr ""
+
+#: web/models.py:1718
+msgid "The primary image shown in item displays"
+msgstr ""
+
+#: web/models.py:1728
+msgid "Collection Item Images"
+msgstr ""
+
+#: web/models_metrics.py:26
+msgid "When metrics were collected"
+msgstr ""
+
+#: web/models_metrics.py:30
+msgid "Date of metrics snapshot (one per day)"
+msgstr ""
+
+#: web/models_metrics.py:34
+msgid "How long collection took in seconds"
+msgstr ""
+
+#: web/models_metrics.py:40
+msgid "Total registered users"
+msgstr ""
+
+#: web/models_metrics.py:44
+msgid "Users active in last 24 hours"
+msgstr ""
+
+#: web/models_metrics.py:48
+msgid "Users active in last 7 days"
+msgstr ""
+
+#: web/models_metrics.py:52
+msgid "Users active in last 30 days"
+msgstr ""
+
+#: web/models_metrics.py:56
+msgid "New users in last 24 hours"
+msgstr ""
+
+#: web/models_metrics.py:60
+msgid "New users in last 7 days"
+msgstr ""
+
+#: web/models_metrics.py:64
+msgid "New users in last 30 days"
+msgstr ""
+
+#: web/models_metrics.py:70
+msgid "Total collections"
+msgstr ""
+
+#: web/models_metrics.py:74
+msgid "Total items across all collections"
+msgstr ""
+
+#: web/models_metrics.py:78
+msgid "Private collections count"
+msgstr ""
+
+#: web/models_metrics.py:82
+msgid "Public collections count"
+msgstr ""
+
+#: web/models_metrics.py:86
+msgid "Unlisted collections count"
+msgstr ""
+
+#: web/models_metrics.py:92
+msgid "Items with status: In Collection"
+msgstr ""
+
+#: web/models_metrics.py:96
+msgid "Items with status: Wanted"
+msgstr ""
+
+#: web/models_metrics.py:100
+msgid "Items with status: Reserved"
+msgstr ""
+
+#: web/models_metrics.py:104
+msgid "Items with status: Ordered"
+msgstr ""
+
+#: web/models_metrics.py:108
+msgid "Items with status: Lent"
+msgstr ""
+
+#: web/models_metrics.py:112
+msgid "Items with status: Previously Owned"
+msgstr ""
+
+#: web/models_metrics.py:116
+msgid "Items with status: Sold"
+msgstr ""
+
+#: web/models_metrics.py:120
+msgid "Items with status: Given Away"
+msgstr ""
+
+#: web/models_metrics.py:126
+msgid "Total item types defined"
+msgstr ""
+
+#: web/models_metrics.py:130
+msgid "Distribution of items by type {type_name: count}"
+msgstr ""
+
+#: web/models_metrics.py:134
+msgid "Total attribute definitions"
+msgstr ""
+
+#: web/models_metrics.py:138
+msgid "Attribute usage statistics {attr_name: count}"
+msgstr ""
+
+#: web/models_metrics.py:144
+msgid "Total links in items and collections"
+msgstr ""
+
+#: web/models_metrics.py:148
+msgid "Links matching defined patterns"
+msgstr ""
+
+#: web/models_metrics.py:152
+msgid "Links not matching any pattern"
+msgstr ""
+
+#: web/models_metrics.py:156
+msgid "Link usage by pattern {pattern_name: count}"
+msgstr ""
+
+#: web/models_metrics.py:162
+msgid "Total media files"
+msgstr ""
+
+#: web/models_metrics.py:166
+msgid "Total storage used in bytes"
+msgstr ""
+
+#: web/models_metrics.py:170
+msgid "Media files uploaded in last 24h"
+msgstr ""
+
+#: web/models_metrics.py:174
+msgid "Media files uploaded in last 7 days"
+msgstr ""
+
+#: web/models_metrics.py:178
+msgid "Media files uploaded in last 30 days"
+msgstr ""
+
+#: web/models_metrics.py:182
+msgid "Media files not linked to items/collections"
+msgstr ""
+
+#: web/models_metrics.py:186
+msgid "Media files that failed integrity check"
+msgstr ""
+
+#: web/models_metrics.py:190
+msgid "Storage distribution by file type {ext: bytes}"
+msgstr ""
+
+#: web/models_metrics.py:197
+msgid "Total emails tracked"
+msgstr ""
+
+#: web/models_metrics.py:202
+msgid "Emails pending delivery"
+msgstr ""
+
+#: web/models_metrics.py:207
+msgid "Emails successfully sent"
+msgstr ""
+
+#: web/models_metrics.py:212
+msgid "Emails that failed to send"
+msgstr ""
+
+#: web/models_metrics.py:217
+msgid "Users opted in to marketing"
+msgstr ""
+
+#: web/models_metrics.py:222
+msgid "Users opted out of marketing"
+msgstr ""
+
+#: web/models_metrics.py:226
+msgid "Whether email stats are synced with Resend"
+msgstr ""
+
+#: web/models_metrics.py:232
+msgid "Content items flagged for review"
+msgstr ""
+
+#: web/models_metrics.py:236
+msgid "Content items pending moderation"
+msgstr ""
+
+#: web/models_metrics.py:240
+msgid "Total user violations"
+msgstr ""
+
+#: web/models_metrics.py:244
+msgid "Currently banned users"
+msgstr ""
+
+#: web/models_metrics.py:250
+msgid "Total favorited items"
+msgstr ""
+
+#: web/models_metrics.py:256
+msgid "Percentage of items with images"
+msgstr ""
+
+#: web/models_metrics.py:262
+msgid "Percentage of items with custom attributes"
+msgstr ""
+
+#: web/models_metrics.py:268
+msgid "Percentage of items with links"
+msgstr ""
+
+#: web/models_metrics.py:274
+msgid "Average attributes per item"
+msgstr ""
+
+#: web/models_metrics.py:280
+msgid "Average items per collection"
+msgstr ""
+
+#: web/models_metrics.py:286
+msgid "Items created in last 24h"
+msgstr ""
+
+#: web/models_metrics.py:290
+msgid "Items created in last 7 days"
+msgstr ""
+
+#: web/models_metrics.py:294
+msgid "Items created in last 30 days"
+msgstr ""
+
+#: web/models_metrics.py:298
+msgid "Collections created in last 24h"
+msgstr ""
+
+#: web/models_metrics.py:302
+msgid "Collections created in last 7 days"
+msgstr ""
+
+#: web/models_metrics.py:306
+msgid "Collections created in last 30 days"
+msgstr ""
+
+#: web/models_metrics.py:310 web/models_metrics.py:311
+msgid "Daily Metrics"
+msgstr ""

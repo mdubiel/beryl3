@@ -3,7 +3,7 @@
 {% load lucide %}
 {% load media_tags %}
 
-{% block title %}{{ display_name }} - Public Profile{% endblock %}
+{% block title %}{{ display_name }} - {% trans "Public Profile" %}{% endblock %}
 
 {% block breadcrumbs %}
     <li>
@@ -28,7 +28,7 @@
                     <div class="flex flex-col md:flex-row gap-4 text-sm text-base-content/70 mb-4">
                         <div class="flex items-center gap-2 justify-center md:justify-start">
                             {% lucide 'calendar' size=16 %}
-                            <span>Joined {{ join_date|date:"F Y" }}</span>
+                            <span>{% trans "Joined" %} {{ join_date|date:"F Y" }}</span>
                         </div>
                     </div>
 
@@ -38,7 +38,7 @@
                             <div class="stat-figure text-primary">
                                 {% lucide 'package' size=32 %}
                             </div>
-                            <div class="stat-title">Public Collections</div>
+                            <div class="stat-title">{% trans "Public Collections" %}</div>
                             <div class="stat-value text-primary">{{ total_collections }}</div>
                         </div>
 
@@ -46,7 +46,7 @@
                             <div class="stat-figure text-success">
                                 {% lucide 'box' size=32 %}
                             </div>
-                            <div class="stat-title">Total Items</div>
+                            <div class="stat-title">{% trans "Total Items" %}</div>
                             <div class="stat-value text-success">{{ total_items }}</div>
                         </div>
 
@@ -54,7 +54,7 @@
                             <div class="stat-figure text-warning">
                                 {% lucide 'star' size=32 %}
                             </div>
-                            <div class="stat-title">Favorites</div>
+                            <div class="stat-title">{% trans "Favorites" %}</div>
                             <div class="stat-value text-warning">{{ total_favorites }}</div>
                         </div>
                     </div>
@@ -65,8 +65,8 @@
                         <div class="flex items-start gap-2">
                             {% lucide 'info' size=20 %}
                             <div>
-                                <h3 class="font-bold">Set up your custom profile URL</h3>
-                                <p class="text-sm">You're currently using your user ID in the URL. Set a nickname in your <a href="{% url 'user_settings' %}" class="link link-primary">account settings</a> to get a personalized URL like <code>/u/yournickname/</code></p>
+                                <h3 class="font-bold">{% trans "Set up your custom profile URL" %}</h3>
+                                <p class="text-sm">{% trans "You're currently using your user ID in the URL. Set a nickname in your" %} <a href="{% url 'user_settings' %}" class="link link-primary">{% trans "account settings" %}</a> {% trans "to get a personalized URL like" %} <code>/u/yournickname/</code></p>
                             </div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
     <div class="mb-12">
         <h2 class="text-3xl font-bold mb-6 flex items-center gap-2">
             {% lucide 'package' size=28 %}
-            Public Collections
+            {% trans "Public Collections" %}
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -112,11 +112,11 @@
                     <div class="flex items-center gap-4 text-sm text-base-content/60 mt-2">
                         <div class="flex items-center gap-1">
                             {% lucide 'box' size=14 %}
-                            <span>{{ collection.item_count }} item{{ collection.item_count|pluralize }}</span>
+                            <span>{% blocktrans count counter=collection.item_count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktrans %}</span>
                         </div>
                         <div class="flex items-center gap-1">
                             {% lucide 'globe' size=14 %}
-                            <span>Public</span>
+                            <span>{% trans "Public" %}</span>
                         </div>
                     </div>
 
@@ -132,7 +132,7 @@
     <div class="alert alert-info">
         <div class="flex items-center gap-2">
             {% lucide 'info' size=20 %}
-            <span>{{ display_name }} hasn't made any collections public yet.</span>
+            <span>{% blocktrans with name=display_name %}{{ name }} hasn't made any collections public yet.{% endblocktrans %}</span>
         </div>
     </div>
     {% endif %}
@@ -142,7 +142,7 @@
     <div class="mb-12">
         <h2 class="text-3xl font-bold mb-6 flex items-center gap-2">
             {% lucide 'star' size=28 %}
-            Favorite Items
+            {% trans "Favorite Items" %}
         </h2>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">

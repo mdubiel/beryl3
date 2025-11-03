@@ -1,9 +1,10 @@
 {% load static %}
 {% load lucide %}
 {% load django_htmx %}
+{% load i18n %}
 
 <!DOCTYPE html>
-<html lang="en" data-theme="berylfe">
+<html lang="{% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE }}" data-theme="berylfe">
 
 <head>
     <meta charset="UTF-8">
@@ -28,6 +29,13 @@
             'space-mono': 'Space Mono',
             'ibm-plex-mono': 'IBM Plex Mono',
             'system-mono': 'System Mono'
+        };
+
+        // Language names with flags
+        const languages = {
+            'en': { name: 'English', flag: '🇬🇧' },
+            'pl': { name: 'Polski', flag: '🇵🇱' },
+            'de': { name: 'Deutsch', flag: '🇩🇪' }
         };
 
         function selectFont(fontName) {
@@ -58,10 +66,46 @@
             }
         }
 
-        // Load saved font preference on page load
+        function selectLanguage(langCode) {
+            // Save to localStorage
+            localStorage.setItem('beryl-language', langCode);
+
+            // Update check marks in navbar dropdown
+            Object.keys(languages).forEach(lang => {
+                const checkElement = document.getElementById('check-lang-' + lang);
+                if (checkElement) {
+                    if (lang === langCode) {
+                        checkElement.classList.remove('hidden');
+                    } else {
+                        checkElement.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Set Django language preference cookie
+            document.cookie = 'django_language=' + langCode + '; path=/; max-age=31536000; SameSite=Lax';
+
+            // Reload page to apply language change
+            window.location.reload();
+        }
+
+        // Load saved font and language preferences on page load
         document.addEventListener('DOMContentLoaded', function() {
             const savedFont = localStorage.getItem('beryl-selected-font') || 'space-mono'; // Default to space-mono
             selectFont(savedFont);
+
+            // Set language check marks based on current language or saved preference
+            const savedLang = localStorage.getItem('beryl-language') || 'en';
+            Object.keys(languages).forEach(lang => {
+                const checkElement = document.getElementById('check-lang-' + lang);
+                if (checkElement) {
+                    if (lang === savedLang) {
+                        checkElement.classList.remove('hidden');
+                    } else {
+                        checkElement.classList.add('hidden');
+                    }
+                }
+            });
 
             // DaisyUI dropdowns with tabindex handle click-outside automatically
             // No additional JavaScript needed for basic dropdown behavior
@@ -131,6 +175,29 @@
             </div>
 
             <div class="flex items-center gap-2">
+                <!-- Language Selector Dropdown -->
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors" title="Select Language">
+                        <div class="w-8 h-8 rounded-full bg-base-200 border border-neutral flex items-center justify-center">
+                            {% lucide 'languages' size='18' class='text-primary' %}
+                        </div>
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                        <li><a onclick="selectLanguage('en')" class="flex items-center justify-between">
+                            <span>🇬🇧 English</span>
+                            <span id="check-lang-en" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectLanguage('pl')" class="flex items-center justify-between">
+                            <span>🇵🇱 Polski</span>
+                            <span id="check-lang-pl" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                        <li><a onclick="selectLanguage('de')" class="flex items-center justify-between">
+                            <span>🇩🇪 Deutsch</span>
+                            <span id="check-lang-de" class="hidden">{% lucide 'check' size='14' class='text-accent' %}</span>
+                        </a></li>
+                    </ul>
+                </div>
+
                 <!-- Font Selector Dropdown -->
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors" title="Select Font">
