@@ -721,3 +721,34 @@ collect-metrics-email: ## Collect daily metrics and send email report to superus
 view-metrics: ## View latest metrics in terminal
 	@echo "📊 Latest metrics snapshot:"
 	@$(MANAGE_PY) shell -c "from web.models import DailyMetrics; m = DailyMetrics.objects.order_by('-collection_date').first(); print(f'\\n📅 Date: {m.collection_date}\\n👥 Users: {m.total_users}\\n📦 Collections: {m.total_collections}\\n📝 Items: {m.total_items}\\n💾 Storage: {m.total_storage_bytes / 1024 / 1024:.2f} MB\\n⏱️  Collection took: {m.collection_duration_seconds}s\\n') if m else print('\\n⚠️  No metrics collected yet. Run: make collect-metrics\\n')"
+
+# ==============================================================================
+# ICON PRE-RENDERING (Task 65)
+# ==============================================================================
+
+prerender-icons: ## Pre-render lucide icons to static SVG
+	@echo "🎨 Pre-rendering lucide icons..."
+	cd webapp && python workflows/bin/prerender_lucide_icons.py \
+		--template-dir templates \
+		--output-dir templates_compiled
+
+prerender-icons-dry-run: ## Show what would be pre-rendered (dry run)
+	@echo "🎨 Pre-rendering lucide icons (DRY RUN)..."
+	cd webapp && python workflows/bin/prerender_lucide_icons.py \
+		--template-dir templates \
+		--output-dir templates_compiled \
+		--dry-run
+
+clean-prerendered: ## Remove pre-rendered templates
+	@echo "🧹 Cleaning pre-rendered templates..."
+	rm -rf webapp/templates_compiled
+	@echo "✅ Cleaned"
+
+# Deployment with pre-rendering
+deploy-with-icons-prod: ## Deploy to production with pre-rendered icons
+	@echo "🚀 Deploying to production with pre-rendered icons..."
+	./webapp/workflows/bin/deploy_with_prerendering.sh production
+
+deploy-with-icons-preprod: ## Deploy to preprod with pre-rendered icons
+	@echo "🚀 Deploying to preprod with pre-rendered icons..."
+	./webapp/workflows/bin/deploy_with_prerendering.sh preprod

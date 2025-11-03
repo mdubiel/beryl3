@@ -144,4 +144,4 @@ Thumbs.db
 .local/
 local_cdn/
 staticfiles/
-media/
+webapp/templates_compiled/

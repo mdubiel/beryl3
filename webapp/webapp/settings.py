@@ -221,7 +221,12 @@ ROOT_URLCONF = 'webapp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [ BASE_DIR / 'templates' ],
+        'DIRS': [
+            # Task 65: Compiled templates with pre-rendered icons take precedence
+            BASE_DIR / 'templates_compiled',
+            # Fallback to source templates
+            BASE_DIR / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
