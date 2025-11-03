@@ -452,13 +452,15 @@ dje-pre-send-queued-mail: dje-pre-verify-env ## Process queued emails on Django 
 
 dje-pre-deploy-all: dje-pre-verify-env ## Run full deployment sequence on Django Europe preprod
 	@echo "🚀 Running full deployment sequence on Django Europe preprod..."
-	@echo "Step 1/4: Database migrations..."
+	@echo "Step 1/5: Pre-rendering lucide icons..."
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && source ~/.virtualenvs/beryl3-preprod/bin/activate && python workflows/bin/prerender_lucide_icons.py --template-dir templates --output-dir templates_compiled'
+	@echo "Step 2/5: Database migrations..."
 	@$(MAKE) dje-pre-migrate
-	@echo "Step 2/4: Site setup..."
+	@echo "Step 3/5: Site setup..."
 	@$(MAKE) dje-pre-setup-site
-	@echo "Step 3/4: Static files collection..."
+	@echo "Step 4/5: Static files collection..."
 	@$(MAKE) dje-pre-collectstatic
-	@echo "Step 4/4: Restarting service..."
+	@echo "Step 5/5: Restarting service..."
 	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && ./restart.sh'
 	@echo "✅ Full deployment completed on Django Europe preprod!"
 	@echo "🌐 Service available at: http://148.251.140.153/"
@@ -624,13 +626,15 @@ dje-prod-send-queued-mail: dje-prod-verify-env ## Process queued emails on Djang
 
 dje-prod-deploy-all: dje-prod-verify-env ## Run full deployment sequence on Django Europe production
 	@echo "🚀 Running full deployment sequence on Django Europe production..."
-	@echo "Step 1/4: Database migrations..."
+	@echo "Step 1/5: Pre-rendering lucide icons..."
+	@ssh $(DJE_PROD_HOST) 'cd $(DJE_PROD_PATH) && source ~/.virtualenvs/beryl3-prod/bin/activate && python workflows/bin/prerender_lucide_icons.py --template-dir templates --output-dir templates_compiled'
+	@echo "Step 2/5: Database migrations..."
 	@$(MAKE) dje-prod-migrate
-	@echo "Step 2/4: Site setup..."
+	@echo "Step 3/5: Site setup..."
 	@$(MAKE) dje-prod-setup-site
-	@echo "Step 3/4: Static files collection..."
+	@echo "Step 4/5: Static files collection..."
 	@$(MAKE) dje-prod-collectstatic
-	@echo "Step 4/4: Background services setup..."
+	@echo "Step 5/5: Background services setup..."
 	@$(MAKE) dje-prod-setup-services
 	@echo "✅ Full deployment completed on Django Europe production!"
 	@echo "🌐 Service available at: http://148.251.140.153:62079/"
