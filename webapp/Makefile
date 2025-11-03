@@ -453,7 +453,7 @@ dje-pre-send-queued-mail: dje-pre-verify-env ## Process queued emails on Django 
 dje-pre-deploy-all: dje-pre-verify-env ## Run full deployment sequence on Django Europe preprod
 	@echo "🚀 Running full deployment sequence on Django Europe preprod..."
 	@echo "Step 1/5: Pre-rendering lucide icons..."
-	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && source ~/.virtualenvs/beryl3-preprod/bin/activate && python workflows/bin/prerender_lucide_icons.py --template-dir templates --output-dir templates_compiled'
+	@ssh $(DJE_PRE_HOST) 'cd $(DJE_PRE_PATH) && source .env && uv run python workflows/bin/prerender_lucide_icons.py --template-dir templates --output-dir templates_compiled'
 	@echo "Step 2/5: Database migrations..."
 	@$(MAKE) dje-pre-migrate
 	@echo "Step 3/5: Site setup..."
@@ -627,7 +627,7 @@ dje-prod-send-queued-mail: dje-prod-verify-env ## Process queued emails on Djang
 dje-prod-deploy-all: dje-prod-verify-env ## Run full deployment sequence on Django Europe production
 	@echo "🚀 Running full deployment sequence on Django Europe production..."
 	@echo "Step 1/5: Pre-rendering lucide icons..."
-	@ssh $(DJE_PROD_HOST) 'cd $(DJE_PROD_PATH) && source ~/.virtualenvs/beryl3-prod/bin/activate && python workflows/bin/prerender_lucide_icons.py --template-dir templates --output-dir templates_compiled'
+	@ssh $(DJE_PROD_HOST) 'cd $(DJE_PROD_PATH) && source $(DJE_PROD_VENV)/bin/activate && python workflows/bin/prerender_lucide_icons.py --template-dir templates --output-dir templates_compiled'
 	@echo "Step 2/5: Database migrations..."
 	@$(MAKE) dje-prod-migrate
 	@echo "Step 3/5: Site setup..."
