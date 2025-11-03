@@ -70,6 +70,12 @@
             // Save to localStorage
             localStorage.setItem('beryl-language', langCode);
 
+            // Update flag icon in button
+            const flagElement = document.getElementById('language-flag');
+            if (flagElement && languages[langCode]) {
+                flagElement.textContent = languages[langCode].flag;
+            }
+
             // Update check marks in navbar dropdown
             Object.keys(languages).forEach(lang => {
                 const checkElement = document.getElementById('check-lang-' + lang);
@@ -94,8 +100,16 @@
             const savedFont = localStorage.getItem('beryl-selected-font') || 'space-mono'; // Default to space-mono
             selectFont(savedFont);
 
-            // Set language check marks based on current language or saved preference
+            // Set language check marks and flag based on current language or saved preference
             const savedLang = localStorage.getItem('beryl-language') || 'en';
+
+            // Update flag icon
+            const flagElement = document.getElementById('language-flag');
+            if (flagElement && languages[savedLang]) {
+                flagElement.textContent = languages[savedLang].flag;
+            }
+
+            // Update check marks
             Object.keys(languages).forEach(lang => {
                 const checkElement = document.getElementById('check-lang-' + lang);
                 if (checkElement) {
@@ -178,8 +192,8 @@
                 <!-- Language Selector Dropdown -->
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors" title="Select Language">
-                        <div class="w-8 h-8 rounded-full bg-base-200 border border-neutral flex items-center justify-center">
-                            {% lucide 'languages' size='18' class='text-primary' %}
+                        <div class="w-8 h-8 rounded-full bg-base-200 border border-neutral flex items-center justify-center text-xl" id="language-flag">
+                            🇬🇧
                         </div>
                     </div>
                     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">

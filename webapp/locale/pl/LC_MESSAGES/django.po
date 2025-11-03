@@ -301,24 +301,24 @@ msgstr ""
 
 #: templates/public/collection_public_detail.html:43
 msgid "Owned by"
-msgstr ""
+msgstr "Właściciel"
 
 #: templates/public/collection_public_detail.html:55 web/models.py:1658
 msgid "Collection Images"
-msgstr ""
+msgstr "Zdjęcia kolekcji"
 
 #: templates/public/collection_public_detail.html:75
 #: templates/public/user_profile.html:49
 msgid "Total Items"
-msgstr ""
+msgstr "Wszystkie przedmioty"
 
 #: templates/public/collection_public_detail.html:79 web/models.py:791
 msgid "In Collection"
-msgstr ""
+msgstr "W kolekcji"
 
 #: templates/public/collection_public_detail.html:83 web/models.py:796
 msgid "Wanted"
-msgstr ""
+msgstr "Poszukiwane"
 
 #: templates/public/collection_public_detail.html:87
 msgid "Reserved"
@@ -326,7 +326,7 @@ msgstr ""
 
 #: templates/public/collection_public_detail.html:99
 msgid "Items in this Collection"
-msgstr ""
+msgstr "Przedmioty w tej kolekcji"
 
 #: templates/public/collection_public_detail.html:111
 #: templates/public/user_profile.html:115
@@ -359,35 +359,35 @@ msgstr ""
 
 #: templates/public/collection_public_detail.html:171
 msgid "This collection is currently empty."
-msgstr ""
+msgstr "Ta kolekcja jest obecnie pusta."
 
 #: templates/public/collection_public_detail.html:172
 msgid "Check back later for new items!"
-msgstr ""
+msgstr "Sprawdź później, czy są nowe przedmioty!"
 
 #: templates/public/collection_public_detail.html:186
 msgid "Close"
-msgstr ""
+msgstr "Zamknij"
 
 #: templates/public/collection_public_detail.html:192
 msgid "Image Preview"
-msgstr ""
+msgstr "Podgląd obrazu"
 
 #: templates/public/user_profile.html:6
 msgid "Public Profile"
-msgstr ""
+msgstr "Profil publiczny"
 
 #: templates/public/user_profile.html:31
 msgid "Joined"
-msgstr ""
+msgstr "Dołączył"
 
 #: templates/public/user_profile.html:41 templates/public/user_profile.html:84
 msgid "Public Collections"
-msgstr ""
+msgstr "Publiczne kolekcje"
 
 #: templates/public/user_profile.html:57
 msgid "Favorites"
-msgstr ""
+msgstr "Ulubione"
 
 #: templates/public/user_profile.html:68
 msgid "Set up your custom profile URL"
@@ -407,7 +407,7 @@ msgstr ""
 
 #: templates/public/user_profile.html:119 web/models.py:656
 msgid "Public"
-msgstr ""
+msgstr "Publiczne"
 
 #: templates/public/user_profile.html:135
 #, python-format
@@ -416,7 +416,7 @@ msgstr ""
 
 #: templates/public/user_profile.html:145
 msgid "Favorite Items"
-msgstr ""
+msgstr "Ulubione przedmioty"
 
 #: web/models.py:91
 msgid "Collection Header Image"

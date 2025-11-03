@@ -36,8 +36,8 @@ urlpatterns = [
     # Public view for sharable collections
     path('share/collections/<str:hash>/', public.public_collection_view, name='public_collection_view'),
 
-    # Task 65: Lazy load item images for performance
-    path('api/items/<str:item_hash>/image/', public.lazy_load_item_image, name='lazy_load_item_image'),
+    # Task 65: Lazy load item images for performance (HTMX endpoint)
+    path('hx/items/<str:item_hash>/image/', public.lazy_load_item_image, name='lazy_load_item_image'),
 
     # Task 64: Public user profile
     path('u/<str:username>/', public.public_user_profile, name='public_user_profile'),
