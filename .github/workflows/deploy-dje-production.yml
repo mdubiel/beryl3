@@ -1,0 +1,550 @@
+name: Deploy to Django Europe Production
+
+# Manual deployment workflow for Django Europe production environment
+# Deploys a specific release tag to production server at 148.251.140.153
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to deploy (e.g., v0.2.122)'
+        required: true
+        type: string
+      skip_backup:
+        description: 'Skip backup step (NOT RECOMMENDED)'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  # Django Europe Production Environment
+  DJE_HOST: 148.251.140.153
+  DJE_USER: mdubiel
+  DJE_PROJECT_PATH: ~/beryl3
+  DJE_VENV_PATH: ~/.virtualenvs/beryl3
+  DJE_PORT: 62079
+  DJE_BACKUP_DIR: ~/backup
+  GIT_REPO: https://github.com/mdubiel/beryl3.git
+
+jobs:
+  # ============================================================================
+  # Job 1: Validate Release Tag
+  # ============================================================================
+  validate:
+    name: 1. Validate Release Tag
+    runs-on: ubuntu-latest
+
+    outputs:
+      release_tag: ${{ steps.validate.outputs.release_tag }}
+      release_exists: ${{ steps.validate.outputs.release_exists }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for tag validation
+
+      - name: Validate release tag format
+        id: validate
+        run: |
+          RELEASE_TAG="${{ github.event.inputs.release_tag }}"
+
+          echo "🔍 Validating release tag: $RELEASE_TAG"
+
+          # Check tag format (vX.Y.Z)
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid tag format. Expected: vX.Y.Z (e.g., v0.2.122)"
+            exit 1
+          fi
+
+          # Check if tag exists
+          git fetch --tags
+          if ! git tag | grep -q "^${RELEASE_TAG}$"; then
+            echo "❌ Tag $RELEASE_TAG does not exist in repository"
+            echo "Available tags:"
+            git tag | tail -5
+            exit 1
+          fi
+
+          echo "✅ Release tag $RELEASE_TAG is valid"
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
+          echo "release_exists=true" >> $GITHUB_OUTPUT
+
+          # Show tag details
+          echo "📋 Tag details:"
+          git show "$RELEASE_TAG" --no-patch --format="%H %s"
+
+  # ============================================================================
+  # Job 2: Backup ~/beryl3 Directory
+  # ============================================================================
+  backup:
+    name: 2. Backup ~/beryl3 Directory
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ github.event.inputs.skip_backup != 'true' }}
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Create backup of entire ~/beryl3 directory
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << 'ENDSSH'
+            set -e
+
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            BACKUP_DIR=~/beryl3-backups
+            BACKUP_FILE="beryl3_backup_$TIMESTAMP.tar.gz"
+
+            echo "📦 Creating backup directories..."
+            mkdir -p "$BACKUP_DIR"
+            mkdir -p ~/backup
+
+            echo "🗜️ Creating full backup: $BACKUP_FILE"
+            echo "   This includes:"
+            echo "   - All code files"
+            echo "   - .env configuration"
+            echo "   - credentials/ directory (GCS JSON)"
+            echo "   - logs/"
+
+            tar -czf "$BACKUP_DIR/$BACKUP_FILE" \
+              -C ~/ \
+              --exclude='beryl3/logs/*.log' \
+              --exclude='beryl3/__pycache__' \
+              --exclude='beryl3/**/__pycache__' \
+              beryl3/
+
+            BACKUP_SIZE=$(du -h "$BACKUP_DIR/$BACKUP_FILE" | cut -f1)
+            echo "✅ Full backup created: $BACKUP_FILE (Size: $BACKUP_SIZE)"
+
+            echo ""
+            echo "💾 Creating individual file backups in ~/backup/..."
+
+            # Backup .env file
+            if [ -f ~/beryl3/.env ]; then
+              cp ~/beryl3/.env ~/backup/.env.backup_$TIMESTAMP
+              echo "✅ Backed up .env to ~/backup/.env.backup_$TIMESTAMP"
+            else
+              echo "⚠️ No .env file found to backup"
+            fi
+
+            # Backup GCS credentials
+            if [ -d ~/beryl3/credentials ]; then
+              mkdir -p ~/backup/credentials
+              if [ -n "$(ls -A ~/beryl3/credentials/*.json 2>/dev/null)" ]; then
+                cp ~/beryl3/credentials/*.json ~/backup/credentials/gcs_backup_$TIMESTAMP.json
+                echo "✅ Backed up GCS credentials to ~/backup/credentials/gcs_backup_$TIMESTAMP.json"
+              else
+                echo "⚠️ No GCS JSON files found to backup"
+              fi
+            else
+              echo "⚠️ No credentials directory found to backup"
+            fi
+
+            echo ""
+            echo "🧹 Keeping only last 5 full backups..."
+            cd "$BACKUP_DIR"
+            ls -t beryl3_backup_*.tar.gz | tail -n +6 | xargs -r rm -v
+
+            echo "🧹 Keeping only last 10 individual file backups..."
+            cd ~/backup
+            ls -t .env.backup_* 2>/dev/null | tail -n +11 | xargs -r rm -v || true
+            ls -t credentials/gcs_backup_*.json 2>/dev/null | tail -n +11 | xargs -r rm -v || true
+
+            echo ""
+            echo "📋 Available backups:"
+            echo "Full backups:"
+            ls -lh $BACKUP_DIR/beryl3_backup_*.tar.gz | tail -5
+            echo ""
+            echo "Individual .env backups:"
+            ls -lh ~/backup/.env.backup_* 2>/dev/null | tail -5 || echo "No .env backups"
+            echo ""
+            echo "GCS credentials backups:"
+            ls -lh ~/backup/credentials/gcs_backup_*.json 2>/dev/null | tail -5 || echo "No GCS backups"
+          ENDSSH
+
+  # ============================================================================
+  # Job 3: Stop Gunicorn Service
+  # ============================================================================
+  stop-service:
+    name: 3. Stop Gunicorn Service
+    runs-on: ubuntu-latest
+    needs: [validate, backup]
+    if: ${{ always() && needs.validate.result == 'success' && (needs.backup.result == 'success' || needs.backup.result == 'skipped') }}
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Stop Gunicorn service
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "🛑 Stopping Gunicorn service..."
+            cd ~/beryl3
+
+            # Check if service is running
+            if [ -f gunicorn.pid ]; then
+              PID=$(cat gunicorn.pid)
+              if ps -p "$PID" > /dev/null 2>&1; then
+                echo "Found running process (PID: $PID)"
+                ./beryl3-service.sh stop
+              else
+                echo "Service not running (stale PID file)"
+                rm -f gunicorn.pid
+              fi
+            else
+              echo "Service not running (no PID file)"
+            fi
+
+            # Verify service is stopped
+            sleep 2
+            if ./beryl3-service.sh status; then
+              echo "❌ Service is still running!"
+              exit 1
+            else
+              echo "✅ Service stopped successfully"
+            fi
+          ENDSSH
+
+  # ============================================================================
+  # Job 4: Rotate Application Logs
+  # ============================================================================
+  rotate-logs:
+    name: 4. Rotate Application Logs
+    runs-on: ubuntu-latest
+    needs: stop-service
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Rotate logs before deployment
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "🔄 Rotating application logs..."
+
+            if [ -f ~/beryl3/workflows/logrotate.conf ]; then
+              /usr/sbin/logrotate \
+                -s ~/beryl3/workflows/logrotate.state \
+                ~/beryl3/workflows/logrotate.conf \
+                --verbose --force
+              echo "✅ Log rotation completed"
+            else
+              echo "⚠️ Logrotate config not found, skipping rotation"
+            fi
+
+            echo "📊 Current log files:"
+            ls -lh ~/beryl3/logs/*.log 2>/dev/null | tail -10 || echo "No log files found"
+          ENDSSH
+
+  # ============================================================================
+  # Job 5: Deploy Code and Configuration from Git + GitHub Secrets
+  # ============================================================================
+  deploy-code:
+    name: 5. Deploy Code and Configuration
+    runs-on: ubuntu-latest
+    needs: [validate, rotate-logs]
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Deploy code from git and configuration from GitHub secrets
+        env:
+          RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
+          ENV_FILE_CONTENT: ${{ secrets.DJE_PROD_ENV_FILE }}
+          GCS_CREDS_CONTENT: ${{ secrets.DJE_GCS_CREDENTIALS_JSON }}
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << ENDSSH
+            set -e
+
+            RELEASE_TAG="${RELEASE_TAG}"
+            echo "📦 Deploying release: \$RELEASE_TAG"
+
+            # ========================================
+            # Step 1: Create backup directory
+            # ========================================
+            echo "📁 Creating backup directory..."
+            TIMESTAMP=\$(date +%Y%m%d_%H%M%S)
+            mkdir -p ~/backup/credentials
+
+            # ========================================
+            # Step 2: Backup existing configuration files
+            # ========================================
+            echo ""
+            echo "💾 Backing up existing configuration to ~/backup/..."
+
+            if [ -f ~/beryl3/.env ]; then
+              cp ~/beryl3/.env ~/backup/.env.backup_\$TIMESTAMP
+              echo "✅ Backed up .env to ~/backup/.env.backup_\$TIMESTAMP"
+            else
+              echo "ℹ️ No existing .env file to backup"
+            fi
+
+            if [ -d ~/beryl3/credentials ] && [ -n "\$(ls -A ~/beryl3/credentials/*.json 2>/dev/null)" ]; then
+              cp ~/beryl3/credentials/*.json ~/backup/credentials/gcs_backup_\$TIMESTAMP.json
+              echo "✅ Backed up GCS credentials to ~/backup/credentials/gcs_backup_\$TIMESTAMP.json"
+            else
+              echo "ℹ️ No existing GCS credentials to backup"
+            fi
+
+            # ========================================
+            # Step 3: Clone repository
+            # ========================================
+            echo ""
+            echo "🔄 Cloning repository..."
+            cd ~
+            rm -rf beryl3-tmp
+            git clone ${{ env.GIT_REPO }} beryl3-tmp
+            cd beryl3-tmp
+            git checkout "\$RELEASE_TAG"
+
+            COMMIT_SHA=\$(git rev-parse HEAD)
+            echo "✅ Checked out \$RELEASE_TAG (commit: \$COMMIT_SHA)"
+
+            # ========================================
+            # Step 4: Deploy new code
+            # ========================================
+            echo ""
+            echo "📂 Deploying new code..."
+            cd ~
+
+            # Remove old webapp code
+            rm -rf ~/beryl3/webapp
+
+            # Create project directory structure
+            mkdir -p ~/beryl3
+            mkdir -p ~/beryl3/credentials
+
+            # Copy new code from git
+            echo "Copying files from git..."
+            cp -r beryl3-tmp/webapp/* ~/beryl3/
+
+            # ========================================
+            # Step 5: Deploy configuration from GitHub secrets
+            # ========================================
+            echo ""
+            echo "🔐 Deploying configuration from GitHub secrets..."
+
+            # Deploy .env file
+            cat > ~/beryl3/.env << 'ENVEOF'
+          ${ENV_FILE_CONTENT}
+          ENVEOF
+            echo "✅ Deployed .env from GitHub secret"
+
+            # Deploy GCS credentials JSON
+            cat > ~/beryl3/credentials/beryl3-storage.json << 'GCSEOF'
+          ${GCS_CREDS_CONTENT}
+          GCSEOF
+            chmod 600 ~/beryl3/credentials/beryl3-storage.json
+            echo "✅ Deployed GCS credentials from GitHub secret"
+
+            # ========================================
+            # Step 6: Verify deployment
+            # ========================================
+            echo ""
+            echo "🔍 Verifying deployment..."
+
+            if [ ! -f ~/beryl3/.env ]; then
+              echo "❌ ERROR: .env file not deployed!"
+              exit 1
+            fi
+            echo "✅ .env file exists"
+
+            if [ ! -f ~/beryl3/credentials/beryl3-storage.json ]; then
+              echo "❌ ERROR: GCS credentials not deployed!"
+              exit 1
+            fi
+            echo "✅ GCS credentials file exists"
+
+            # Verify .env is not empty
+            if [ ! -s ~/beryl3/.env ]; then
+              echo "❌ ERROR: .env file is empty!"
+              exit 1
+            fi
+
+            # Verify GCS JSON is valid
+            if ! python3 -m json.tool ~/beryl3/credentials/beryl3-storage.json > /dev/null 2>&1; then
+              echo "❌ ERROR: GCS credentials JSON is invalid!"
+              exit 1
+            fi
+            echo "✅ GCS credentials JSON is valid"
+
+            # ========================================
+            # Step 7: Cleanup
+            # ========================================
+            echo ""
+            echo "🧹 Cleaning up temporary files..."
+            rm -rf ~/beryl3-tmp
+
+            echo ""
+            echo "✅ Deployment completed successfully"
+            echo "   Release: \$RELEASE_TAG"
+            echo "   Commit: \$COMMIT_SHA"
+            echo "   Configuration: Deployed from GitHub secrets"
+            echo "   Backups: ~/backup/.env.backup_\$TIMESTAMP"
+            echo "           ~/backup/credentials/gcs_backup_\$TIMESTAMP.json"
+          ENDSSH
+
+  # ============================================================================
+  # Job 6: Run Database Migrations
+  # ============================================================================
+  migrate-database:
+    name: 6. Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: deploy-code
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Run database migrations
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "🔄 Running database migrations..."
+
+            cd ~/beryl3
+            source ~/.virtualenvs/beryl3/bin/activate
+            export DJANGO_SETTINGS_MODULE=production_settings
+
+            # Show pending migrations
+            echo "Checking for pending migrations..."
+            python manage.py showmigrations --plan | grep -E "\[ \]" || echo "No pending migrations"
+
+            # Run migrations
+            python manage.py migrate --noinput
+
+            echo "✅ Database migrations completed"
+          ENDSSH
+
+  # ============================================================================
+  # Job 7: Collect Static Files
+  # ============================================================================
+  collect-static:
+    name: 7. Collect Static Files
+    runs-on: ubuntu-latest
+    needs: migrate-database
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Collect static files to GCS
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << 'ENDSSH'
+            set -e
+
+            echo "📦 Collecting static files to Google Cloud Storage..."
+
+            cd ~/beryl3
+            source ~/.virtualenvs/beryl3/bin/activate
+            export DJANGO_SETTINGS_MODULE=production_settings
+
+            # Verify GCS credentials
+            if [ -z "$(find ~/beryl3/credentials -name "*.json")" ]; then
+              echo "⚠️ WARNING: No GCS credentials found, static files may not upload"
+            fi
+
+            # Collect static files
+            python manage.py collectstatic --noinput --clear
+
+            echo "✅ Static files collected successfully"
+          ENDSSH
+
+  # ============================================================================
+  # Job 8: Start Gunicorn Service
+  # ============================================================================
+  start-service:
+    name: 8. Start Gunicorn Service
+    runs-on: ubuntu-latest
+    needs: collect-static
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DJE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DJE_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Start Gunicorn service and verify
+        env:
+          RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
+        run: |
+          ssh ${{ env.DJE_USER }}@${{ env.DJE_HOST }} << ENDSSH
+            set -e
+
+            echo "🚀 Starting Gunicorn service..."
+
+            cd ~/beryl3
+            ./beryl3-service.sh start
+
+            # Wait for service to start
+            echo "⏳ Waiting for service to start..."
+            sleep 5
+
+            # Check service status
+            if ! ./beryl3-service.sh status; then
+              echo "❌ Service failed to start!"
+              echo "📋 Checking error logs..."
+              tail -50 ~/beryl3/logs/error.log 2>/dev/null || echo "No error logs found"
+              exit 1
+            fi
+
+            echo "✅ Service started successfully"
+
+            # Health check
+            echo ""
+            echo "🏥 Performing health check..."
+            if curl -f -s http://127.0.0.1:${{ env.DJE_PORT }}/health/ > /dev/null 2>&1; then
+              echo "✅ Health check passed"
+            else
+              echo "⚠️ Health check failed (application may still be starting)"
+            fi
+
+            # Show service info
+            echo ""
+            echo "📊 Service Information:"
+            ./beryl3-service.sh info
+
+            echo ""
+            echo "🎉 Deployment completed successfully!"
+            echo "   Release: ${RELEASE_TAG}"
+            echo "   URL: http://beryl3.mdubiel.org/"
+            echo "   Direct: http://148.251.140.153:${{ env.DJE_PORT }}/"
+          ENDSSH
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "::notice title=Deployment Success::Release ${{ needs.validate.outputs.release_tag }} deployed to Django Europe Production"
