@@ -400,6 +400,26 @@ def collection_detail_view(request, hash):
         except EmptyPage:
             items_page = paginator.page(paginator.num_pages)
 
+        # Progressive loading: Pass only item hashes, not full items
+        # Items will be loaded via HTMX as user scrolls
+        if items_page:
+            # Paginated view: get hashes from current page
+            item_hashes = [item.hash for item in items_page]
+        elif grouped_items:
+            # Grouped view: extract hashes from groups
+            item_hashes_grouped = []
+            for group in grouped_items:
+                group_hashes = [item.hash for item in group['items']]
+                item_hashes_grouped.append({
+                    'attribute_name': group['attribute_name'],
+                    'attribute_value': group['attribute_value'],
+                    'item_hashes': group_hashes
+                })
+            item_hashes = None  # Use grouped structure instead
+        else:
+            # All items view: get all hashes
+            item_hashes = [item.hash for item in items]
+
         # Log successful detail view
         logger.info('collection_detail_view: Collection "%s" viewed with %d items (page %s of %s) by user %s [%s]',
                    collection.name, stats['total_items'], items_page.number, paginator.num_pages,
@@ -411,7 +431,9 @@ def collection_detail_view(request, hash):
 
         context = {
             'collection': collection,
-            'items': items_page,
+            'item_hashes': item_hashes,  # Pass hashes instead of full items
+            'item_hashes_grouped': item_hashes_grouped if grouped_items else None,  # Grouped structure
+            'page_obj': items_page,  # For pagination controls
             'stats': stats,
             'visibility_choices': Collection.Visibility.choices,
             'status_choices': CollectionItem.Status.choices,  # Task 45: Add status choices for filter
@@ -427,7 +449,6 @@ def collection_detail_view(request, hash):
             'filter_attribute': filter_attribute,
             'filter_attribute_value': filter_attribute_value,
             'items_per_page': items_per_page,
-            'grouped_items': grouped_items,
             'attribute_stats': attribute_stats,
         }
 

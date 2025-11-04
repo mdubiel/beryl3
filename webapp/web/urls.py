@@ -39,6 +39,9 @@ urlpatterns = [
     # Task 65: Progressive item card loading (HTMX endpoint)
     path('hx/items/<str:item_hash>/card/', public.load_item_card, name='load_item_card'),
 
+    # Progressive item card loading for private collections (HTMX endpoint)
+    path('hx/items/<str:item_hash>/card/private/', items.load_private_item_card, name='load_private_item_card'),
+
     # Legacy: Lazy load item images (deprecated - use card endpoint instead)
     path('hx/items/<str:item_hash>/image/', public.lazy_load_item_image, name='lazy_load_item_image'),
 

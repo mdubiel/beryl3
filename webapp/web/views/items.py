@@ -477,13 +477,13 @@ def get_user_collections_for_move_copy(request, item_hash):
     Get user's collections for move/copy dropdown, excluding the current collection.
     """
     item = get_object_or_404(CollectionItem, hash=item_hash, collection__created_by=request.user)
-    
+
     # Get all user's collections except the current one
     collections = Collection.objects.filter(
         created_by=request.user,
         is_deleted=False
     ).exclude(id=item.collection.id).order_by('name')
-    
+
     collections_data = [
         {
             'id': collection.id,
@@ -493,7 +493,7 @@ def get_user_collections_for_move_copy(request, item_hash):
         }
         for collection in collections
     ]
-    
+
     return JsonResponse({
         'collections': collections_data,
         'current_collection': {
@@ -501,4 +501,29 @@ def get_user_collections_for_move_copy(request, item_hash):
             'name': item.collection.name,
             'hash': item.collection.hash
         }
+    })
+
+
+@login_required
+@log_execution_time
+def load_private_item_card(request, item_hash):
+    """
+    HTMX endpoint to progressively load a single item card on scroll intersection.
+    For private collections - includes authorization check.
+    """
+    item = get_object_or_404(
+        CollectionItem.objects
+            .select_related('item_type', 'collection', 'location')
+            .prefetch_related(
+                'images__media_file',
+                'attribute_values__item_attribute',
+                'item_type__attributes',
+                'links'
+            ),
+        hash=item_hash,
+        collection__created_by=request.user
+    )
+
+    return render(request, 'partials/_item_list_item.html', {
+        'item': item,
     })
