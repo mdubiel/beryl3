@@ -402,6 +402,9 @@ def collection_detail_view(request, hash):
 
         # Progressive loading: Pass only item hashes, not full items
         # Items will be loaded via HTMX as user scrolls
+        item_hashes = None
+        item_hashes_grouped = None
+
         if items_page:
             # Paginated view: get hashes from current page
             item_hashes = [item.hash for item in items_page]
@@ -415,7 +418,6 @@ def collection_detail_view(request, hash):
                     'attribute_value': group['attribute_value'],
                     'item_hashes': group_hashes
                 })
-            item_hashes = None  # Use grouped structure instead
         else:
             # All items view: get all hashes
             item_hashes = [item.hash for item in items]

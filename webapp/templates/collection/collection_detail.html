@@ -361,20 +361,20 @@
     </div>
 
     {# Task 46: Pagination UI #}
-    {% if items.has_other_pages %}
+    {% if page_obj.has_other_pages %}
     <div class="flex flex-col md:flex-row items-center justify-between mt-8 gap-4">
         {# Page navigation #}
         <div class="join">
-            {% if items.has_previous %}
+            {% if page_obj.has_previous %}
             <a href="?page=1{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">«</a>
-            <a href="?page={{ items.previous_page_number }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">‹</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">‹</a>
             {% endif %}
 
-            <button class="join-item btn btn-sm bg-base-100 cursor-default">Page {{ items.number }} of {{ items.paginator.num_pages }}</button>
+            <button class="join-item btn btn-sm bg-base-100 cursor-default">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</button>
 
-            {% if items.has_next %}
-            <a href="?page={{ items.next_page_number }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">›</a>
-            <a href="?page={{ items.paginator.num_pages }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">»</a>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">›</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if filter_search %}&search={{ filter_search }}{% endif %}{% if filter_status %}&status={{ filter_status }}{% endif %}{% if filter_item_type %}&item_type={{ filter_item_type }}{% endif %}&per_page={{ items_per_page }}" class="join-item btn btn-sm bg-base-100">»</a>
             {% endif %}
         </div>
 
