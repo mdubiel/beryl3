@@ -3,15 +3,27 @@
 {% load attribute_tags %}
 
 <div class="card lg:card-side bg-gray-50/85 min-w-80 max-w-md lg:min-w-96 lg:max-w-none mx-auto lg:mx-0 shadow-md hover:shadow-lg transition-shadow rounded-none">
-    {# Task 65: Lazy load images with HTMX for better performance #}
-    <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch rounded-none relative bg-base-200"
-            hx-get="{% url 'lazy_load_item_image' item.hash %}"
-            hx-trigger="intersect once"
-            hx-swap="innerHTML">
-        {# Loading spinner shown while image loads #}
-        <div class="absolute inset-0 flex items-center justify-center">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-        </div>
+    {# Item image - rendered directly with the card #}
+    <figure class="lg:w-1/4 w-full h-48 lg:h-auto lg:self-stretch rounded-none relative bg-base-200">
+        {% if item.default_image.media_file %}
+            <img src="{% media_url item.default_image.media_file %}"
+                 alt="{{ item.name }}"
+                 class="w-full h-full object-cover fade-in"
+                 loading="lazy">
+        {% elif item.images.all %}
+            {% with first_image=item.images.all.0 %}
+                {% if first_image.media_file %}
+                    <img src="{% media_url first_image.media_file %}"
+                         alt="{{ item.name }}"
+                         class="w-full h-full object-cover fade-in"
+                         loading="lazy">
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            <div class="flex items-center justify-center h-full text-base-content/30">
+                {% lucide_cached 'image-off' size=48 %}
+            </div>
+        {% endif %}
     </figure>
     {# Content section using DaisyUI card-body #}
     <div class="card-body lg:w-3/4 flex flex-col justify-between">

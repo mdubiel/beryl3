@@ -100,37 +100,43 @@
 
         {% if stats.total_items > 0 %}
             <div class="flex flex-col gap-6">
-                {# Task 47: Show grouped or ungrouped items based on collection setting #}
-                {% if grouped_items %}
-                    {# Display items grouped by attribute values #}
-                    {% for group in grouped_items %}
+                {# Progressive loading: Each item card loads on scroll via HTMX #}
+                {% if item_hashes_grouped %}
+                    {# Grouped view: Display groups with progressive item loading #}
+                    {% for group in item_hashes_grouped %}
                         {# Group header #}
                         <h3 class="text-lg font-semibold flex items-center gap-2 mt-2">
                             {% lucide 'layers' size=20 %}
                             {{ group.attribute_name }}{% if group.attribute_value %}: {{ group.attribute_value }}{% endif %}
-                            <span class="badge badge-neutral badge-sm ml-2">{{ group.items|length }} items</span>
+                            <span class="badge badge-neutral badge-sm ml-2">{{ group.item_hashes|length }} items</span>
                         </h3>
 
-                        {# Group items #}
-                        {% for item in group.items %}
-                            <div id="item-{{ item.hash }}-container">
-                                {# Task 65: Cache each item card for 1 hour to speed up rendering #}
-                                {% load cache %}
-                                {% cache 3600 public_item_card item.id item.updated %}
-                                    {% include "partials/_item_public_card.html" with item=item %}
-                                {% endcache %}
+                        {# Group items - progressive loading #}
+                        {% for item_hash in group.item_hashes %}
+                            <div id="item-{{ item_hash }}-container"
+                                 class="min-h-[200px]"
+                                 hx-get="{% url 'load_item_card' item_hash %}"
+                                 hx-trigger="intersect once"
+                                 hx-swap="innerHTML">
+                                {# Loading placeholder #}
+                                <div class="flex items-center justify-center h-48">
+                                    <span class="loading loading-spinner loading-lg text-primary"></span>
+                                </div>
                             </div>
                         {% endfor %}
                     {% endfor %}
                 {% else %}
-                    {# Regular ungrouped display #}
-                    {% for item in items %}
-                        <div id="item-{{ item.hash }}-container">
-                            {# Task 65: Cache each item card for 1 hour to speed up rendering #}
-                            {% load cache %}
-                            {% cache 3600 public_item_card item.id item.updated %}
-                                {% include "partials/_item_public_card.html" with item=item %}
-                            {% endcache %}
+                    {# Regular ungrouped display - progressive loading #}
+                    {% for item_hash in item_hashes %}
+                        <div id="item-{{ item_hash }}-container"
+                             class="min-h-[200px]"
+                             hx-get="{% url 'load_item_card' item_hash %}"
+                             hx-trigger="intersect once"
+                             hx-swap="innerHTML">
+                            {# Loading placeholder #}
+                            <div class="flex items-center justify-center h-48">
+                                <span class="loading loading-spinner loading-lg text-primary"></span>
+                            </div>
                         </div>
                     {% endfor %}
                 {% endif %}
