@@ -257,15 +257,35 @@ def public_collection_view(request, hash):
             }
         )
 
+    # Progressive loading: Pass only item hashes, not full items
+    # Items will be loaded via HTMX as user scrolls
+    if page_obj:
+        # Paginated view: get hashes from current page
+        item_hashes = [item.hash for item in page_obj]
+    elif grouped_items:
+        # Grouped view: extract hashes from groups
+        item_hashes_grouped = []
+        for group in grouped_items:
+            group_hashes = [item.hash for item in group['items']]
+            item_hashes_grouped.append({
+                'attribute_name': group['attribute_name'],
+                'attribute_value': group['attribute_value'],
+                'item_hashes': group_hashes
+            })
+        item_hashes = None  # Use grouped structure instead
+    else:
+        # All items view: get all hashes
+        item_hashes = [item.hash for item in all_items]
+
     context = {
         "collection": collection,
-        "items": page_obj if page_obj else all_items,  # Paginated or all items
+        "item_hashes": item_hashes,  # Simple list of hashes
+        "item_hashes_grouped": item_hashes_grouped if grouped_items else None,  # Grouped structure
         "page_obj": page_obj,  # For pagination controls (None if grouped)
         "stats": stats,
         "item_type_distribution": item_type_distribution,
         "dummy_name": dummy_name,
         "item_types": ItemType.objects.all(),
-        "grouped_items": grouped_items,
         "items_per_page": items_per_page,
         "background_image_url": background_image_url,  # Task 62
     }
@@ -604,4 +624,32 @@ def lazy_load_item_image(request, item_hash):
     return render(request, 'partials/_item_image_lazy.html', {
         'item': item,
         'image_url': image_url
+    })
+
+
+def load_item_card(request, item_hash):
+    """
+    HTMX endpoint to progressively load a single item card on scroll intersection.
+
+    This replaces the previous approach of loading all items at once.
+    Each card is loaded atomically when it enters the viewport, providing:
+    - Fast initial page load (only collection header + placeholders)
+    - Progressive rendering as user scrolls
+    - Reduced memory footprint
+
+    The card is fully rendered with all data in one request - no nested HTMX triggers.
+    """
+    item = get_object_or_404(
+        CollectionItem.objects
+            .select_related('item_type', 'collection')
+            .prefetch_related(
+                'images__media_file',
+                'attributes__attribute',
+                'links'
+            ),
+        hash=item_hash
+    )
+
+    return render(request, 'partials/_item_public_card.html', {
+        'item': item,
     })

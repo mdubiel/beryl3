@@ -3584,6 +3584,9 @@
   .min-h-\[60vh\] {
     min-height: 60vh;
   }
+  .min-h-\[200px\] {
+    min-height: 200px;
+  }
   .min-h-full {
     min-height: 100%;
   }
