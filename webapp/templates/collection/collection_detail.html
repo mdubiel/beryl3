@@ -179,7 +179,7 @@
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-bold">Items in this Collection</h2>
         {% if stats.total_items > 0 %}
-        <span class="text-sm text-base-content/70">Showing {{ items.start_index }}-{{ items.end_index }} of {{ stats.total_items }} items</span>
+        <span class="text-sm text-base-content/70">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ stats.total_items }} items</span>
         {% endif %}
     </div>
 
