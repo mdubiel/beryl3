@@ -644,7 +644,8 @@ def load_item_card(request, item_hash):
             .select_related('item_type', 'collection')
             .prefetch_related(
                 'images__media_file',
-                'attributes__attribute',
+                'attribute_values__item_attribute',  # Correct relationship name
+                'item_type__attributes',  # Prefetch item type attributes for get_display_attributes()
                 'links'
             ),
         hash=item_hash
