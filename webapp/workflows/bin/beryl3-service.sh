@@ -78,7 +78,7 @@ start() {
     source "$VENV_PATH/bin/activate"
     export DJANGO_SETTINGS_MODULE="$SETTINGS_MODULE"
     
-    gunicorn config.wsgi:application \
+    gunicorn webapp.wsgi:application \
         --bind "$BIND" \
         --workers "$WORKERS" \
         --timeout "$TIMEOUT" \
