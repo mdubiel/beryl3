@@ -393,19 +393,19 @@ msgstr "Ulubione"
 
 #: templates/public/user_profile.html:68
 msgid "Set up your custom profile URL"
-msgstr ""
+msgstr "Skonfiguruj swój własny adres URL profilu"
 
 #: templates/public/user_profile.html:69
 msgid "You're currently using your user ID in the URL. Set a nickname in your"
-msgstr ""
+msgstr "Obecnie używasz swojego ID użytkownika w adresie URL. Ustaw pseudonim w"
 
 #: templates/public/user_profile.html:69
 msgid "account settings"
-msgstr ""
+msgstr "ustawieniach konta"
 
 #: templates/public/user_profile.html:69
 msgid "to get a personalized URL like"
-msgstr ""
+msgstr "aby otrzymać spersonalizowany adres URL, taki jak"
 
 #: templates/public/user_profile.html:119 web/models.py:656
 msgid "Public"
@@ -414,7 +414,7 @@ msgstr "Publiczne"
 #: templates/public/user_profile.html:135
 #, python-format
 msgid "%(name)s hasn't made any collections public yet."
-msgstr ""
+msgstr "%(name)s nie udostępnił(a) jeszcze żadnych kolekcji publicznie."
 
 #: templates/public/user_profile.html:145
 msgid "Favorite Items"
@@ -542,175 +542,175 @@ msgstr ""
 
 #: web/models.py:449 web/models.py:531 web/models.py:1367 web/models.py:1406
 msgid "Display Name"
-msgstr ""
+msgstr "Nazwa wyświetlana"
 
 #: web/models.py:450 web/models.py:620 web/models.py:1371
 msgid "Description"
-msgstr ""
+msgstr "Opis"
 
 #: web/models.py:451 web/models.py:1206 web/models.py:1370
 msgid "Lucide Icon Name"
-msgstr ""
+msgstr "Nazwa ikony Lucide"
 
 #: web/models.py:454 web/models.py:530 web/models.py:670 web/models.py:810
 msgid "Item Type"
-msgstr ""
+msgstr "Typ przedmiotu"
 
 #: web/models.py:455
 msgid "Item Types"
-msgstr ""
+msgstr "Typy przedmiotów"
 
 #: web/models.py:522
 msgid "Text"
-msgstr ""
+msgstr "Tekst"
 
 #: web/models.py:523
 msgid "Long Text"
-msgstr ""
+msgstr "Długi tekst"
 
 #: web/models.py:524
 msgid "Number"
-msgstr ""
+msgstr "Liczba"
 
 #: web/models.py:525
 msgid "Date"
-msgstr ""
+msgstr "Data"
 
 #: web/models.py:526 web/models.py:1405
 msgid "URL"
-msgstr ""
+msgstr "Adres URL"
 
 #: web/models.py:527
 msgid "Boolean"
-msgstr ""
+msgstr "Tak/Nie"
 
 #: web/models.py:528
 msgid "Choice"
-msgstr ""
+msgstr "Wybór"
 
 #: web/models.py:532
 msgid "Attribute Type"
-msgstr ""
+msgstr "Typ atrybutu"
 
 #: web/models.py:533
 msgid "Required"
-msgstr ""
+msgstr "Wymagane"
 
 #: web/models.py:534
 msgid "Skip Validation"
-msgstr ""
+msgstr "Pomiń walidację"
 
 #: web/models.py:535 web/models.py:1409 web/models.py:1652 web/models.py:1722
 msgid "Display Order"
-msgstr ""
+msgstr "Kolejność wyświetlania"
 
 #: web/models.py:536
 msgid "Choices"
-msgstr ""
+msgstr "Opcje wyboru"
 
 #: web/models.py:536
 msgid "For choice fields, provide a list of options"
-msgstr ""
+msgstr "Dla pól wyboru podaj listę opcji"
 
 #: web/models.py:537
 msgid "Help Text"
-msgstr ""
+msgstr "Tekst pomocniczy"
 
 #: web/models.py:540
 msgid "Item Attribute"
-msgstr ""
+msgstr "Atrybut przedmiotu"
 
 #: web/models.py:541
 msgid "Item Attributes"
-msgstr ""
+msgstr "Atrybuty przedmiotu"
 
 #: web/models.py:619
 msgid "Location Name"
-msgstr ""
+msgstr "Nazwa lokalizacji"
 
 #: web/models.py:625
 msgid "Created By"
-msgstr ""
+msgstr "Utworzone przez"
 
 #: web/models.py:629 web/models.py:838
 msgid "Location"
-msgstr ""
+msgstr "Lokalizacja"
 
 #: web/models.py:630
 msgid "Locations"
-msgstr ""
+msgstr "Lokalizacje"
 
 #: web/models.py:654
 msgid "Visible only to me"
-msgstr ""
+msgstr "Widoczne tylko dla mnie"
 
 #: web/models.py:655
 msgid "Shared with link"
-msgstr ""
+msgstr "Udostępnione przez link"
 
 #: web/models.py:663
 msgid "Visibility"
-msgstr ""
+msgstr "Widoczność"
 
 #: web/models.py:669
 msgid "No Grouping"
-msgstr ""
+msgstr "Bez grupowania"
 
 #: web/models.py:671 web/models.py:802
 msgid "Status"
-msgstr ""
+msgstr "Status"
 
 #: web/models.py:672
 msgid "Attribute"
-msgstr ""
+msgstr "Atrybut"
 
 #: web/models.py:675
 msgid "Name"
-msgstr ""
+msgstr "Nazwa"
 
 #: web/models.py:676
 msgid "Date Created"
-msgstr ""
+msgstr "Data utworzenia"
 
 #: web/models.py:677
 msgid "Date Updated"
-msgstr ""
+msgstr "Data aktualizacji"
 
 #: web/models.py:678
 msgid "Attribute Value"
-msgstr ""
+msgstr "Wartość atrybutu"
 
 #: web/models.py:684
 msgid "Group By"
-msgstr ""
+msgstr "Grupuj według"
 
 #: web/models.py:685
 msgid "Group items by type, status, or attribute"
-msgstr ""
+msgstr "Grupuj przedmioty według typu, statusu lub atrybutu"
 
 #: web/models.py:693
 msgid "Group By Attribute"
-msgstr ""
+msgstr "Grupuj według atrybutu"
 
 #: web/models.py:694
 msgid "Select which attribute to group items by"
-msgstr ""
+msgstr "Wybierz atrybut do grupowania przedmiotów"
 
 #: web/models.py:702
 msgid "Sort By"
-msgstr ""
+msgstr "Sortuj według"
 
 #: web/models.py:703
 msgid "Sort items within groups"
-msgstr ""
+msgstr "Sortuj przedmioty w grupach"
 
 #: web/models.py:711
 msgid "Sort By Attribute"
-msgstr ""
+msgstr "Sortuj według atrybutu"
 
 #: web/models.py:712
 msgid "Select which attribute to sort items by"
-msgstr ""
+msgstr "Wybierz atrybut do sortowania przedmiotów"
 
 #: web/models.py:717
 msgid "Image URL"
