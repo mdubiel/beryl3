@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-03 20:37+0000\n"
+"POT-Creation-Date: 2025-11-05 19:56+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -320,7 +320,7 @@ msgstr "Gesucht"
 
 #: templates/public/collection_public_detail.html:87
 msgid "Reserved"
-msgstr ""
+msgstr "Reserviert"
 
 #: templates/public/collection_public_detail.html:99
 msgid "Items in this Collection"
@@ -331,43 +331,43 @@ msgstr "Artikel in dieser Sammlung"
 #, python-format
 msgid "%(counter)s item"
 msgid_plural "%(counter)s items"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(counter)s Artikel"
+msgstr[1] "%(counter)s Artikel"
 
-#: templates/public/collection_public_detail.html:149
+#: templates/public/collection_public_detail.html:155
 #, python-format
 msgid "Page %(current)s of %(total)s"
-msgstr ""
+msgstr "Seite %(current)s von %(total)s"
 
-#: templates/public/collection_public_detail.html:160
+#: templates/public/collection_public_detail.html:166
 msgid "10 per page"
-msgstr ""
+msgstr "10 pro Seite"
 
-#: templates/public/collection_public_detail.html:161
+#: templates/public/collection_public_detail.html:167
 msgid "25 per page"
-msgstr ""
+msgstr "25 pro Seite"
 
-#: templates/public/collection_public_detail.html:162
+#: templates/public/collection_public_detail.html:168
 msgid "50 per page"
-msgstr ""
+msgstr "50 pro Seite"
 
-#: templates/public/collection_public_detail.html:163
+#: templates/public/collection_public_detail.html:169
 msgid "100 per page"
-msgstr ""
+msgstr "100 pro Seite"
 
-#: templates/public/collection_public_detail.html:171
+#: templates/public/collection_public_detail.html:177
 msgid "This collection is currently empty."
 msgstr "Diese Sammlung ist derzeit leer."
 
-#: templates/public/collection_public_detail.html:172
+#: templates/public/collection_public_detail.html:178
 msgid "Check back later for new items!"
 msgstr "Schauen Sie später nach neuen Artikeln!"
 
-#: templates/public/collection_public_detail.html:186
+#: templates/public/collection_public_detail.html:192
 msgid "Close"
 msgstr "Schließen"
 
-#: templates/public/collection_public_detail.html:192
+#: templates/public/collection_public_detail.html:198
 msgid "Image Preview"
 msgstr "Bildvorschau"
 
@@ -714,19 +714,19 @@ msgstr ""
 
 #: web/models.py:792
 msgid "Previously Owned"
-msgstr ""
+msgstr "Früher besessen"
 
 #: web/models.py:793
 msgid "Lent to Someone"
-msgstr ""
+msgstr "Verliehen"
 
 #: web/models.py:794
 msgid "Reserved by Someone"
-msgstr ""
+msgstr "Reserviert"
 
 #: web/models.py:795
 msgid "Ordered (On its way)"
-msgstr ""
+msgstr "Bestellt (unterwegs)"
 
 #: web/models.py:817
 msgid "Reserved By Name"
