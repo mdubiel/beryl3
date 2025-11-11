@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load lucide_cached %}
 {% load media_tags %}
 {% load attribute_tags %}
@@ -37,7 +38,7 @@
                     <div class="flex items-center gap-2 flex-grow">
                         {# Favorite star - display only (not interactive for public view) #}
                         {% if item.is_favorite %}
-                        <div class="tooltip" data-tip="Owner's favorite">
+                        <div class="tooltip" data-tip="{% trans "Owner's favorite" %}">
                             {% lucide_cached 'star' size=20 class='text-warning fill-current' %}
                         </div>
                         {% endif %}
@@ -112,12 +113,12 @@
                                                         {% if value_data.value %}
                                                             <span class="flex items-center gap-1 text-success font-semibold">
                                                                 {% lucide_cached 'circle-check' size=14 %}
-                                                                Yes
+                                                                {% trans "Yes" %}
                                                             </span>
                                                         {% else %}
                                                             <span class="flex items-center gap-1 text-error font-semibold">
                                                                 {% lucide_cached 'circle-x' size=14 %}
-                                                                No
+                                                                {% trans "No" %}
                                                             </span>
                                                         {% endif %}
                                                     {% else %}
@@ -138,12 +139,12 @@
                                                         {% if value_data.value %}
                                                             <span class="flex items-center gap-1 text-success font-semibold">
                                                                 {% lucide_cached 'circle-check' size=14 %}
-                                                                Yes
+                                                                {% trans "Yes" %}
                                                             </span>
                                                         {% else %}
                                                             <span class="flex items-center gap-1 text-error font-semibold">
                                                                 {% lucide_cached 'circle-x' size=14 %}
-                                                                No
+                                                                {% trans "No" %}
                                                             </span>
                                                         {% endif %}
                                                     {% else %}
@@ -210,29 +211,29 @@
                             hx-swap="innerHTML"
                             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
                         {% lucide_cached 'bookmark' size=14 class='mr-1' %}
-                        Reserve
+                        {% trans "Reserve" %}
                     </button>
                 {% else %}
                     {# Unauthenticated user: Dropdown with an inline form #}
                     <div class="dropdown dropdown-end">
                         <button tabindex="0" class="btn btn-sm btn-primary">
                             {% lucide_cached 'bookmark' size=14 class='mr-1' %}
-                            Reserve
+                            {% trans "Reserve" %}
                         </button>
                         <div tabindex="0" class="dropdown-content z-10 card card-compact w-64 p-2 shadow bg-base-200 text-base-content">
                             <form hx-post="{% url 'book_item_guest' item.hash %}"
                                   hx-target="#item-{{ item.hash }}-container"
                                   hx-swap="innerHTML"
-                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'  
+                                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                                   class="card-body p-2">
-                                <p class="text-sm font-semibold mb-1">Reserve as guest:</p>
+                                <p class="text-sm font-semibold mb-1">{% trans "Reserve as guest:" %}</p>
                                 <div class="form-control">
-                                    <input type="email" name="email" placeholder="your.email@example.com" class="input input-bordered input-sm" required>
+                                    <input type="email" name="email" placeholder="{% trans "your.email@example.com" %}" class="input input-bordered input-sm" required>
                                 </div>
-                                <p class="text-xs text-neutral mt-1">We'll send you a confirmation email with a cancellation link.</p>
+                                <p class="text-xs text-neutral mt-1">{% trans "We'll send you a confirmation email with a cancellation link." %}</p>
                                 <button type="submit" class="btn btn-success btn-sm mt-2">
                                     {% lucide_cached 'check' size=14 class='mr-1' %}
-                                    Confirm
+                                    {% trans "Confirm" %}
                                 </button>
                             </form>
                         </div>

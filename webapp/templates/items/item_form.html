@@ -38,13 +38,17 @@
                 {% if form.name.errors %}<div class="text-error text-sm mt-1">{{ form.name.errors.as_text }}</div>{% endif %}
             </div>
 
-            {% if not item %}
             <div class="form-control w-full mb-4">
                 <label class="label" for="{{ form.item_type.id_for_label }}"><span class="label-text">{{ form.item_type.label }}</span></label>
-                {% render_field form.item_type class="select select-bordered w-full" hx-get="/items/get-type-attributes/" hx-target="#dynamic-attributes-container" hx-trigger="change" hx-swap="innerHTML" %}
+                {% if not item %}
+                    {% render_field form.item_type class="select select-bordered w-full" hx-get="/items/get-type-attributes/" hx-target="#dynamic-attributes-container" hx-trigger="change" hx-swap="innerHTML" %}
+                {% else %}
+                    {% render_field form.item_type class="select select-bordered w-full" %}
+                {% endif %}
                 {% if form.item_type.errors %}<div class="text-error text-sm mt-1">{{ form.item_type.errors.as_text }}</div>{% endif %}
             </div>
 
+            {% if not item %}
             {# Dynamic attributes container - populated via HTMX when item type is selected #}
             <div id="dynamic-attributes-container" class="mb-4"></div>
             {% endif %}

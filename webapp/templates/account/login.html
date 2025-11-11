@@ -11,7 +11,7 @@
         {% csrf_token %}
 
         <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
-            <legend class="fieldset-legend">Login</legend>
+            <legend class="fieldset-legend">{% trans "Sign In" %}</legend>
 
             {# Display any non-field errors (e.g., "invalid credentials") #}
             {% if form.non_field_errors %}
@@ -23,7 +23,7 @@
             
             {# Email Field #}
             <label class="label" for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
-            {% render_field form.login class="input w-full" placeholder="Email" %}
+            {% render_field form.login class="input w-full" placeholder=_("Email") %}
             {% if form.login.errors %}
                 <div class="text-error text-sm mt-1">
                     {{ form.login.errors.as_text }}
@@ -32,7 +32,7 @@
 
             {# Password Field #}
             <label class="label mt-2" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-            {% render_field form.password class="input w-full" placeholder="Password" %}
+            {% render_field form.password class="input w-full" placeholder=_("Password") %}
              {% if form.password.errors %}
                 <div class="text-error text-sm mt-1">
                     {{ form.password.errors.as_text }}
@@ -43,7 +43,7 @@
                 <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
             {% endif %}
 
-            <button type="submit" class="btn btn-neutral mt-4 w-full">Login</button>
+            <button type="submit" class="btn btn-neutral mt-4 w-full">{% trans "Sign In" %}</button>
         </fieldset>
     </form>
 </div>
