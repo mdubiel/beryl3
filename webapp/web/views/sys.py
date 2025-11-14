@@ -2843,24 +2843,24 @@ def user_detail(request, user_id):
 @application_admin_required
 def user_content(request, user_id):
     """View all content uploaded by a specific user."""
-    
+
     user = get_object_or_404(User, id=user_id)
-    
+
     # Get all user's media files with content moderation info
     media_files = MediaFile.objects.filter(
         uploaded_by=user
     ).order_by('-created')
-    
+
     # Apply status filter if provided
     status_filter = request.GET.get('status')
     if status_filter:
         media_files = media_files.filter(content_moderation_status=status_filter)
-    
+
     # Pagination
     paginator = Paginator(media_files, 24)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'user': user,
         'media_files': page_obj,
@@ -2868,6 +2868,131 @@ def user_content(request, user_id):
         'page_obj': page_obj,
         'status_filter': status_filter,
     }
-    
+
     return render(request, 'sys/user_content.html', context)
+
+
+@application_admin_required
+@log_execution_time
+def sys_backups(request):
+    """Display system backups stored in GCS."""
+    logger.info("System backups view accessed by admin user '%s' [%s]", request.user.username, request.user.id)
+
+    from google.cloud import storage
+
+    backups = {
+        'database': [],
+        'media': [],
+        'error': None
+    }
+
+    try:
+        # Initialize GCS client
+        credentials_path = settings.GCS_CREDENTIALS_PATH
+        if credentials_path and os.path.exists(credentials_path):
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+
+        storage_client = storage.Client(project=settings.GCS_PROJECT_ID)
+        bucket = storage_client.bucket(settings.GCS_BUCKET_NAME)
+
+        # List database backups
+        db_blobs = list(bucket.list_blobs(prefix='backups/database/'))
+        db_blobs.sort(key=lambda x: x.time_created, reverse=True)
+
+        for blob in db_blobs:
+            backups['database'].append({
+                'name': blob.name.split('/')[-1],
+                'path': blob.name,
+                'size': blob.size,
+                'size_mb': round(blob.size / (1024 ** 2), 2),
+                'created': blob.time_created,
+                'download_url': blob.generate_signed_url(
+                    version='v4',
+                    expiration=timedelta(hours=1),
+                    method='GET'
+                )
+            })
+
+        # List media backups (group by timestamp)
+        media_blobs = list(bucket.list_blobs(prefix='backups/media/'))
+
+        # Group media backups by timestamp
+        media_groups = {}
+        for blob in media_blobs:
+            # Extract timestamp from filename
+            parts = blob.name.split('_')
+            if len(parts) >= 3:
+                timestamp_parts = []
+                for i in range(2, len(parts)):
+                    if 'part' in parts[i] or '.tar.gz' in parts[i]:
+                        break
+                    timestamp_parts.append(parts[i])
+
+                timestamp = '_'.join(timestamp_parts)
+
+                if timestamp not in media_groups:
+                    media_groups[timestamp] = {
+                        'timestamp': timestamp,
+                        'files': [],
+                        'total_size': 0,
+                        'created': None
+                    }
+
+                media_groups[timestamp]['files'].append({
+                    'name': blob.name.split('/')[-1],
+                    'path': blob.name,
+                    'size': blob.size,
+                    'download_url': blob.generate_signed_url(
+                        version='v4',
+                        expiration=timedelta(hours=1),
+                        method='GET'
+                    )
+                })
+                media_groups[timestamp]['total_size'] += blob.size
+
+                if media_groups[timestamp]['created'] is None or blob.time_created < media_groups[timestamp]['created']:
+                    media_groups[timestamp]['created'] = blob.time_created
+
+        # Convert to list and sort by created date
+        for group_data in media_groups.values():
+            group_data['total_size_mb'] = round(group_data['total_size'] / (1024 ** 2), 2)
+            group_data['total_size_gb'] = round(group_data['total_size'] / (1024 ** 3), 2)
+            group_data['part_count'] = len(group_data['files'])
+
+        backups['media'] = sorted(media_groups.values(), key=lambda x: x['created'], reverse=True)
+
+    except Exception as e:
+        logger.error(f"Error listing backups: {e}", exc_info=True)
+        backups['error'] = str(e)
+
+    context = {
+        'backups': backups,
+    }
+
+    return render(request, 'sys/backups.html', context)
+
+
+@application_admin_required
+@require_http_methods(['POST'])
+def sys_backup_now(request):
+    """Trigger a backup immediately."""
+    logger.info("Backup triggered by admin user '%s' [%s]", request.user.username, request.user.id)
+
+    from django.core.management import call_command
+    import io
+
+    try:
+        # Capture command output
+        out = io.StringIO()
+        call_command('backup_system', stdout=out)
+        output = out.getvalue()
+
+        logger.info(f"Backup completed successfully. Output: {output}")
+        messages.success(request, 'Backup completed successfully!')
+
+    except Exception as e:
+        logger.error(f"Backup failed: {e}", exc_info=True)
+        messages.error(request, f'Backup failed: {str(e)}')
+
+    return redirect('sys_backups')
 

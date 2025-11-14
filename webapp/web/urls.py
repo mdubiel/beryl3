@@ -180,7 +180,10 @@ urlpatterns = [
     path('sys/link-patterns/create/', sys.sys_link_pattern_create, name='sys_link_pattern_create'),
     path('sys/link-patterns/<int:link_pattern_id>/update/', sys.sys_link_pattern_update, name='sys_link_pattern_update'),
     path('sys/link-patterns/<int:link_pattern_id>/delete/', sys.sys_link_pattern_delete, name='sys_link_pattern_delete'),
-    
+
+    # Backup management
+    path('sys/backups/', sys.sys_backups, name='sys_backups'),
+    path('sys/backups/backup-now/', sys.sys_backup_now, name='sys_backup_now'),
 
     # HTMX endpoints
     

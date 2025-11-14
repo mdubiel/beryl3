@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load lucide %}
+{% load i18n %}
+
+{% block title %}System Backups{% endblock %}
+
+{% block breadcrumbs %}
+    <li>
+        <a href="{% url 'sys_dashboard' %}">
+            {% lucide 'gauge' size=16 %}
+            System
+        </a>
+    </li>
+    <li>
+        <span class="inline-flex gap-2 items-center">
+            {% lucide 'database' size=16 %}
+            Backups
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold">System Backups</h1>
+            <p class="text-base-content/70 mt-2">Database and media backups stored in Google Cloud Storage</p>
+        </div>
+        <form method="post" action="{% url 'sys_backup_now' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">
+                {% lucide 'database' size=20 %}
+                Backup Now
+            </button>
+        </form>
+    </div>
+
+    {% if backups.error %}
+    <div class="alert alert-error">
+        <span>Error loading backups: {{ backups.error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Database Backups -->
+    <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">
+                {% lucide 'database' size=24 %}
+                Database Backups
+                <span class="badge badge-neutral">{{ backups.database|length }}</span>
+            </h2>
+            <p class="text-sm text-base-content/70">Keep 7 most recent database dumps</p>
+
+            {% if backups.database %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Size</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups.database %}
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    {% lucide 'file-archive' size=16 %}
+                                    <code class="text-sm">{{ backup.name }}</code>
+                                </div>
+                            </td>
+                            <td>{{ backup.size_mb }} MB</td>
+                            <td>{{ backup.created|date:"Y-m-d H:i:s" }}</td>
+                            <td>
+                                <a href="{{ backup.download_url }}" class="btn btn-sm btn-ghost" target="_blank">
+                                    {% lucide 'download' size=16 %}
+                                    Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert">
+                <span>No database backups found</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Media Backups -->
+    <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">
+                {% lucide 'image' size=24 %}
+                Media Backups
+                <span class="badge badge-neutral">{{ backups.media|length }}</span>
+            </h2>
+            <p class="text-sm text-base-content/70">Keep only the most recent media backup set</p>
+
+            {% if backups.media %}
+            <div class="space-y-4">
+                {% for media_backup in backups.media %}
+                <div class="card bg-base-100">
+                    <div class="card-body">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold">Backup {{ media_backup.timestamp }}</h3>
+                                <p class="text-sm text-base-content/70">
+                                    Created: {{ media_backup.created|date:"Y-m-d H:i:s" }}
+                                </p>
+                                <div class="flex gap-4 mt-2">
+                                    <span class="badge badge-outline">
+                                        {{ media_backup.part_count }} part{% if media_backup.part_count > 1 %}s{% endif %}
+                                    </span>
+                                    <span class="badge badge-outline">
+                                        Total: {{ media_backup.total_size_mb }} MB
+                                        {% if media_backup.total_size_gb > 0.1 %}
+                                        ({{ media_backup.total_size_gb }} GB)
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if media_backup.part_count > 1 %}
+                        <div class="divider">Archive Parts</div>
+                        <div class="grid grid-cols-1 gap-2">
+                            {% for file in media_backup.files %}
+                            <div class="flex justify-between items-center p-2 bg-base-200 rounded">
+                                <div class="flex items-center gap-2">
+                                    {% lucide 'file-archive' size=16 %}
+                                    <code class="text-sm">{{ file.name }}</code>
+                                </div>
+                                <a href="{{ file.download_url }}" class="btn btn-xs btn-ghost" target="_blank">
+                                    {% lucide 'download' size=14 %}
+                                    Download
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <!-- Single file backup -->
+                        <div class="flex justify-between items-center mt-4 p-2 bg-base-200 rounded">
+                            <div class="flex items-center gap-2">
+                                {% lucide 'file-archive' size=16 %}
+                                <code class="text-sm">{{ media_backup.files.0.name }}</code>
+                            </div>
+                            <a href="{{ media_backup.files.0.download_url }}" class="btn btn-sm btn-ghost" target="_blank">
+                                {% lucide 'download' size=16 %}
+                                Download
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert">
+                <span>No media backups found</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Backup Information -->
+    <div class="card bg-base-200">
+        <div class="card-body">
+            <h3 class="font-bold flex items-center gap-2">
+                {% lucide 'info' size=20 %}
+                Backup Information
+            </h3>
+            <ul class="list-disc list-inside space-y-2 text-sm">
+                <li>Database backups are created using Django's dumpdata command and compressed with gzip</li>
+                <li>Media backups include all uploaded files (images, documents, etc.)</li>
+                <li>If media files exceed 1GB, the backup is automatically split into multiple parts</li>
+                <li>The system keeps the 7 most recent database backups</li>
+                <li>The system keeps only the most recent media backup set</li>
+                <li>All backups are stored in Google Cloud Storage</li>
+                <li>Download links are valid for 1 hour</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
