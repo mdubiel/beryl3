@@ -23,7 +23,7 @@
             
             {# Email Field #}
             <label class="label" for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
-            {% render_field form.login class="input w-full" placeholder=_("Email") %}
+            {% render_field form.login class="input w-full" placeholder="Email" %}
             {% if form.login.errors %}
                 <div class="text-error text-sm mt-1">
                     {{ form.login.errors.as_text }}
@@ -32,7 +32,7 @@
 
             {# Password Field #}
             <label class="label mt-2" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-            {% render_field form.password class="input w-full" placeholder=_("Password") %}
+            {% render_field form.password class="input w-full" placeholder="Password" %}
              {% if form.password.errors %}
                 <div class="text-error text-sm mt-1">
                     {{ form.password.errors.as_text }}

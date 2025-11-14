@@ -22,21 +22,21 @@
 
             {# Email Field #}
             <label class="label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-            {% render_field form.email type="email" class="input w-full" placeholder=_("Email Address") %}
+            {% render_field form.email type="email" class="input w-full" placeholder="Email Address" %}
             {% if form.email.errors %}
                 <div class="text-error text-sm mt-1">{{ form.email.errors.as_text }}</div>
             {% endif %}
 
             {# Password Field - uses 'password1' #}
             <label class="label mt-2" for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
-            {% render_field form.password1 class="input w-full" placeholder=_("Password") %}
+            {% render_field form.password1 class="input w-full" placeholder="Password" %}
             {% if form.password1.errors %}
                 <div class="text-error text-sm mt-1">{{ form.password1.errors.as_text }}</div>
             {% endif %}
 
             {# Password Confirmation Field - uses 'password2' #}
             <label class="label mt-2" for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
-            {% render_field form.password2 class="input w-full" placeholder=_("Confirm Password") %}
+            {% render_field form.password2 class="input w-full" placeholder="Confirm Password" %}
             {% if form.password2.errors %}
                 <div class="text-error text-sm mt-1">{{ form.password2.errors.as_text }}</div>
             {% endif %}
