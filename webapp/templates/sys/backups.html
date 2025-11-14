@@ -1,40 +1,23 @@
-{% extends "base.html" %}
+{% extends "base_sys.html" %}
 {% load lucide %}
-{% load i18n %}
 
-{% block title %}System Backups{% endblock %}
+{% block title %}System Backups - Beryl Admin{% endblock %}
 
-{% block breadcrumbs %}
-    <li>
-        <a href="{% url 'sys_dashboard' %}">
-            {% lucide 'gauge' size=16 %}
-            System
-        </a>
-    </li>
-    <li>
-        <span class="inline-flex gap-2 items-center">
-            {% lucide 'database' size=16 %}
-            Backups
-        </span>
-    </li>
-{% endblock breadcrumbs %}
+{% block page_title %}System Backups{% endblock %}
+{% block page_description %}Database and media backups stored in Google Cloud Storage{% endblock %}
+
+{% block header_actions %}
+<form method="post" action="{% url 'sys_backup_now' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-primary">
+        {% lucide 'database' size=16 %}
+        Backup Now
+    </button>
+</form>
+{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold">System Backups</h1>
-            <p class="text-base-content/70 mt-2">Database and media backups stored in Google Cloud Storage</p>
-        </div>
-        <form method="post" action="{% url 'sys_backup_now' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary">
-                {% lucide 'database' size=20 %}
-                Backup Now
-            </button>
-        </form>
-    </div>
+<div class="p-6 space-y-6">
 
     {% if backups.error %}
     <div class="alert alert-error">

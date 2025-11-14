@@ -84,7 +84,11 @@
                 <a href="{% url 'sys_content_moderation_dashboard' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'content_moderation' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'shield-alert' size=14 class='inline mr-2' %} Content Moderation
                 </a>
-                
+
+                <a href="{% url 'sys_backups' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'backups' in request.resolver_match.url_name %}active{% endif %}">
+                    {% lucide 'hard-drive' size=14 class='inline mr-2' %} Backups
+                </a>
+
                 <a href="{% url 'sys_import_data' %}" class="terminal-menu-item block px-3 py-2 text-sm terminal-text {% if 'import' in request.resolver_match.url_name %}active{% endif %}">
                     {% lucide 'upload' size=14 class='inline mr-2' %} Data Import
                 </a>
