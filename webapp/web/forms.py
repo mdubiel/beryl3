@@ -38,6 +38,13 @@ class CollectionForm(forms.ModelForm):
                 # No attributes used, show empty queryset
                 self.fields['grouping_attribute'].queryset = ItemAttribute.objects.none()
                 self.fields['sort_attribute'].queryset = ItemAttribute.objects.none()
+        else:
+            # When creating a new collection, remove grouping/sorting fields
+            # These will be available after the collection has items
+            self.fields.pop('group_by', None)
+            self.fields.pop('grouping_attribute', None)
+            self.fields.pop('sort_by', None)
+            self.fields.pop('sort_attribute', None)
 
     class Meta:
         model = Collection
